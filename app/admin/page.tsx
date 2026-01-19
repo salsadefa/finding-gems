@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/store';
@@ -39,7 +39,7 @@ import {
     Settings
 } from 'lucide-react';
 
-export default function AdminDashboardPage() {
+function AdminDashboardContent() {
     const searchParams = useSearchParams();
     const { user, isAuthenticated } = useAuth();
 
@@ -906,115 +906,115 @@ export default function AdminDashboardPage() {
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-white text-gray-500 border-b border-gray-100">
                                     <tr>
-                                        <th className="px-6 py-3 font-medium">Category</th>
-                                        <th className="px-6 py-3 font-medium">Views</th>
-                                        <th className="px-6 py-3 font-medium">Trend</th>
-                                    </tr>            <th className="px-6 py-3 font-medium text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                {adminTeam.map(admin => (
-                                    <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="font-medium text-gray-900">{admin.name}</div>
-                                            <div className="text-xs text-gray-500">{admin.email}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${admin.role === 'Superadmin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {admin.role === 'Superadmin' && <Shield size={10} />}
-                                                {admin.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
-                                                {admin.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-3 text-xs font-medium">
-                                                <button className="text-blue-600 hover:text-blue-800">Edit</button>
-                                                <button className="text-red-600 hover:text-red-800">Remove</button>
-                                            </div>
-                                        </td>
+                                        <th className="px-6 py-3 font-medium">User</th>
+                                        <th className="px-6 py-3 font-medium">Role</th>
+                                        <th className="px-6 py-3 font-medium">Status</th>
+                                        <th className="px-6 py-3 font-medium text-right">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    {adminTeam.map(admin => (
+                                        <tr key={admin.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-gray-900">{admin.name}</div>
+                                                <div className="text-xs text-gray-500">{admin.email}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${admin.role === 'Superadmin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                    {admin.role === 'Superadmin' && <Shield size={10} />}
+                                                    {admin.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700">
+                                                    {admin.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-3 text-xs font-medium">
+                                                    <button className="text-blue-600 hover:text-blue-800">Edit</button>
+                                                    <button className="text-red-600 hover:text-red-800">Remove</button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     )}
 
-                {settingsTab === 'audit' && (
-                    <div>
-                        <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
-                            <h3 className="font-bold text-gray-900">Security Audit Log</h3>
-                        </div>
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-white text-gray-500 border-b border-gray-100">
-                                <tr>
-                                    <th className="px-6 py-3 font-medium">Admin</th>
-                                    <th className="px-6 py-3 font-medium">Action</th>
-                                    <th className="px-6 py-3 font-medium">Date</th>
-                                    <th className="px-6 py-3 font-medium">IP Address</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100">
-                                <tr className="hover:bg-gray-50">
-                                    <td className="px-6 py-3 font-medium text-gray-900">Sarah Support</td>
-                                    <td className="px-6 py-3 text-gray-600">Approved Website: TaskFlow</td>
-                                    <td className="px-6 py-3 text-gray-500">Jan 12, 10:42 AM</td>
-                                    <td className="px-6 py-3 text-gray-400 font-mono text-xs">192.168.1.42</td>
-                                </tr>
-                                <tr className="hover:bg-gray-50">
-                                    <td className="px-6 py-3 font-medium text-gray-900">You</td>
-                                    <td className="px-6 py-3 text-gray-600">Updated Settings</td>
-                                    <td className="px-6 py-3 text-gray-500">Jan 11, 09:15 PM</td>
-                                    <td className="px-6 py-3 text-gray-400 font-mono text-xs">10.0.0.1</td>
-                                </tr>
-                                <tr className="hover:bg-gray-50">
-                                    <td className="px-6 py-3 font-medium text-gray-900">You</td>
-                                    <td className="px-6 py-3 text-gray-600">Exported User Data</td>
-                                    <td className="px-6 py-3 text-gray-500">Jan 10, 02:30 PM</td>
-                                    <td className="px-6 py-3 text-gray-400 font-mono text-xs">10.0.0.1</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
-
-                {/* Invite Modal */ }
-        {
-            inviteModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">Invite New Admin</h3>
-                            <button onClick={() => setInviteModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-                        </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="w-full rounded-lg border-gray-300 border p-2.5" placeholder="colleague@dualangka.com" />
+                    {settingsTab === 'audit' && (
+                        <div>
+                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                                <h3 className="font-bold text-gray-900">Security Audit Log</h3>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button onClick={() => setInviteRole('Admin')} className={`p-3 rounded-lg border text-left ${inviteRole === 'Admin' ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:bg-gray-50'}`}>
-                                        <div className="font-bold text-sm text-gray-900">Admin</div>
-                                        <div className="text-xs text-gray-500 mt-1">Can manage content</div>
-                                    </button>
-                                    <button onClick={() => setInviteRole('Superadmin')} className={`p-3 rounded-lg border text-left ${inviteRole === 'Superadmin' ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-500' : 'border-gray-200 hover:bg-gray-50'}`}>
-                                        <div className="font-bold text-sm text-gray-900">Superadmin</div>
-                                        <div className="text-xs text-gray-500 mt-1">Full access control</div>
-                                    </button>
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-white text-gray-500 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-6 py-3 font-medium">Admin</th>
+                                        <th className="px-6 py-3 font-medium">Action</th>
+                                        <th className="px-6 py-3 font-medium">Date</th>
+                                        <th className="px-6 py-3 font-medium">IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="px-6 py-3 font-medium text-gray-900">Sarah Support</td>
+                                        <td className="px-6 py-3 text-gray-600">Approved Website: TaskFlow</td>
+                                        <td className="px-6 py-3 text-gray-500">Jan 12, 10:42 AM</td>
+                                        <td className="px-6 py-3 text-gray-400 font-mono text-xs">192.168.1.42</td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="px-6 py-3 font-medium text-gray-900">You</td>
+                                        <td className="px-6 py-3 text-gray-600">Updated Settings</td>
+                                        <td className="px-6 py-3 text-gray-500">Jan 11, 09:15 PM</td>
+                                        <td className="px-6 py-3 text-gray-400 font-mono text-xs">10.0.0.1</td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50">
+                                        <td className="px-6 py-3 font-medium text-gray-900">You</td>
+                                        <td className="px-6 py-3 text-gray-600">Exported User Data</td>
+                                        <td className="px-6 py-3 text-gray-500">Jan 10, 02:30 PM</td>
+                                        <td className="px-6 py-3 text-gray-400 font-mono text-xs">10.0.0.1</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* Invite Modal */}
+                {
+                    inviteModalOpen && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+                            <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-lg font-bold text-gray-900">Invite New Admin</h3>
+                                    <button onClick={() => setInviteModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                        <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} className="w-full rounded-lg border-gray-300 border p-2.5" placeholder="colleague@dualangka.com" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <button onClick={() => setInviteRole('Admin')} className={`p-3 rounded-lg border text-left ${inviteRole === 'Admin' ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                <div className="font-bold text-sm text-gray-900">Admin</div>
+                                                <div className="text-xs text-gray-500 mt-1">Can manage content</div>
+                                            </button>
+                                            <button onClick={() => setInviteRole('Superadmin')} className={`p-3 rounded-lg border text-left ${inviteRole === 'Superadmin' ? 'border-purple-500 bg-purple-50 ring-1 ring-purple-500' : 'border-gray-200 hover:bg-gray-50'}`}>
+                                                <div className="font-bold text-sm text-gray-900">Superadmin</div>
+                                                <div className="text-xs text-gray-500 mt-1">Full access control</div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button onClick={handleInviteAdmin} className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 mt-2">Send Invitation</button>
                                 </div>
                             </div>
-                            <button onClick={handleInviteAdmin} className="w-full py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 mt-2">Send Invitation</button>
                         </div>
-                    </div>
-                </div>
-            )
-        }
+                    )
+                }
             </div >
         )
     }
@@ -1176,5 +1176,17 @@ export default function AdminDashboardPage() {
             </div>
 
         </div>
+    );
+}
+
+export default function AdminDashboardPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-blue"></div>
+            </div>
+        }>
+            <AdminDashboardContent />
+        </Suspense>
     );
 }

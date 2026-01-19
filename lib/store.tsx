@@ -21,7 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await new Promise(resolve => setTimeout(resolve, 500));
         const existingUser = mockUsers.find(u => u.email === email);
         if (existingUser) { setUser(existingUser); return true; }
-        const demoUser: User = { id: `user-demo-${Date.now()}`, email, name: email.split('@')[0], role: role || 'buyer', createdAt: new Date().toISOString() };
+        const demoUser: User = { id: `user-demo-${Date.now()}`, email, name: email.split('@')[0], username: email.split('@')[0], role: role || 'buyer', createdAt: new Date().toISOString() };
         setUser(demoUser);
         return true;
     }, []);
