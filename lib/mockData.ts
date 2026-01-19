@@ -9,8 +9,6 @@ import {
     Category,
     Website,
     Review,
-    Purchase,
-    Trial,
     Bookmark,
     MessageThread,
     Message,
@@ -28,6 +26,7 @@ export const mockUsers: User[] = [
         id: 'user-1',
         email: 'john@example.com',
         name: 'John Buyer',
+        username: 'johnbuyer',
         avatar: '',
         role: 'buyer',
         createdAt: '2025-10-15T08:00:00Z',
@@ -36,6 +35,7 @@ export const mockUsers: User[] = [
         id: 'user-2',
         email: 'sarah@creator.com',
         name: 'Sarah Chen',
+        username: 'sarahchen',
         avatar: '',
         role: 'creator',
         createdAt: '2025-09-01T08:00:00Z',
@@ -44,6 +44,7 @@ export const mockUsers: User[] = [
         id: 'user-3',
         email: 'mike@creator.com',
         name: 'Mike Rodriguez',
+        username: 'mikerodriguez',
         avatar: '',
         role: 'creator',
         createdAt: '2025-08-15T08:00:00Z',
@@ -52,6 +53,7 @@ export const mockUsers: User[] = [
         id: 'user-4',
         email: 'emma@buyer.com',
         name: 'Emma Wilson',
+        username: 'emmawilson',
         avatar: '',
         role: 'buyer',
         createdAt: '2025-11-01T08:00:00Z',
@@ -60,6 +62,7 @@ export const mockUsers: User[] = [
         id: 'user-5',
         email: 'admin@dualangka.com',
         name: 'Admin User',
+        username: 'admin',
         avatar: '',
         role: 'admin',
         createdAt: '2025-01-01T08:00:00Z',
@@ -68,6 +71,7 @@ export const mockUsers: User[] = [
         id: 'user-6',
         email: 'alex@creator.com',
         name: 'Alex Thompson',
+        username: 'alexthompson',
         avatar: '',
         role: 'creator',
         createdAt: '2025-07-20T08:00:00Z',
@@ -82,41 +86,99 @@ export const mockCreatorProfiles: CreatorProfile[] = [
     {
         userId: 'user-2',
         bio: 'Full-stack developer with 8 years of experience building productivity tools. Passionate about creating software that helps people work smarter.',
+        role: 'Senior Software Engineer',
+        institution: 'at GoTo Financial',
         professionalBackground: 'Senior Software Engineer',
         expertise: ['React', 'Node.js', 'AI/ML', 'SaaS'],
         portfolioUrl: 'https://sarahchen.dev',
         isVerified: true,
         verifiedAt: '2025-09-05T08:00:00Z',
         totalWebsites: 4,
-        totalSales: 127,
         rating: 4.8,
         reviewCount: 89,
+        socialLinks: {
+            linkedin: 'https://linkedin.com/in/sarahchen',
+            x: 'https://twitter.com/sarahchen',
+            website: 'https://sarahchen.dev',
+        },
+        otherProducts: [
+            {
+                id: 'web-4',
+                name: 'LearnCode Interactive',
+                slug: 'learncode-interactive',
+                thumbnail: 'https://picsum.photos/seed/learncode/800/600',
+                category: { name: 'Education' },
+            },
+            {
+                id: 'web-8',
+                name: 'QuizMaster Pro',
+                slug: 'quizmaster-pro',
+                thumbnail: 'https://picsum.photos/seed/quizmaster/800/600',
+                category: { name: 'Education' },
+            },
+        ],
     },
     {
         userId: 'user-3',
         bio: 'UI/UX designer turned developer. I build beautiful, functional tools that solve real business problems.',
+        role: 'Product Designer',
+        institution: 'at Tokopedia',
         professionalBackground: 'UI/UX Designer & Developer',
         expertise: ['Design Systems', 'Figma', 'React', 'TailwindCSS'],
         portfolioUrl: 'https://mikerodriguez.design',
         isVerified: true,
         verifiedAt: '2025-08-20T08:00:00Z',
         totalWebsites: 3,
-        totalSales: 84,
         rating: 4.6,
         reviewCount: 52,
+        socialLinks: {
+            linkedin: 'https://linkedin.com/in/mikerodriguez',
+            instagram: 'https://instagram.com/mike.design',
+        },
+        otherProducts: [
+            {
+                id: 'web-5',
+                name: 'BudgetWise',
+                slug: 'budgetwise',
+                thumbnail: 'https://picsum.photos/seed/budgetwise/800/600',
+                category: { name: 'Finance' },
+            },
+        ],
     },
     {
         userId: 'user-6',
         bio: 'AI enthusiast building the future of automation. Specialized in creating AI-powered tools that save hours of manual work.',
+        role: 'AI Researcher',
+        institution: 'Indie Hacker',
         professionalBackground: 'AI Engineer',
         expertise: ['Python', 'Machine Learning', 'GPT', 'Automation'],
         portfolioUrl: 'https://alexthompson.ai',
         isVerified: true,
         verifiedAt: '2025-07-25T08:00:00Z',
         totalWebsites: 5,
-        totalSales: 203,
         rating: 4.9,
         reviewCount: 156,
+        socialLinks: {
+            x: 'https://twitter.com/alex_ai',
+            website: 'https://alexthompson.ai',
+            tiktok: 'https://tiktok.com/@alex_ai',
+        },
+        otherProducts: [
+            {
+                id: 'web-3',
+                name: 'AI Invoice Assistant',
+                slug: 'ai-invoice-assistant',
+                thumbnail: 'https://picsum.photos/seed/ai-invoice/800/600',
+                category: { name: 'Administration' },
+            },
+            {
+                id: 'web-7',
+                name: 'MeetingMind',
+                slug: 'meetingmind',
+                thumbnail: 'https://picsum.photos/seed/meetingmind/800/600',
+                category: { name: 'Productivity' },
+            },
+        ],
     },
 ];
 
@@ -199,7 +261,7 @@ Key features include:
         creatorId: 'user-2',
         creator: getUserById('user-2'),
         creatorProfile: getCreatorProfile('user-2'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/docugen-pro/800/600',
         screenshots: [
             '/api/placeholder/800/500',
             '/api/placeholder/800/500',
@@ -228,26 +290,8 @@ Key features include:
                 answer: 'Yes, we offer a 7-day free trial with access to all features. No credit card required.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-1a',
-                type: 'subscription',
-                name: 'Monthly',
-                price: 199000,
-                period: 'monthly',
-                description: 'Full access, billed monthly',
-                features: ['Unlimited documents', 'All templates', 'AI assistance', 'Priority support'],
-            },
-            {
-                id: 'price-1b',
-                type: 'lifetime',
-                name: 'Lifetime Access',
-                price: 1999000,
-                description: 'One-time payment, forever access',
-                features: ['Everything in Monthly', 'Lifetime updates', 'Early access to features', 'Direct creator support'],
-                isPopular: true,
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: true,
         freeTrialDetails: '7-day trial with full access to all features',
         rating: 4.8,
@@ -273,7 +317,7 @@ Perfect for startups, agencies, and remote teams who need to move fast.`,
         creatorId: 'user-3',
         creator: getUserById('user-3'),
         creatorProfile: getCreatorProfile('user-3'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/taskflow/800/600',
         screenshots: ['/api/placeholder/800/500', '/api/placeholder/800/500'],
         externalUrl: 'https://taskflow.example.com',
         techStack: ['Next.js', 'Supabase', 'TailwindCSS'],
@@ -288,25 +332,8 @@ Perfect for startups, agencies, and remote teams who need to move fast.`,
                 answer: 'The starter plan supports up to 5 members. Pro plans support unlimited members.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-2a',
-                type: 'subscription',
-                name: 'Starter',
-                price: 99000,
-                period: 'monthly',
-                features: ['5 team members', 'Unlimited projects', 'Basic integrations'],
-            },
-            {
-                id: 'price-2b',
-                type: 'subscription',
-                name: 'Pro',
-                price: 299000,
-                period: 'monthly',
-                features: ['Unlimited members', 'Advanced analytics', 'Priority support'],
-                isPopular: true,
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: true,
         freeTrialDetails: '14-day trial on Pro plan',
         rating: 4.5,
@@ -330,7 +357,7 @@ Simply describe your work or paste a project summary, and our AI will create a p
         creatorId: 'user-6',
         creator: getUserById('user-6'),
         creatorProfile: getCreatorProfile('user-6'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/ai-invoice/800/600',
         screenshots: ['/api/placeholder/800/500', '/api/placeholder/800/500', '/api/placeholder/800/500'],
         externalUrl: 'https://ai-invoice.example.com',
         techStack: ['Python', 'FastAPI', 'OpenAI', 'React'],
@@ -349,16 +376,8 @@ Simply describe your work or paste a project summary, and our AI will create a p
                 answer: 'Absolutely. Full branding customization is included.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-3a',
-                type: 'lifetime',
-                name: 'Lifetime License',
-                price: 799000,
-                features: ['Unlimited invoices', 'All integrations', 'Lifetime updates'],
-                isPopular: true,
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: false,
         rating: 4.9,
         reviewCount: 78,
@@ -381,7 +400,7 @@ Built for beginners and intermediate developers who want to level up their skill
         creatorId: 'user-2',
         creator: getUserById('user-2'),
         creatorProfile: getCreatorProfile('user-2'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/learncode/800/600',
         screenshots: ['/api/placeholder/800/500', '/api/placeholder/800/500'],
         externalUrl: 'https://learncode.example.com',
         techStack: ['React', 'Node.js', 'Monaco Editor', 'Docker'],
@@ -396,24 +415,8 @@ Built for beginners and intermediate developers who want to level up their skill
                 answer: 'JavaScript, Python, TypeScript, Go, and Rust with more coming soon.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-4a',
-                type: 'subscription',
-                name: 'Learner',
-                price: 149000,
-                period: 'monthly',
-                features: ['All courses', 'AI tutor', 'Certificates'],
-                isPopular: true,
-            },
-            {
-                id: 'price-4b',
-                type: 'lifetime',
-                name: 'Lifetime Learner',
-                price: 2499000,
-                features: ['Everything forever', 'New courses included', 'Community access'],
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: true,
         freeTrialDetails: '3 free courses to try',
         rating: 4.7,
@@ -437,7 +440,7 @@ Connect your bank accounts securely or manually log expenses. Our AI categorizes
         creatorId: 'user-3',
         creator: getUserById('user-3'),
         creatorProfile: getCreatorProfile('user-3'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/budgetwise/800/600',
         screenshots: ['/api/placeholder/800/500'],
         externalUrl: 'https://budgetwise.example.com',
         techStack: ['React Native', 'Expo', 'Plaid API', 'Firebase'],
@@ -452,25 +455,8 @@ Connect your bank accounts securely or manually log expenses. Our AI categorizes
                 answer: 'We use Plaid for bank connections - the same security used by major fintech apps.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-5a',
-                type: 'subscription',
-                name: 'Basic',
-                price: 49000,
-                period: 'monthly',
-                features: ['Manual tracking', 'Budgets', 'Reports'],
-            },
-            {
-                id: 'price-5b',
-                type: 'subscription',
-                name: 'Premium',
-                price: 99000,
-                period: 'monthly',
-                features: ['Bank sync', 'AI insights', 'Goal tracking'],
-                isPopular: true,
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: true,
         freeTrialDetails: '30-day Premium trial',
         rating: 4.4,
@@ -494,7 +480,7 @@ Powered by the latest language models, ContentBot helps you overcome writer's bl
         creatorId: 'user-6',
         creator: getUserById('user-6'),
         creatorProfile: getCreatorProfile('user-6'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/contentbot/800/600',
         screenshots: ['/api/placeholder/800/500', '/api/placeholder/800/500'],
         externalUrl: 'https://contentbot.example.com',
         techStack: ['Next.js', 'OpenAI GPT-4', 'Vercel', 'Stripe'],
@@ -510,25 +496,8 @@ Powered by the latest language models, ContentBot helps you overcome writer's bl
                 answer: 'Yes, all content is generated uniquely for you. We also include a plagiarism checker.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-6a',
-                type: 'subscription',
-                name: 'Creator',
-                price: 199000,
-                period: 'monthly',
-                features: ['50,000 words/month', 'All templates', 'SEO tools'],
-                isPopular: true,
-            },
-            {
-                id: 'price-6b',
-                type: 'subscription',
-                name: 'Agency',
-                price: 499000,
-                period: 'monthly',
-                features: ['Unlimited words', 'Team accounts', 'API access', 'White-label'],
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: true,
         freeTrialDetails: '2,000 free words to try',
         rating: 4.6,
@@ -552,7 +521,7 @@ Our AI creates searchable transcripts, extracts key decisions and action items, 
         creatorId: 'user-6',
         creator: getUserById('user-6'),
         creatorProfile: getCreatorProfile('user-6'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/meetingmind/800/600',
         screenshots: ['/api/placeholder/800/500'],
         externalUrl: 'https://meetingmind.example.com',
         techStack: ['Python', 'Whisper AI', 'React', 'AWS'],
@@ -567,17 +536,8 @@ Our AI creates searchable transcripts, extracts key decisions and action items, 
                 answer: 'Zoom, Google Meet, Microsoft Teams, and WebEx.',
             },
         ],
-        pricing: [
-            {
-                id: 'price-7a',
-                type: 'subscription',
-                name: 'Professional',
-                price: 249000,
-                period: 'monthly',
-                features: ['Unlimited meetings', 'AI summaries', 'Integrations'],
-                isPopular: true,
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: true,
         freeTrialDetails: '5 free meeting transcriptions',
         rating: 4.7,
@@ -601,7 +561,7 @@ QuizMaster Pro offers multiple question types, automatic grading, detailed analy
         creatorId: 'user-2',
         creator: getUserById('user-2'),
         creatorProfile: getCreatorProfile('user-2'),
-        thumbnail: '/api/placeholder/400/240',
+        thumbnail: 'https://picsum.photos/seed/quizmaster/800/600',
         screenshots: ['/api/placeholder/800/500', '/api/placeholder/800/500'],
         externalUrl: 'https://quizmaster.example.com',
         techStack: ['Vue.js', 'Laravel', 'MySQL', 'Redis'],
@@ -611,16 +571,8 @@ QuizMaster Pro offers multiple question types, automatic grading, detailed analy
             'Marketing lead generation quizzes',
         ],
         faq: [],
-        pricing: [
-            {
-                id: 'price-8a',
-                type: 'lifetime',
-                name: 'Educator License',
-                price: 599000,
-                features: ['Unlimited quizzes', 'Analytics', 'Certificates'],
-                isPopular: true,
-            },
-        ],
+        // Pricing removed
+
         hasFreeTrial: false,
         rating: 4.3,
         reviewCount: 45,
@@ -694,86 +646,8 @@ export const mockReviews: Review[] = [
     },
 ];
 
-// ============================================
-// PURCHASES
-// ============================================
+// Purchases and Trials removed
 
-export const mockPurchases: Purchase[] = [
-    {
-        id: 'purchase-1',
-        websiteId: 'web-1',
-        website: mockWebsites.find(w => w.id === 'web-1')!,
-        buyerId: 'user-1',
-        buyer: getUserById('user-1'),
-        pricingOptionId: 'price-1b',
-        pricingOption: mockWebsites.find(w => w.id === 'web-1')!.pricing[1],
-        amount: 1999000,
-        platformFee: 1000,
-        status: 'approved',
-        paymentMethod: 'native',
-        createdAt: '2025-11-15T10:00:00Z',
-        approvedAt: '2025-11-15T12:00:00Z',
-        accessDetails: 'Login credentials sent via email',
-    },
-    {
-        id: 'purchase-2',
-        websiteId: 'web-3',
-        website: mockWebsites.find(w => w.id === 'web-3')!,
-        buyerId: 'user-1',
-        buyer: getUserById('user-1'),
-        pricingOptionId: 'price-3a',
-        pricingOption: mockWebsites.find(w => w.id === 'web-3')!.pricing[0],
-        amount: 799000,
-        platformFee: 1000,
-        status: 'approved',
-        paymentMethod: 'native',
-        createdAt: '2025-12-01T14:00:00Z',
-        approvedAt: '2025-12-01T16:00:00Z',
-        accessDetails: 'API key provided in dashboard',
-    },
-    {
-        id: 'purchase-3',
-        websiteId: 'web-6',
-        website: mockWebsites.find(w => w.id === 'web-6')!,
-        buyerId: 'user-4',
-        buyer: getUserById('user-4'),
-        pricingOptionId: 'price-6a',
-        pricingOption: mockWebsites.find(w => w.id === 'web-6')!.pricing[0],
-        amount: 199000,
-        platformFee: 1000,
-        status: 'pending',
-        paymentMethod: 'native',
-        createdAt: '2025-12-28T09:00:00Z',
-    },
-];
-
-// ============================================
-// TRIALS
-// ============================================
-
-export const mockTrials: Trial[] = [
-    {
-        id: 'trial-1',
-        websiteId: 'web-2',
-        website: mockWebsites.find(w => w.id === 'web-2')!,
-        userId: 'user-1',
-        user: getUserById('user-1'),
-        status: 'active',
-        createdAt: '2025-12-20T10:00:00Z',
-        expiresAt: '2026-01-03T10:00:00Z',
-        accessDetails: 'Trial account created: trial_john@taskflow.com',
-    },
-    {
-        id: 'trial-2',
-        websiteId: 'web-4',
-        website: mockWebsites.find(w => w.id === 'web-4')!,
-        userId: 'user-4',
-        user: getUserById('user-4'),
-        status: 'converted',
-        createdAt: '2025-11-01T08:00:00Z',
-        expiresAt: '2025-11-08T08:00:00Z',
-    },
-];
 
 // ============================================
 // BOOKMARKS
@@ -888,17 +762,15 @@ export const mockCreatorApplications: CreatorApplication[] = [
 ];
 
 // ============================================
-// PLATFORM STATS
+// ADMIN STATS
 // ============================================
 
 export const mockPlatformStats: PlatformStats = {
-    totalWebsites: 156,
-    totalCreators: 42,
-    totalBuyers: 1247,
-    totalTransactions: 3892,
-    totalRevenue: 487650000,
+    totalWebsites: 42,
+    totalCreators: 15,
+    totalBuyers: 350,
     pendingVerifications: 3,
-    pendingReports: 1,
+    pendingReports: 0,
 };
 
 // ============================================

@@ -1,35 +1,32 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/lib/store';
+import Image from 'next/image';
 import { mockWebsites } from '@/lib/mockData';
-import Button from '@/components/Button';
 import EmptyState, { EmptyListingsIcon } from '@/components/EmptyState';
+import Button from '@/components/Button';
+import { Plus, Eye, Star } from 'lucide-react';
 
 export default function CreatorListingsPage() {
-    const { user, isAuthenticated } = useAuth();
-
-    if (!isAuthenticated || (user?.role !== 'creator' && user?.role !== 'admin')) {
-        return <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}><h1>Creator Access Required</h1></div>;
-    }
-
-    const creatorWebsites = mockWebsites.filter(w => w.creatorId === 'user-2');
+    const creatorWebsites = mockWebsites.filter(w => w.creatorId === 'user-2'); // Mock user
 
     return (
-        <div className="listings-page">
-            <div className="container">
-                <div className="page-header">
-                    <div>
-                        <Link href="/creator" className="back-link">← Back to Dashboard</Link>
-                        <h1>My Listings</h1>
-                        <p>Manage your website listings</p>
-                    </div>
-                    <Link href="/creator/listings/new"><Button>+ New Listing</Button></Link>
+        <div className="p-8 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-900">My Listings</h2>
+                    <p className="text-gray-500 mt-1">Manage your software and tool listings.</p>
                 </div>
+                <Link href="/creator/listings/new" className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                    <Plus size={18} />
+                    New Listing
+                </Link>
+            </div>
 
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
                 {creatorWebsites.length > 0 ? (
-                    <div className="listings-table">
-                        <div className="table-header">
+                    <div className="divide-y divide-gray-100">
+                        <div className="grid grid-cols-[2fr_1fr_0.7fr_0.7fr_0.8fr_1.2fr] gap-4 p-6 bg-gray-50 text-xs font-semibold uppercase text-gray-500 tracking-wider">
                             <span>Website</span>
                             <span>Category</span>
                             <span>Views</span>
@@ -38,50 +35,53 @@ export default function CreatorListingsPage() {
                             <span>Actions</span>
                         </div>
                         {creatorWebsites.map(website => (
-                            <div key={website.id} className="table-row">
-                                <span className="website-cell">
-                                    <div className="thumb">{website.name.charAt(0)}</div>
-                                    <div>
-                                        <strong>{website.name}</strong>
-                                        <small>{website.shortDescription.slice(0, 50)}...</small>
+                            <div key={website.id} className="grid grid-cols-[2fr_1fr_0.7fr_0.7fr_0.8fr_1.2fr] gap-4 p-6 hover:bg-gray-50 transition-colors items-center group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-lg font-bold text-gray-400 overflow-hidden relative">
+                                        {website.thumbnail && !website.thumbnail.includes('placeholder') ? (
+                                            <Image src={website.thumbnail} fill className="object-cover" alt={website.name} />
+                                        ) : (
+                                            website.name.charAt(0)
+                                        )}
                                     </div>
-                                </span>
-                                <span>{website.category.name}</span>
-                                <span>{website.viewCount}</span>
-                                <span>⭐ {website.rating}</span>
-                                <span className={`status status-${website.status}`}>{website.status}</span>
-                                <span className="actions">
-                                    <Link href={`/website/${website.slug}`}><Button size="sm" variant="ghost">View</Button></Link>
-                                    <Link href={`/creator/listings/${website.id}/edit`}><Button size="sm" variant="secondary">Edit</Button></Link>
-                                </span>
+                                    <div className="min-w-0">
+                                        <h3 className="font-semibold text-gray-900 truncate">{website.name}</h3>
+                                        <p className="text-xs text-gray-500 truncate max-w-[200px]">{website.shortDescription}</p>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-gray-600">{website.category.name}</div>
+                                <div className="text-sm text-gray-600">{website.viewCount}</div>
+                                <div className="text-sm text-gray-600 flex items-center gap-1">
+                                    <Star size={14} className="text-yellow-400 fill-yellow-400" /> {website.rating}
+                                </div>
+                                <div>
+                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${website.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' :
+                                            website.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                                                'bg-gray-100 text-gray-600 border-gray-200'
+                                        }`}>
+                                        {website.status}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Link href={`/website/${website.slug}`} className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-black transition-colors focus:ring-2 focus:ring-gray-200">
+                                        View
+                                    </Link>
+                                    <Link href={`/creator/listings/${website.id}/edit`} className="px-3 py-1.5 text-xs font-medium text-white bg-black rounded-lg hover:bg-gray-800 transition-colors focus:ring-2 focus:ring-gray-200">
+                                        Edit
+                                    </Link>
+                                </div>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <EmptyState icon={<EmptyListingsIcon />} title="No listings yet" description="Create your first website listing to start selling." action={<Link href="/creator/listings/new"><Button>Create Listing</Button></Link>} />
+                    <EmptyState
+                        icon={<EmptyListingsIcon />}
+                        title="No listings yet"
+                        description="Create your first website listing to start driving traffic."
+                        action={<Link href="/creator/listings/new"><Button>Create Listing</Button></Link>}
+                    />
                 )}
             </div>
-
-            <style jsx>{`
-        .listings-page { padding: 32px 0 64px; min-height: 80vh; }
-        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
-        .back-link { font-size: 14px; color: var(--gray-500); display: inline-block; margin-bottom: 8px; }
-        h1 { font-size: 2rem; font-weight: 700; }
-        .page-header p { color: var(--gray-500); margin-top: 4px; }
-        .listings-table { background: var(--gray-50); border-radius: 16px; overflow: hidden; }
-        .table-header, .table-row { display: grid; grid-template-columns: 2fr 1fr 0.7fr 0.7fr 0.8fr 1.2fr; gap: 16px; padding: 16px 24px; align-items: center; }
-        .table-header { background: var(--gray-100); font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--gray-500); }
-        .table-row { border-bottom: 1px solid var(--gray-200); font-size: 14px; }
-        .table-row:last-child { border-bottom: none; }
-        .website-cell { display: flex; align-items: center; gap: 12px; }
-        .thumb { width: 48px; height: 48px; background: var(--gray-200); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; }
-        .website-cell strong { display: block; } .website-cell small { color: var(--gray-500); font-size: 12px; }
-        .status { font-size: 12px; font-weight: 500; text-transform: uppercase; }
-        .status-active { color: var(--success); }
-        .status-pending { color: var(--warning); }
-        .status-draft { color: var(--gray-500); }
-        .actions { display: flex; gap: 8px; }
-      `}</style>
         </div>
     );
 }

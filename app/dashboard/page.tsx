@@ -2,145 +2,101 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useAuth, useBookmarks, usePurchases } from '@/lib/store';
-import { formatPrice, formatDate } from '@/lib/utils';
+import Image from 'next/image';
+import { useAuth, useBookmarks } from '@/lib/store';
+import { formatDate } from '@/lib/utils';
 import WebsiteCard from '@/components/WebsiteCard';
-import EmptyState, { EmptyBookmarksIcon, EmptyPurchasesIcon } from '@/components/EmptyState';
+import EmptyState, { EmptyBookmarksIcon } from '@/components/EmptyState';
 import Button from '@/components/Button';
+import { Settings } from 'lucide-react';
 
-type Tab = 'purchases' | 'bookmarks' | 'reviews';
+type Tab = 'bookmarks' | 'reviews';
 
 export default function DashboardPage() {
     const { user, isAuthenticated } = useAuth();
     const { bookmarks } = useBookmarks();
-    const { purchases, trials } = usePurchases();
-    const [activeTab, setActiveTab] = useState<Tab>('purchases');
+    const [activeTab, setActiveTab] = useState<Tab>('bookmarks');
 
     if (!isAuthenticated) {
         return (
-            <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}>
-                <h1>Please log in</h1>
-                <p style={{ color: 'var(--gray-500)', marginTop: '8px' }}>You need to be logged in to view your dashboard.</p>
-                <Link href="/login" className="btn btn-primary" style={{ marginTop: '24px', display: 'inline-block' }}>Log In</Link>
+            <div className="min-h-screen pt-32 pb-12 flex flex-col items-center justify-center text-center px-4">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Please log in</h1>
+                <p className="text-gray-500 mb-6">You need to be logged in to view your dashboard.</p>
+                <Link href="/login" className="px-6 py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                    Log In
+                </Link>
             </div>
         );
     }
 
-    const userPurchases = purchases.filter(p => p.buyerId === user?.id || p.buyerId === 'user-1');
-    const userTrials = trials.filter(t => t.userId === user?.id || t.userId === 'user-1');
+    // No purchases or trials logic needed
+
 
     return (
-        <div className="dashboard-page">
-            <div className="container">
-                <div className="page-header">
-                    <h1>My Dashboard</h1>
-                    <p>Manage your purchases, bookmarks, and reviews</p>
+        <div className="min-h-screen bg-gray-50/50">
+            <div className="max-w-5xl mx-auto px-6 lg:px-8 pt-32 pb-24">
+
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Welcome back, {user?.name || 'User'}</h1>
+                        <p className="text-gray-500 mt-1 text-lg">Manage your tools and reviews.</p>
+                    </div>
+                    <button className="hidden md:flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors shadow-sm">
+                        <Settings size={16} />
+                        Settings
+                    </button>
                 </div>
 
-                <div className="tabs">
-                    <button className={activeTab === 'purchases' ? 'active' : ''} onClick={() => setActiveTab('purchases')}>
-                        Purchases ({userPurchases.length})
+                {/* Tabs */}
+                <div className="flex items-center gap-8 border-b border-gray-200 mb-10">
+                    <button
+                        onClick={() => setActiveTab('bookmarks')}
+                        className={`pb-4 text-sm font-semibold tracking-wide transition-colors relative ${activeTab === 'bookmarks' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
+                        Saved Tools <span className="ml-1.5 py-0.5 px-2 bg-gray-100 text-gray-600 rounded-full text-xs">{bookmarks.length}</span>
+                        {activeTab === 'bookmarks' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-full" />}
                     </button>
-                    <button className={activeTab === 'bookmarks' ? 'active' : ''} onClick={() => setActiveTab('bookmarks')}>
-                        Bookmarks ({bookmarks.length})
-                    </button>
-                    <button className={activeTab === 'reviews' ? 'active' : ''} onClick={() => setActiveTab('reviews')}>
+                    <button
+                        onClick={() => setActiveTab('reviews')}
+                        className={`pb-4 text-sm font-semibold tracking-wide transition-colors relative ${activeTab === 'reviews' ? 'text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+                    >
                         My Reviews
+                        {activeTab === 'reviews' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-black rounded-full" />}
                     </button>
                 </div>
 
-                <div className="tab-content">
-                    {activeTab === 'purchases' && (
-                        <>
-                            {userTrials.length > 0 && (
-                                <div className="section">
-                                    <h2>Active Trials</h2>
-                                    <div className="trials-list">
-                                        {userTrials.filter(t => t.status === 'active').map(trial => (
-                                            <div key={trial.id} className="trial-card">
-                                                <div className="trial-info">
-                                                    <h3>{trial.website.name}</h3>
-                                                    <p>Trial expires: {trial.expiresAt ? formatDate(trial.expiresAt) : 'N/A'}</p>
-                                                </div>
-                                                <Link href={`/website/${trial.website.slug}`}><Button size="sm">View Website</Button></Link>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                {/* Content */}
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Purchases tab content removed */}
 
-                            {userPurchases.length > 0 ? (
-                                <div className="purchases-list">
-                                    {userPurchases.map(purchase => (
-                                        <div key={purchase.id} className="purchase-card">
-                                            <div className="purchase-thumb">{purchase.website.name.charAt(0)}</div>
-                                            <div className="purchase-info">
-                                                <h3>{purchase.website.name}</h3>
-                                                <p>{purchase.pricingOption.name} • {formatPrice(purchase.amount)}</p>
-                                                <span className={`status status-${purchase.status}`}>{purchase.status}</span>
-                                            </div>
-                                            <div className="purchase-date">{formatDate(purchase.createdAt)}</div>
-                                            <div className="purchase-actions">
-                                                {purchase.status === 'approved' && purchase.accessDetails && (
-                                                    <div className="access-details">{purchase.accessDetails}</div>
-                                                )}
-                                                <Link href={`/website/${purchase.website.slug}`}><Button variant="secondary" size="sm">View</Button></Link>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <EmptyState icon={<EmptyPurchasesIcon />} title="No purchases yet" description="Start exploring and find the perfect tools for your needs." action={<Link href="/"><Button>Explore Websites</Button></Link>} />
-                            )}
-                        </>
-                    )}
 
                     {activeTab === 'bookmarks' && (
                         bookmarks.length > 0 ? (
-                            <div className="grid-cards">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {bookmarks.map(bookmark => (
                                     <WebsiteCard key={bookmark.id} website={bookmark.website} />
                                 ))}
                             </div>
                         ) : (
-                            <EmptyState icon={<EmptyBookmarksIcon />} title="No bookmarks yet" description="Save websites you're interested in for later." action={<Link href="/"><Button>Explore Websites</Button></Link>} />
+                            <div className="py-12">
+                                <EmptyState
+                                    icon={<EmptyBookmarksIcon />}
+                                    title="No bookmarks yet"
+                                    description="Save websites you're interested in for later."
+                                    action={<Link href="/"><Button>Explore Websites</Button></Link>}
+                                />
+                            </div>
                         )
                     )}
 
                     {activeTab === 'reviews' && (
-                        <EmptyState title="No reviews yet" description="After making a purchase, you can leave a review to help others." />
+                        <div className="py-12 border border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                            <EmptyState title="No reviews yet" description="Share your experiences with tools you've used to help others." />
+                        </div>
                     )}
                 </div>
             </div>
-
-            <style jsx>{`
-        .dashboard-page { padding: 32px 0 64px; min-height: 80vh; }
-        .page-header { margin-bottom: 32px; }
-        .page-header h1 { font-size: 2rem; font-weight: 700; }
-        .page-header p { color: var(--gray-500); margin-top: 4px; }
-        .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--gray-200); margin-bottom: 32px; }
-        .tabs button { padding: 12px 20px; background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 15px; color: var(--gray-500); }
-        .tabs button.active { border-bottom-color: var(--foreground); color: var(--foreground); font-weight: 500; }
-        .section { margin-bottom: 32px; }
-        .section h2 { font-size: 1.125rem; font-weight: 600; margin-bottom: 16px; }
-        .trials-list { display: flex; flex-direction: column; gap: 12px; }
-        .trial-card { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--info); background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05)); border: 1px solid rgba(37,99,235,0.2); border-radius: 12px; }
-        .trial-info h3 { font-size: 15px; font-weight: 600; }
-        .trial-info p { font-size: 13px; color: var(--gray-600); }
-        .purchases-list { display: flex; flex-direction: column; gap: 12px; }
-        .purchase-card { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--gray-50); border-radius: 12px; }
-        .purchase-thumb { width: 48px; height: 48px; border-radius: 8px; background: var(--gray-200); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; }
-        .purchase-info { flex: 1; }
-        .purchase-info h3 { font-size: 15px; font-weight: 600; }
-        .purchase-info p { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
-        .status { display: inline-block; margin-top: 4px; padding: 2px 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; border-radius: 4px; }
-        .status-approved { background: rgba(22,163,74,0.1); color: var(--success); }
-        .status-pending { background: rgba(202,138,4,0.1); color: var(--warning); }
-        .status-rejected { background: rgba(220,38,38,0.1); color: var(--error); }
-        .purchase-date { font-size: 13px; color: var(--gray-400); }
-        .purchase-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
-        .access-details { font-size: 12px; color: var(--gray-600); background: var(--background); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--gray-200); }
-      `}</style>
         </div>
     );
 }

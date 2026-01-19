@@ -10,6 +10,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  username: string;
   avatar?: string;
   role: UserRole;
   createdAt: string;
@@ -19,15 +20,30 @@ export interface User {
 export interface CreatorProfile {
   userId: string;
   bio: string;
+  role?: string; // e.g. "Senior Frontend Engineer"
+  institution?: string; // e.g. "at GoTo Financial"
   professionalBackground: string; // e.g., "UI/UX Designer", "Full-Stack Developer"
   expertise: string[];
   portfolioUrl?: string;
   isVerified: boolean;
   verifiedAt?: string;
   totalWebsites: number;
-  totalSales: number;
   rating: number;
   reviewCount: number;
+  socialLinks?: {
+    linkedin?: string;
+    instagram?: string;
+    tiktok?: string;
+    x?: string;
+    website?: string;
+  };
+  otherProducts?: {
+    id: string;
+    name: string;
+    slug: string;
+    thumbnail: string;
+    category: { name: string };
+  }[];
 }
 
 // Category
@@ -58,7 +74,6 @@ export interface Website {
   techStack: string[];
   useCases: string[];
   faq: FAQ[];
-  pricing: PricingOption[];
   hasFreeTrial: boolean;
   freeTrialDetails?: string;
   rating: number;
@@ -76,18 +91,6 @@ export interface FAQ {
   answer: string;
 }
 
-// Pricing Option
-export interface PricingOption {
-  id: string;
-  type: 'lifetime' | 'subscription';
-  name: string;
-  price: number; // in IDR
-  period?: string; // e.g., "monthly", "yearly" for subscriptions
-  description?: string;
-  features: string[];
-  isPopular?: boolean;
-}
-
 // Review
 export interface Review {
   id: string;
@@ -101,37 +104,6 @@ export interface Review {
   helpfulCount: number;
 }
 
-// Purchase
-export interface Purchase {
-  id: string;
-  websiteId: string;
-  website: Website;
-  buyerId: string;
-  buyer: User;
-  pricingOptionId: string;
-  pricingOption: PricingOption;
-  amount: number;
-  platformFee: number; // Rp1.000
-  status: 'pending' | 'approved' | 'rejected' | 'expired';
-  paymentMethod: 'native' | 'external';
-  externalOrderId?: string;
-  createdAt: string;
-  approvedAt?: string;
-  accessDetails?: string;
-}
-
-// Trial
-export interface Trial {
-  id: string;
-  websiteId: string;
-  website: Website;
-  userId: string;
-  user: User;
-  status: 'active' | 'expired' | 'converted';
-  createdAt: string;
-  expiresAt?: string;
-  accessDetails?: string;
-}
 
 // Bookmark
 export interface Bookmark {
@@ -203,10 +175,7 @@ export interface WebsiteAnalytics {
   websiteId: string;
   views: number;
   clicks: number;
-  purchases: number;
-  revenue: number;
-  trials: number;
-  conversionRate: number;
+  ctr: number;
 }
 
 // Platform Stats (Admin)
@@ -214,8 +183,6 @@ export interface PlatformStats {
   totalWebsites: number;
   totalCreators: number;
   totalBuyers: number;
-  totalTransactions: number;
-  totalRevenue: number;
   pendingVerifications: number;
   pendingReports: number;
 }
@@ -224,7 +191,6 @@ export interface PlatformStats {
 export interface SearchFilters {
   query?: string;
   categoryId?: string;
-  priceRange?: { min: number; max: number };
   hasFreeTrial?: boolean;
   minRating?: number;
   sortBy?: 'alphabetical' | 'newest' | 'rating' | 'popular';

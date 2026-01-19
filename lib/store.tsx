@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { User, UserRole, Website, Bookmark, Purchase, Trial, MessageThread, Message } from './types';
-import { mockUsers, mockBookmarks, mockPurchases, mockTrials, mockMessageThreads, mockMessages } from './mockData';
+import { User, UserRole, Website, Bookmark, MessageThread, Message } from './types';
+import { mockUsers, mockBookmarks, mockMessageThreads, mockMessages } from './mockData';
 
 interface AuthContextType {
     user: User | null;
@@ -74,46 +74,7 @@ export function useBookmarks() {
     return context;
 }
 
-interface PurchasesContextType {
-    purchases: Purchase[];
-    trials: Trial[];
-    hasPurchased: (websiteId: string) => boolean;
-    hasTrial: (websiteId: string) => boolean;
-    addPurchase: (purchase: Omit<Purchase, 'id' | 'createdAt'>) => void;
-    startTrial: (trial: Omit<Trial, 'id' | 'createdAt'>) => void;
-    approvePurchase: (purchaseId: string, accessDetails: string) => void;
-    rejectPurchase: (purchaseId: string) => void;
-}
 
-const PurchasesContext = createContext<PurchasesContextType | undefined>(undefined);
-
-export function PurchasesProvider({ children }: { children: ReactNode }) {
-    const [purchases, setPurchases] = useState<Purchase[]>(mockPurchases);
-    const [trials, setTrials] = useState<Trial[]>(mockTrials);
-    const hasPurchased = useCallback((websiteId: string) => purchases.some(p => p.websiteId === websiteId && p.status === 'approved'), [purchases]);
-    const hasTrial = useCallback((websiteId: string) => trials.some(t => t.websiteId === websiteId && t.status === 'active'), [trials]);
-    const addPurchase = useCallback((purchase: Omit<Purchase, 'id' | 'createdAt'>) => {
-        const newPurchase: Purchase = { ...purchase, id: `purchase-${Date.now()}`, createdAt: new Date().toISOString() };
-        setPurchases(prev => [...prev, newPurchase]);
-    }, []);
-    const startTrial = useCallback((trial: Omit<Trial, 'id' | 'createdAt'>) => {
-        const newTrial: Trial = { ...trial, id: `trial-${Date.now()}`, createdAt: new Date().toISOString() };
-        setTrials(prev => [...prev, newTrial]);
-    }, []);
-    const approvePurchase = useCallback((purchaseId: string, accessDetails: string) => {
-        setPurchases(prev => prev.map(p => p.id === purchaseId ? { ...p, status: 'approved' as const, approvedAt: new Date().toISOString(), accessDetails } : p));
-    }, []);
-    const rejectPurchase = useCallback((purchaseId: string) => {
-        setPurchases(prev => prev.map(p => p.id === purchaseId ? { ...p, status: 'rejected' as const } : p));
-    }, []);
-    return (<PurchasesContext.Provider value={{ purchases, trials, hasPurchased, hasTrial, addPurchase, startTrial, approvePurchase, rejectPurchase }}>{children}</PurchasesContext.Provider>);
-}
-
-export function usePurchases() {
-    const context = useContext(PurchasesContext);
-    if (context === undefined) throw new Error('usePurchases must be used within a PurchasesProvider');
-    return context;
-}
 
 interface MessagesContextType {
     threads: MessageThread[];
@@ -181,11 +142,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <AuthProvider>
             <ToastProvider>
                 <BookmarksProvider>
-                    <PurchasesProvider>
-                        <MessagesProvider>
-                            {children}
-                        </MessagesProvider>
-                    </PurchasesProvider>
+                    <MessagesProvider>
+                        {children}
+                    </MessagesProvider>
                 </BookmarksProvider>
             </ToastProvider>
         </AuthProvider>

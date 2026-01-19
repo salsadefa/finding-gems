@@ -2,194 +2,100 @@
 import Link from 'next/link';
 
 const footerLinks = {
-    product: [
-        { name: 'Explore', href: '/' },
-        { name: 'Categories', href: '/search' },
-        { name: 'For Creators', href: '/creator' },
-        { name: 'Pricing', href: '/pricing' },
-    ],
-    company: [
-        { name: 'About', href: '/about' },
-        { name: 'Blog', href: '/blog' },
-        { name: 'Careers', href: '/careers' },
-        { name: 'Contact', href: '/contact' },
-    ],
-    legal: [
-        { name: 'Privacy Policy', href: '/privacy' },
-        { name: 'Terms of Service', href: '/terms' },
-        { name: 'Cookie Policy', href: '/cookies' },
-    ],
+  product: [
+    { name: 'Explore', href: '/' },
+    { name: 'Categories', href: '/search' },
+    { name: 'For Creators', href: '/creator' },
+    { name: 'Pricing', href: '/pricing' },
+  ],
+  company: [
+    { name: 'About', href: '/about' },
+    { name: 'Blog', href: '/blog' },
+    { name: 'Careers', href: '/careers' },
+    { name: 'Contact', href: '/contact' },
+  ],
+  legal: [
+    { name: 'Privacy Policy', href: '/privacy' },
+    { name: 'Terms of Service', href: '/terms' },
+    { name: 'Cookie Policy', href: '/cookies' },
+  ],
 };
 
 export default function Footer() {
-    return (
-        <footer className="footer">
-            <div className="container">
-                <div className="footer-grid">
-                    {/* Brand */}
-                    <div className="footer-brand">
-                        <Link href="/" className="footer-logo">
-                            Dualangka
-                        </Link>
-                        <p className="footer-tagline">
-                            Discover hidden gem websites built by independent creators and AI-enabled developers.
-                        </p>
-                    </div>
+  return (
+    <footer className="bg-gray-50 border-t border-gray-200 mt-auto">
+      {/* Global Container with consistent padding */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-16">
 
-                    {/* Links */}
-                    <div className="footer-links">
-                        <div className="footer-column">
-                            <h4 className="footer-heading">Product</h4>
-                            <ul className="footer-list">
-                                {footerLinks.product.map(link => (
-                                    <li key={link.href}>
-                                        <Link href={link.href} className="footer-link">{link.name}</Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div className="footer-column">
-                            <h4 className="footer-heading">Company</h4>
-                            <ul className="footer-list">
-                                {footerLinks.company.map(link => (
-                                    <li key={link.href}>
-                                        <Link href={link.href} className="footer-link">{link.name}</Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div className="footer-column">
-                            <h4 className="footer-heading">Legal</h4>
-                            <ul className="footer-list">
-                                {footerLinks.legal.map(link => (
-                                    <li key={link.href}>
-                                        <Link href={link.href} className="footer-link">{link.name}</Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8">
+          {/* Brand Section */}
+          <div className="md:col-span-5 lg:col-span-4 max-w-sm">
+            <Link href="/" className="text-2xl font-bold text-gray-900 block mb-4">
+              Dualangka
+            </Link>
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              Discover hidden gem websites built by independent creators and AI-enabled developers.
+            </p>
+          </div>
 
-                {/* Bottom */}
-                <div className="footer-bottom">
-                    <p className="copyright">
-                        © {new Date().getFullYear()} Dualangka. All rights reserved.
-                    </p>
-                    <p className="footer-note">
-                        Platform fee: Rp1.000 per transaction • No listing fees
-                    </p>
-                </div>
+          {/* Links Space */}
+          <div className="md:col-span-7 lg:col-span-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
+              {/* Product */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-4">Product</h4>
+                <ul className="space-y-3">
+                  {footerLinks.product.map(link => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Company */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-4">Company</h4>
+                <ul className="space-y-3">
+                  {footerLinks.company.map(link => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Legal */}
+              <div>
+                <h4 className="text-xs font-semibold text-gray-900 uppercase tracking-wider mb-4">Legal</h4>
+                <ul className="space-y-3">
+                  {footerLinks.legal.map(link => (
+                    <li key={link.href}>
+                      <Link href={link.href} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                        {link.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
+          </div>
+        </div>
 
-            <style jsx>{`
-        .footer {
-          background: var(--gray-50);
-          border-top: 1px solid var(--gray-200);
-          padding: var(--space-12) 0 var(--space-8);
-          margin-top: auto;
-        }
-        
-        .footer-grid {
-          display: grid;
-          gap: var(--space-8);
-        }
-        
-        @media (min-width: 768px) {
-          .footer-grid {
-            grid-template-columns: 1.5fr 2fr;
-            gap: var(--space-12);
-          }
-        }
-        
-        .footer-brand {
-          max-width: 320px;
-        }
-        
-        .footer-logo {
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: var(--foreground);
-        }
-        
-        .footer-logo:hover {
-          color: var(--foreground);
-        }
-        
-        .footer-tagline {
-          margin-top: var(--space-3);
-          font-size: 0.875rem;
-          color: var(--gray-600);
-          line-height: 1.6;
-        }
-        
-        .footer-links {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: var(--space-6);
-        }
-        
-        @media (min-width: 640px) {
-          .footer-links {
-            grid-template-columns: repeat(3, 1fr);
-          }
-        }
-        
-        .footer-heading {
-          font-size: 0.8125rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          color: var(--foreground);
-          margin-bottom: var(--space-4);
-        }
-        
-        .footer-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-3);
-        }
-        
-        .footer-link {
-          font-size: 0.875rem;
-          color: var(--gray-600);
-          transition: color var(--transition-fast);
-        }
-        
-        .footer-link:hover {
-          color: var(--foreground);
-        }
-        
-        .footer-bottom {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-2);
-          margin-top: var(--space-8);
-          padding-top: var(--space-6);
-          border-top: 1px solid var(--gray-200);
-        }
-        
-        @media (min-width: 640px) {
-          .footer-bottom {
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-          }
-        }
-        
-        .copyright {
-          font-size: 0.8125rem;
-          color: var(--gray-500);
-        }
-        
-        .footer-note {
-          font-size: 0.75rem;
-          color: var(--gray-400);
-        }
-      `}</style>
-        </footer>
-    );
+        {/* Bottom Section */}
+        <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-gray-500">
+            © {new Date().getFullYear()} Dualangka. All rights reserved.
+          </p>
+          <p className="text-xs text-gray-400">
+            Platform fee: Rp1.000 per transaction • No listing fees
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
 }
