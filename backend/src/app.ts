@@ -9,6 +9,7 @@ import morgan from 'morgan';
 import rateLimit from 'express-rate-limit';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { morganStream } from './config/logger';
+import { initSentry, sentryErrorHandler } from './config/sentry';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -27,6 +28,9 @@ import payoutRoutes from './routes/payout.routes';
 import refundRoutes from './routes/refund.routes';
 
 const app: Application = express();
+
+// Initialize Sentry (must be done early)
+initSentry(app);
 
 // ============================================
 // Security Middleware
@@ -185,6 +189,9 @@ app.use(`${API_PREFIX}/refunds`, refundRoutes);
 
 // Handle undefined routes
 app.use(notFoundHandler);
+
+// Sentry error handler (must be before other error handlers)
+app.use(sentryErrorHandler);
 
 // Global error handler
 app.use(errorHandler);
