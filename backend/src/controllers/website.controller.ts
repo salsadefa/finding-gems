@@ -125,7 +125,7 @@ export const getWebsiteById = catchAsync(async (req: Request, res: Response) => 
       creator:users(id, name, username, avatar), 
       category:categories(id, name, slug, icon, description),
       reviews:reviews(*, user:users(id, name, username, avatar)),
-      faqs:faqs(*),
+      faqs:website_faqs(*),
       analytics:website_analytics(*)`
     );
 
