@@ -19,6 +19,12 @@ import {
   getUserAnalytics,
   getTopPerformers,
 } from '../controllers/admin-dashboard.controller';
+import {
+  getAllCreatorApplications,
+  getCreatorApplicationById,
+  handleCreatorApplication,
+  getCreatorApplicationStats,
+} from '../controllers/creator-application-admin.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
@@ -45,9 +51,14 @@ router.patch('/websites/:id/moderate', moderateWebsite);
 router.get('/users', getAllUsers);
 router.patch('/users/:id', updateUserAdmin);
 
+// Creator application management
+router.get('/creator-applications/stats', getCreatorApplicationStats);
+router.get('/creator-applications', getAllCreatorApplications);
+router.get('/creator-applications/:id', getCreatorApplicationById);
+router.patch('/creator-applications/:id', handleCreatorApplication);
+
 // Report management
 router.get('/reports', getReports);
 router.patch('/reports/:id', handleReport);
 
 export default router;
-
