@@ -240,7 +240,7 @@ export const getPayouts = catchAsync(async (req: Request, res: Response) => {
     .from('payouts')
     .select('*', { count: 'exact' })
     .eq('creator_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {
@@ -481,7 +481,7 @@ export const getAllPayouts = catchAsync(async (req: Request, res: Response) => {
       *,
       creator:users!payouts_creator_id_fkey(id, name, email)
     `, { count: 'exact' })
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {
@@ -620,7 +620,7 @@ async function calculateCreatorBalance(creatorId: string) {
   // Get all paid orders for this creator
   const { data: orders } = await supabase
     .from('orders')
-    .select('total_amount, platform_fee, status, created_at')
+    .select('total_amount, platform_fee, status, createdAt')
     .eq('creator_id', creatorId)
     .eq('status', 'paid');
 
@@ -635,7 +635,7 @@ async function calculateCreatorBalance(creatorId: string) {
     const creatorEarning = Number(order.total_amount) - Number(order.platform_fee);
     totalEarnings += creatorEarning;
 
-    const orderDate = new Date(order.created_at);
+    const orderDate = new Date(order.createdAt);
     const daysSinceOrder = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysSinceOrder >= settlementDays) {

@@ -69,9 +69,9 @@ export const getPlatformStats = catchAsync(async (req: Request, res: Response) =
     // Pending reports
     supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
     // Websites this month
-    supabase.from('websites').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+    supabase.from('websites').select('*', { count: 'exact', head: true }).gte('createdAt', startOfMonth),
     // Users this month
-    supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+    supabase.from('users').select('*', { count: 'exact', head: true }).gte('createdAt', startOfMonth),
   ]);
 
   const stats: PlatformStats = {
@@ -113,7 +113,7 @@ export const getPendingWebsites = catchAsync(async (req: Request, res: Response)
       category:categories(id, name, slug)
     `, { count: 'exact' })
     .eq('status', 'pending')
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(skip, skip + take - 1);
 
   if (error) throw error;
@@ -211,7 +211,7 @@ export const getAllUsers = catchAsync(async (req: Request, res: Response) => {
     limit = 20,
     role,
     search,
-    sortBy = 'created_at',
+    sortBy = 'createdAt',
     sortOrder = 'desc',
   } = req.query as AdminFilters;
 
@@ -297,7 +297,7 @@ export const updateUserAdmin = catchAsync(async (req: Request, res: Response) =>
   }
 
   if (isActive !== undefined) {
-    updateData.is_active = isActive;
+    updateData.isActive = isActive;
   }
 
   if (adminNote) {
@@ -312,7 +312,7 @@ export const updateUserAdmin = catchAsync(async (req: Request, res: Response) =>
     .from('users')
     .update(updateData)
     .eq('id', id)
-    .select('id, email, name, username, role, is_active, avatar, created_at')
+    .select('id, email, name, username, role, isActive, avatar, createdAt')
     .single();
 
   if (error) throw error;
@@ -337,7 +337,7 @@ export const getReports = catchAsync(async (req: Request, res: Response) => {
     page = 1,
     limit = 20,
     status,
-    sortBy = 'created_at',
+    sortBy = 'createdAt',
     sortOrder = 'desc',
   } = req.query as AdminFilters;
 
@@ -455,7 +455,7 @@ export const getAllWebsitesAdmin = catchAsync(async (req: Request, res: Response
     limit = 20,
     status,
     search,
-    sortBy = 'created_at',
+    sortBy = 'createdAt',
     sortOrder = 'desc',
   } = req.query as AdminFilters;
 

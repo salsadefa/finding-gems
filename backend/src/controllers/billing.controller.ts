@@ -379,7 +379,7 @@ export const getOrder = catchAsync(async (req: Request, res: Response) => {
     .from('transactions')
     .select('*')
     .eq('order_id', orderId)
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .limit(1)
     .single();
 
@@ -421,7 +421,7 @@ export const getMyOrders = catchAsync(async (req: Request, res: Response) => {
       websites!inner(id, name, slug, thumbnail)
     `, { count: 'exact' })
     .eq('buyer_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {
@@ -573,7 +573,7 @@ export const getMyInvoices = catchAsync(async (req: Request, res: Response) => {
       orders!inner(buyer_id, website_id, websites(name, slug))
     `, { count: 'exact' })
     .eq('orders.buyer_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {
@@ -707,7 +707,7 @@ export const getCreatorSales = catchAsync(async (req: Request, res: Response) =>
       buyer:users!orders_buyer_id_fkey(id, name, email)
     `, { count: 'exact' })
     .eq('creator_id', user.id)
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {

@@ -132,7 +132,7 @@ export const getRefunds = catchAsync(async (req: Request, res: Response) => {
       order:orders(id, order_number, total_amount, status)
     `, { count: 'exact' })
     .eq('requested_by', user.id)
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {
@@ -278,7 +278,7 @@ export const getAllRefunds = catchAsync(async (req: Request, res: Response) => {
       order:orders(id, order_number, total_amount),
       requester:users!refunds_requested_by_fkey(id, name, email)
     `, { count: 'exact' })
-    .order('created_at', { ascending: false })
+    .order('createdAt', { ascending: false })
     .range(offset, offset + Number(limit) - 1);
 
   if (status) {
