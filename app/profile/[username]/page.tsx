@@ -4,9 +4,12 @@ import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { mockUsers, mockCreatorProfiles, mockWebsites } from '@/lib/mockData';
 import WebsiteCard from '@/components/WebsiteCard';
+import { ProfileSkeleton } from '@/components/Skeleton';
 import { ShieldCheck, Instagram, Linkedin, Globe, MapPin } from 'lucide-react';
+import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 interface PageProps {
     params: Promise<{
@@ -60,15 +63,31 @@ export default function CreatorProfilePage({ params }: PageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="min-h-screen bg-white"
+        >
             <div className="max-w-5xl mx-auto px-6 py-12 md:py-16">
 
                 {/* SECTION A: PROFILE HEADER */}
-                <div className="flex flex-col items-center text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <motion.div 
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                    className="flex flex-col items-center text-center mb-12"
+                >
 
                     {/* Avatar */}
-                    <div className="relative mb-6">
-                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                    <motion.div 
+                        variants={fadeInUp}
+                        whileHover={{ scale: 1.05 }}
+                        className="relative mb-6"
+                    >
+                        <motion.div 
+                            whileHover={{ boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
+                            className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center"
+                        >
                             {user.avatar ? (
                                 <Image
                                     src={user.avatar}
@@ -79,16 +98,24 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             ) : (
                                 <span className="text-4xl font-bold text-gray-400">{initials}</span>
                             )}
-                        </div>
+                        </motion.div>
+                        
                         {profile.isVerified && (
-                            <div className="absolute bottom-1 right-1 bg-blue-500 text-white p-1.5 rounded-full border-2 border-white shadow-sm" title="Verified Creator">
+                            <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', stiffness: 500, damping: 30, delay: 0.3 }}
+                                whileHover={{ scale: 1.1, rotate: 10 }}
+                                className="absolute bottom-1 right-1 bg-blue-500 text-white p-1.5 rounded-full border-2 border-white shadow-sm" 
+                                title="Verified Creator"
+                            >
                                 <ShieldCheck size={16} />
-                            </div>
+                            </motion.div>
                         )}
-                    </div>
+                    </motion.div>
 
                     {/* Name & Role */}
-                    <div className="space-y-2 mb-6">
+                    <motion.div variants={fadeInUp} className="space-y-2 mb-6">
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-2">
                             {user.name}
                         </h1>
@@ -96,19 +123,30 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             {profile.role || profile.professionalBackground}
                             {profile.institution && <span className="text-gray-400"> {profile.institution}</span>}
                         </p>
-                    </div>
+                    </motion.div>
 
                     {/* Bio */}
-                    <div className="max-w-2xl mx-auto mb-8">
+                    <motion.div 
+                        variants={fadeInUp}
+                        className="max-w-2xl mx-auto mb-8"
+                    >
                         <p className="text-gray-600 leading-relaxed text-center">
                             {profile.bio}
                         </p>
-                    </div>
+                    </motion.div>
 
                     {/* SECTION B: SOCIAL CONNECT */}
-                    <div className="flex flex-wrap items-center justify-center gap-4">
+                    <motion.div 
+                        variants={staggerContainer}
+                        initial="hidden"
+                        animate="visible"
+                        className="flex flex-wrap items-center justify-center gap-4"
+                    >
                         {profile.socialLinks?.linkedin && (
-                            <a
+                            <motion.a
+                                variants={fadeInUp}
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
                                 href={profile.socialLinks.linkedin}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -117,11 +155,14 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             >
                                 <Linkedin size={20} />
                                 <span className="text-sm font-medium hidden group-hover:inline-block">LinkedIn</span>
-                            </a>
+                            </motion.a>
                         )}
 
                         {profile.socialLinks?.x && (
-                            <a
+                            <motion.a
+                                variants={fadeInUp}
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
                                 href={profile.socialLinks.x}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -130,11 +171,14 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             >
                                 <XIcon size={18} />
                                 <span className="text-sm font-medium hidden group-hover:inline-block">X</span>
-                            </a>
+                            </motion.a>
                         )}
 
                         {profile.socialLinks?.instagram && (
-                            <a
+                            <motion.a
+                                variants={fadeInUp}
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
                                 href={profile.socialLinks.instagram}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -143,11 +187,14 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             >
                                 <Instagram size={20} />
                                 <span className="text-sm font-medium hidden group-hover:inline-block">Instagram</span>
-                            </a>
+                            </motion.a>
                         )}
 
                         {profile.socialLinks?.tiktok && (
-                            <a
+                            <motion.a
+                                variants={fadeInUp}
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
                                 href={profile.socialLinks.tiktok}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -156,11 +203,14 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             >
                                 <TikTokIcon size={18} />
                                 <span className="text-sm font-medium hidden group-hover:inline-block">TikTok</span>
-                            </a>
+                            </motion.a>
                         )}
 
                         {profile.socialLinks?.website && (
-                            <a
+                            <motion.a
+                                variants={fadeInUp}
+                                whileHover={{ scale: 1.1, y: -2 }}
+                                whileTap={{ scale: 0.95 }}
                                 href={profile.socialLinks.website}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -169,40 +219,65 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             >
                                 <Globe size={20} />
                                 <span className="text-sm font-medium hidden group-hover:inline-block">Website</span>
-                            </a>
+                            </motion.a>
                         )}
-                    </div>
+                    </motion.div>
 
-                </div>
+                </motion.div>
 
                 {/* divider */}
-                <div className="w-full h-px bg-gray-100 my-12" />
+                <motion.div 
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.8, delay: 0.5 }}
+                    className="w-full h-px bg-gray-100 my-12 origin-left"
+                />
 
                 {/* SECTION C: APPS BY CREATOR */}
-                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                    <div className="flex items-center justify-between mb-8">
+                <motion.div 
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                >
+                    <motion.div variants={fadeInUp} className="flex items-center justify-between mb-8">
                         <h2 className="text-2xl font-bold text-gray-900">
                             More from {user.name.split(' ')[0]}
                         </h2>
                         <span className="text-sm text-gray-500 font-medium">
                             {creatorWebsites.length} {creatorWebsites.length === 1 ? 'App' : 'Apps'}
                         </span>
-                    </div>
+                    </motion.div>
 
                     {creatorWebsites.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {creatorWebsites.map((website) => (
-                                <WebsiteCard key={website.id} website={website} showCreator={false} />
+                        <motion.div 
+                            variants={staggerContainer}
+                            initial="hidden"
+                            animate="visible"
+                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+                        >
+                            {creatorWebsites.map((website, index) => (
+                                <motion.div
+                                    key={website.id}
+                                    variants={fadeInUp}
+                                    whileHover={{ y: -5 }}
+                                    transition={{ delay: index * 0.1 }}
+                                >
+                                    <WebsiteCard website={website} showCreator={false} />
+                                </motion.div>
                             ))}
-                        </div>
+                        </motion.div>
                     ) : (
-                        <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-500">
+                        <motion.div 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-gray-500"
+                        >
                             <p>No listings found for this creator.</p>
-                        </div>
+                        </motion.div>
                     )}
-                </div>
+                </motion.div>
 
             </div>
-        </div>
+        </motion.div>
     );
 }

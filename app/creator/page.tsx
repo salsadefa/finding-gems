@@ -3,18 +3,30 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/store';
-import { mockWebsites, mockCreatorProfiles } from '@/lib/mockData';
+import { useMyWebsites } from '@/lib/api/websites';
 import {
     Package,
     ArrowUpRight,
     Eye,
     Star,
     ExternalLink,
-    Plus
+    Plus,
+    Loader2
 } from 'lucide-react';
 
 export default function CreatorDashboardPage() {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+    const { data: creatorWebsites = [], isLoading: websitesLoading, error } = useMyWebsites();
+
+    // Auth loading state
+    if (authLoading) {
+        return (
+            <div className="min-h-screen pt-32 pb-12 flex flex-col items-center justify-center">
+                <Loader2 size={32} className="animate-spin text-gray-400 mb-4" />
+                <p className="text-gray-500">Loading...</p>
+            </div>
+        );
+    }
 
     if (!isAuthenticated || (user?.role !== 'creator' && user?.role !== 'admin')) {
         return (
@@ -28,9 +40,29 @@ export default function CreatorDashboardPage() {
         );
     }
 
-    // Mock data for demo
-    const creatorProfile = mockCreatorProfiles[0];
-    const creatorWebsites = mockWebsites.filter(w => w.creatorId === 'user-2');
+    // Calculate stats from real data
+    const totalViews = creatorWebsites.reduce((acc, w) => acc + (w.viewCount || 0), 0);
+    const totalClicks = creatorWebsites.reduce((acc, w) => acc + (w.clickCount || 0), 0);
+    const avgRating = creatorWebsites.length > 0 
+        ? (creatorWebsites.reduce((acc, w) => acc + (w.rating || 0), 0) / creatorWebsites.length).toFixed(1)
+        : '0.0';
+    const totalReviews = creatorWebsites.reduce((acc, w) => acc + (w.reviewCount || 0), 0);
+
+    // Error state
+    if (error) {
+        return (
+            <div className="min-h-screen pt-32 pb-12 flex flex-col items-center justify-center text-center px-4">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Data</h1>
+                <p className="text-gray-500 mb-6">Failed to load your websites. Please try again.</p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    className="px-6 py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
@@ -55,7 +87,7 @@ export default function CreatorDashboardPage() {
                             </div>
                         </div>
                         <div className="z-10">
-                            <div className="text-2xl font-bold text-gray-900">{creatorWebsites.reduce((acc, w) => acc + w.viewCount, 0).toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-gray-900">{totalViews.toLocaleString()}</div>
                             <div className="text-xs text-blue-600 font-medium flex items-center gap-1 mt-1">
                                 <ArrowUpRight size={12} /> +12% vs last month
                             </div>
@@ -71,7 +103,7 @@ export default function CreatorDashboardPage() {
                             </div>
                         </div>
                         <div className="z-10">
-                            <div className="text-2xl font-bold text-gray-900">{creatorWebsites.reduce((acc, w) => acc + (w.clickCount || 0), 0).toLocaleString()}</div>
+                            <div className="text-2xl font-bold text-gray-900">{totalClicks.toLocaleString()}</div>
                             <div className="text-xs text-green-600 font-medium flex items-center gap-1 mt-1">
                                 <ArrowUpRight size={12} /> +5% vs last week
                             </div>
@@ -87,9 +119,9 @@ export default function CreatorDashboardPage() {
                             </div>
                         </div>
                         <div className="z-10">
-                            <div className="text-2xl font-bold text-gray-900">{creatorProfile.totalWebsites}</div>
+                            <div className="text-2xl font-bold text-gray-900">{creatorWebsites.filter(w => w.status === 'active').length}</div>
                             <div className="text-xs text-gray-500 font-medium mt-1">
-                                Across 3 categories
+                                {creatorWebsites.length} total listings
                             </div>
                         </div>
                     </div>
@@ -103,9 +135,9 @@ export default function CreatorDashboardPage() {
                             </div>
                         </div>
                         <div className="z-10">
-                            <div className="text-2xl font-bold text-gray-900">{creatorProfile.rating}</div>
+                            <div className="text-2xl font-bold text-gray-900">{avgRating}</div>
                             <div className="text-xs text-gray-500 font-medium mt-1">
-                                From {creatorProfile.reviewCount} reviews
+                                From {totalReviews} reviews
                             </div>
                         </div>
                     </div>

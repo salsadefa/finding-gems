@@ -2,12 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowRight, TrendingUp, Zap, Shield, Sparkles, Star } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import WebsiteCard from '@/components/WebsiteCard';
 import { WebsiteCardSkeleton } from '@/components/Skeleton';
-import { mockWebsites, mockCategories } from '@/lib/mockData';
+import { useWebsites } from '@/lib/api/websites';
+import { useCategories } from '@/lib/api/categories';
+import type { Website } from '@/lib/types';
 
 type SortOption = 'newest' | 'rating' | 'alphabetical';
 
@@ -31,11 +34,70 @@ const staggerContainer = {
   }
 };
 
+// Transform API website data to match Website type
+const transformWebsite = (apiWebsite: any): Website => {
+  return {
+    id: apiWebsite.id,
+    name: apiWebsite.name,
+    slug: apiWebsite.slug,
+    description: apiWebsite.description || apiWebsite.shortDescription,
+    shortDescription: apiWebsite.shortDescription,
+    categoryId: apiWebsite.categoryId || '',
+    category: apiWebsite.category || {
+      id: '',
+      name: 'Uncategorized',
+      slug: '',
+      description: '',
+      websiteCount: 0,
+      isActive: true,
+      createdAt: '',
+    },
+    creatorId: apiWebsite.creatorId || '',
+    creator: apiWebsite.creator || {
+      id: '',
+      name: 'Unknown',
+      username: '',
+      email: '',
+      role: 'visitor',
+      createdAt: '',
+    },
+    creatorProfile: {
+      userId: apiWebsite.creatorId || '',
+      bio: '',
+      professionalBackground: '',
+      expertise: [],
+      isVerified: false,
+      totalWebsites: 0,
+      rating: 0,
+      reviewCount: 0,
+    },
+    thumbnail: apiWebsite.thumbnail,
+    screenshots: apiWebsite.screenshots || [],
+    externalUrl: apiWebsite.externalUrl || '',
+    techStack: apiWebsite.techStack || [],
+    useCases: apiWebsite.useCases || [],
+    faq: [],
+    hasFreeTrial: apiWebsite.hasFreeTrial || false,
+    freeTrialDetails: '',
+    rating: apiWebsite.rating || 0,
+    reviewCount: apiWebsite.reviewCount || 0,
+    viewCount: apiWebsite.viewCount || 0,
+    clickCount: apiWebsite.clickCount || 0,
+    status: apiWebsite.status || 'active',
+    createdAt: apiWebsite.createdAt,
+    updatedAt: apiWebsite.createdAt,
+  };
+};
+
 export default function HomePage() {
   const [sortBy, setSortBy] = useState<SortOption>('rating');
-  const [loading] = useState(false);
+  
+  // Fetch real data from API
+  const { data: websites, isLoading: websitesLoading, error: websitesError } = useWebsites();
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCategories();
 
-  const sortedWebsites = [...mockWebsites].sort((a, b) => {
+  // Sort websites
+  const sortedWebsites = websites?.toSorted((a, b) => {
     switch (sortBy) {
       case 'newest': return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case 'rating': return b.rating - a.rating;
@@ -47,33 +109,43 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white selection:bg-gray-900 selection:text-white">
       {/* Hero Section */}
-      <section className="relative pt-32 pb-24 overflow-visible">
-        {/* Subtle Background Elements */}
-        <div className="absolute inset-0 -z-10 pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-gray-50 to-white rounded-full blur-3xl opacity-60" />
+      <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden bg-gray-900 isolation-auto">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/bg-hero.png"
+            alt="Hero Background"
+            fill
+            className="object-cover"
+            priority
+            quality={100}
+            unoptimized
+          />
+          {/* Subtle Gradient Overlay for text readability without darkening everything */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
         </div>
 
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-6 relative z-10">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
             className="max-w-4xl mx-auto text-center"
           >
-            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-50 border border-gray-200 text-xs font-medium text-gray-600 mb-8">
-              <Sparkles size={12} className="text-yellow-500" />
+            <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-medium text-white mb-8 shadow-lg shadow-blue-900/20">
+              <Sparkles size={12} className="text-yellow-300" aria-hidden="true" />
               <span>Curated for Quality</span>
             </motion.div>
 
-            <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl font-bold tracking-tight text-gray-900 mb-6 leading-[1.1]">
-              The Internet’s Best Tools. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-500">
+            <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl font-bold tracking-tight !text-white mb-6 leading-[1.1] drop-shadow-md">
+              The Internet&apos;s Best Tools. <br />
+              <span className="text-white">
                 Hand-Picked.
               </span>
             </motion.h1>
 
-            <motion.p variants={fadeInUp} className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-              We filter the noise so you don't have to. Explore a directory of verified, high-quality websites designed to upgrade how you work.
+            <motion.p variants={fadeInUp} className="text-xl text-gray-200 mb-10 max-w-2xl mx-auto leading-relaxed font-light">
+              We filter the noise so you don&apos;t have to. Explore a directory of verified, high-quality websites designed to upgrade how you work.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full relative z-20">
@@ -81,9 +153,9 @@ export default function HomePage() {
             </motion.div>
 
             {/* Trust Badges */}
-            <motion.div variants={fadeInUp} className="mt-16 pt-8 border-t border-gray-100 flex flex-wrap justify-center gap-8 md:gap-16 opacity-60 grayscale hover:grayscale-0 transition-all duration-500">
+            <motion.div variants={fadeInUp} className="mt-16 pt-8 border-t border-white/10 flex flex-wrap justify-center gap-8 md:gap-16 opacity-80 grayscale hover:grayscale-0 transition-all duration-500">
               {['Stripe', 'Vercel', 'Linear', 'Notion'].map((brand) => (
-                <span key={brand} className="text-sm font-semibold text-gray-400">{brand}</span>
+                <span key={brand} className="text-sm font-semibold text-gray-300 hover:text-white transition-colors">{brand}</span>
               ))}
             </motion.div>
           </motion.div>
@@ -98,118 +170,112 @@ export default function HomePage() {
               <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Browse by Category</h2>
               <p className="text-gray-500 mt-2">Find exactly what you need.</p>
             </div>
-            <Link href="/search" className="text-sm font-medium text-gray-900 flex items-center gap-1 hover:gap-2 transition-all">
-              View all <ArrowRight size={16} />
+            <Link 
+              href="/search" 
+              className="text-sm font-medium text-gray-900 hover:text-gray-600 flex items-center gap-1 transition-colors"
+            >
+              View All <ArrowRight size={16} />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            {mockCategories.map((category, idx) => (
-              <motion.div
-                key={category.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
-              >
-                <Link href={`/search?category=${category.slug}`} className="group block p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-gray-200 hover:shadow-md transition-all duration-300">
-                  <div className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center mb-4 text-gray-900 group-hover:scale-110 transition-transform">
-                    {/* Dynamic Icon based on slug/name */}
-                    {category.slug === 'productivity' && <Zap size={20} />}
-                    {category.slug === 'finance' && <TrendingUp size={20} />}
-                    {category.slug === 'security' && <Shield size={20} />}
-                    {/* Fallback */}
-                    {['productivity', 'finance', 'security'].indexOf(category.slug) === -1 && <Star size={20} />}
-                  </div>
-                  <h3 className="font-semibold text-gray-900 text-sm mb-1">{category.name}</h3>
-                  <p className="text-xs text-gray-500">{category.websiteCount} tools</p>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
+          {categoriesLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="h-24 bg-gray-100 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : categoriesError ? (
+            <div className="text-red-500 text-center py-8">
+              Failed to load categories. Please try again.
+            </div>
+          ) : (
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={staggerContainer}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4"
+            >
+              {categories?.map((category) => (
+                <motion.a
+                  key={category.id}
+                  href={`/search?category=${category.slug}`}
+                  variants={fadeInUp}
+                  className="group p-6 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:shadow-sm transition-all duration-300"
+                >
+                  <div className="text-2xl mb-3">{category.icon || '📁'}</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">{category.name}</h3>
+                  <p className="text-xs text-gray-400">Explore tools</p>
+                </motion.a>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 
       {/* Featured Listings */}
-      <section className="py-24 bg-gray-50/50">
+      <section className="py-20">
         <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-4">Featured Websites</h2>
-              <p className="text-gray-500 max-w-xl">
-                Hand-picked tools that are gaining traction. Verified by our team for quality and utility.
-              </p>
+              <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Featured Listings</h2>
+              <p className="text-gray-500 mt-2">Hand-picked by our team.</p>
             </div>
+            
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Sort by:</span>
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:border-gray-400"
+              >
+                <option value="rating">Top Rated</option>
+                <option value="newest">Newest</option>
+                <option value="alphabetical">Alphabetical</option>
+              </select>
+            </div>
+          </div>
 
-            {/* Sort Controls */}
-            <div className="flex items-center gap-2 bg-white p-1 rounded-full border border-gray-200 shadow-sm">
-              {(['rating', 'newest', 'alphabetical'] as const).map((option) => (
-                <button
-                  key={option}
-                  onClick={() => setSortBy(option)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${sortBy === option
-                    ? 'bg-gray-900 text-white shadow-md'
-                    : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-                    }`}
-                >
-                  {option.charAt(0).toUpperCase() + option.slice(1)}
-                </button>
+          {websitesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <WebsiteCardSkeleton key={i} />
               ))}
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {loading ? (
-              Array.from({ length: 8 }).map((_, i) => <WebsiteCardSkeleton key={i} />)
-            ) : (
-              sortedWebsites.map((website, idx) => (
-                <motion.div
-                  key={website.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true, margin: "-50px" }}
-                  transition={{ duration: 0.4, delay: idx * 0.05 }}
-                >
-                  <WebsiteCard website={website} />
-                </motion.div>
-              ))
-            )}
-          </div>
-
-          <div className="mt-16 text-center">
-            <Link href="/search" className="inline-flex items-center gap-2 px-8 py-4 bg-white border border-gray-200 rounded-full text-gray-900 font-medium hover:border-gray-900 hover:shadow-lg transition-all group">
-              View All Listings
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-32">
-        <div className="container mx-auto px-6">
-          <div className="relative max-w-5xl mx-auto bg-gray-900 rounded-[2rem] p-12 md:p-24 text-center overflow-hidden">
-            {/* Background Effects */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-700 via-gray-900 to-black" />
-            <div className="absolute -top-24 -left-24 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-20" />
-            <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-purple-500 rounded-full blur-[100px] opacity-20" />
-
-            <div className="relative z-10">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Built something amazing?
-              </h2>
-              <p className="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-                Join our curated directory of creators. Increase your visibility and drive traffic directly to your product.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/signup?role=creator" className="w-full sm:w-auto px-8 py-4 bg-white text-gray-900 rounded-full font-semibold hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl hover:scale-105 transform duration-200">
-                  Submit Your Tool
-                </Link>
-                <Link href="/creator/benefits" className="w-full sm:w-auto px-8 py-4 bg-transparent border border-gray-700 text-white rounded-full font-medium hover:bg-white/10 transition-colors">
-                  Learn More
-                </Link>
-              </div>
+          ) : websitesError ? (
+            <div className="text-red-500 text-center py-8">
+              Failed to load websites. Please try again.
             </div>
+          ) : sortedWebsites?.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              No websites found.
+            </div>
+          ) : (
+            <motion.div 
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={staggerContainer}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            >
+              {sortedWebsites?.slice(0, 6).map((website) => (
+                <WebsiteCard 
+                  key={website.id} 
+                  website={transformWebsite(website)} 
+                />
+              ))}
+            </motion.div>
+          )}
+
+          <div className="mt-12 text-center">
+            <Link 
+              href="/search" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+            >
+              View All Listings
+              <ArrowRight size={18} />
+            </Link>
           </div>
         </div>
       </section>

@@ -33,8 +33,9 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
             {website.thumbnail ? (
               <Image
                 src={website.thumbnail}
-                alt={website.name}
+                alt={`${website.name} thumbnail`}
                 fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
               />
             ) : (
@@ -57,7 +58,7 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
           <div className="p-5 flex flex-col flex-1">
             <div className="flex items-start justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                {website.category.name}
+                {website.category?.name}
               </span>
               <div className="flex items-center gap-1 text-amber-400 text-sm font-medium">
                 <span>★</span>
@@ -77,10 +78,10 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
               {showCreator ? (
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
-                    {website.creator.name.charAt(0)}
+                    {website.creator?.name.charAt(0)}
                   </div>
                   <span className="text-xs text-gray-600 truncate max-w-[100px]">
-                    {website.creator.name}
+                    {website.creator?.name}
                   </span>
                 </div>
               ) : <div />}

@@ -1,41 +1,94 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { User, UserRole, Website, Bookmark, MessageThread, Message } from './types';
-import { mockUsers, mockBookmarks, mockMessageThreads, mockMessages } from './mockData';
+import { mockMessageThreads, mockMessages } from './mockData';
+import { 
+  useBookmarks as useBookmarksQuery, 
+  useCreateBookmark as useCreateBookmarkMutation, 
+  useDeleteBookmark as useDeleteBookmarkMutation,
+  useToggleBookmark as useToggleBookmarkMutation 
+} from './api/bookmarks';
 
 interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
-    login: (email: string, password: string, role?: UserRole) => Promise<boolean>;
+    isLoading: boolean;
     logout: () => void;
-    switchRole: (role: UserRole) => void;
+    setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const login = useCallback(async (email: string, _password: string, role?: UserRole): Promise<boolean> => {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const existingUser = mockUsers.find(u => u.email === email);
-        if (existingUser) { setUser(existingUser); return true; }
-        const demoUser: User = { id: `user-demo-${Date.now()}`, email, name: email.split('@')[0], username: email.split('@')[0], role: role || 'buyer', createdAt: new Date().toISOString() };
-        setUser(demoUser);
-        return true;
+    // Load user from localStorage on mount
+    useEffect(() => {
+        const loadUser = () => {
+            if (typeof window !== 'undefined') {
+                const userStr = localStorage.getItem('user');
+                if (userStr) {
+                    try {
+                        const userData = JSON.parse(userStr);
+                        setUser(userData);
+                    } catch (e) {
+                        console.error('Failed to parse user data', e);
+                        localStorage.removeItem('user');
+                    }
+                }
+                setIsLoading(false);
+            }
+        };
+
+        loadUser();
+
+        // Listen for storage changes (for multi-tab support)
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'user') {
+                if (e.newValue) {
+                    setUser(JSON.parse(e.newValue));
+                } else {
+                    setUser(null);
+                }
+            }
+        };
+
+        // Listen for custom auth-update event (for same-tab login/register)
+        // StorageEvent doesn't fire in the same tab, so we use a custom event
+        const handleAuthUpdate = (e: CustomEvent<{ user: User | null }>) => {
+            setUser(e.detail.user);
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('auth-update', handleAuthUpdate as EventListener);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('auth-update', handleAuthUpdate as EventListener);
+        };
     }, []);
 
-    const logout = useCallback(() => { setUser(null); }, []);
+    const logout = useCallback(() => {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        setUser(null);
+        window.location.href = '/login';
+    }, []);
 
-    const switchRole = useCallback((role: UserRole) => {
-        if (user) {
-            const demoUser = mockUsers.find(u => u.role === role);
-            if (demoUser) { setUser(demoUser); } else { setUser({ ...user, role }); }
-        }
-    }, [user]);
-
-    return (<AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, switchRole }}>{children}</AuthContext.Provider>);
+    return (
+        <AuthContext.Provider value={{ 
+            user, 
+            isAuthenticated: !!user, 
+            isLoading,
+            logout, 
+            setUser 
+        }}>
+            {children}
+        </AuthContext.Provider>
+    );
 }
 
 export function useAuth() {
@@ -46,6 +99,7 @@ export function useAuth() {
 
 interface BookmarksContextType {
     bookmarks: Bookmark[];
+    isLoading: boolean;
     isBookmarked: (websiteId: string) => boolean;
     addBookmark: (website: Website) => void;
     removeBookmark: (websiteId: string) => void;
@@ -55,17 +109,48 @@ interface BookmarksContextType {
 const BookmarksContext = createContext<BookmarksContextType | undefined>(undefined);
 
 export function BookmarksProvider({ children }: { children: ReactNode }) {
-    const [bookmarks, setBookmarks] = useState<Bookmark[]>(mockBookmarks);
-    const isBookmarked = useCallback((websiteId: string) => bookmarks.some(b => b.websiteId === websiteId), [bookmarks]);
+    // Use the real API hooks
+    const { data: bookmarks = [], isLoading } = useBookmarksQuery();
+    const createBookmark = useCreateBookmarkMutation();
+    const deleteBookmark = useDeleteBookmarkMutation();
+    const toggleBookmarkMutation = useToggleBookmarkMutation();
+
+    const isBookmarked = useCallback((websiteId: string) => 
+        bookmarks.some(b => b.websiteId === websiteId), 
+    [bookmarks]);
+
     const addBookmark = useCallback((website: Website) => {
-        const newBookmark: Bookmark = { id: `bookmark-${Date.now()}`, websiteId: website.id, website, userId: 'current-user', createdAt: new Date().toISOString() };
-        setBookmarks(prev => [...prev, newBookmark]);
-    }, []);
-    const removeBookmark = useCallback((websiteId: string) => { setBookmarks(prev => prev.filter(b => b.websiteId !== websiteId)); }, []);
+        createBookmark.mutate(website.id);
+    }, [createBookmark]);
+
+    const removeBookmark = useCallback((websiteId: string) => {
+        const bookmark = bookmarks.find(b => b.websiteId === websiteId);
+        if (bookmark) {
+            deleteBookmark.mutate({ id: bookmark.id, websiteId });
+        }
+    }, [bookmarks, deleteBookmark]);
+
     const toggleBookmark = useCallback((website: Website) => {
-        if (isBookmarked(website.id)) { removeBookmark(website.id); } else { addBookmark(website); }
-    }, [isBookmarked, removeBookmark, addBookmark]);
-    return (<BookmarksContext.Provider value={{ bookmarks, isBookmarked, addBookmark, removeBookmark, toggleBookmark }}>{children}</BookmarksContext.Provider>);
+        const existingBookmark = bookmarks.find(b => b.websiteId === website.id);
+        toggleBookmarkMutation.mutate({
+            websiteId: website.id,
+            isBookmarked: !!existingBookmark,
+            bookmarkId: existingBookmark?.id,
+        });
+    }, [bookmarks, toggleBookmarkMutation]);
+
+    return (
+        <BookmarksContext.Provider value={{ 
+            bookmarks, 
+            isLoading,
+            isBookmarked, 
+            addBookmark, 
+            removeBookmark, 
+            toggleBookmark 
+        }}>
+            {children}
+        </BookmarksContext.Provider>
+    );
 }
 
 export function useBookmarks() {
@@ -80,7 +165,7 @@ interface MessagesContextType {
     threads: MessageThread[];
     messages: Message[];
     getThreadMessages: (threadId: string) => Message[];
-    sendMessage: (threadId: string, content: string, senderId: string) => void;
+    sendMessage: (threadId: string, content: string, senderId: string, sender: User) => void;
     createThread: (participants: User[], websiteId?: string) => MessageThread;
     markAsRead: (threadId: string) => void;
 }
@@ -91,8 +176,7 @@ export function MessagesProvider({ children }: { children: ReactNode }) {
     const [threads, setThreads] = useState<MessageThread[]>(mockMessageThreads);
     const [messages, setMessages] = useState<Message[]>(mockMessages);
     const getThreadMessages = useCallback((threadId: string) => messages.filter(m => m.threadId === threadId), [messages]);
-    const sendMessage = useCallback((threadId: string, content: string, senderId: string) => {
-        const sender = mockUsers.find(u => u.id === senderId)!;
+    const sendMessage = useCallback((threadId: string, content: string, senderId: string, sender: User) => {
         const newMessage: Message = { id: `msg-${Date.now()}`, threadId, senderId, sender, content, isRead: false, createdAt: new Date().toISOString() };
         setMessages(prev => [...prev, newMessage]);
         setThreads(prev => prev.map(t => t.id === threadId ? { ...t, lastMessage: newMessage, updatedAt: newMessage.createdAt } : t));

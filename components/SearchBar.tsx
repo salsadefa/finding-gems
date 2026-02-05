@@ -138,7 +138,7 @@ export default function SearchBar() {
                                             {website.name}
                                         </span>
                                         <span className="text-xs text-gray-500 mt-0.5 truncate">
-                                            {website.category.name}
+                                            {website.category?.name}
                                         </span>
                                     </div>
                                 </Link>

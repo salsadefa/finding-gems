@@ -1,0 +1,343 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  visitor
+  buyer
+  creator
+  admin
+}
+
+enum WebsiteStatus {
+  draft
+  pending
+  active
+  suspended
+}
+
+enum ReportStatus {
+  pending
+  reviewed
+  resolved
+  dismissed
+}
+
+enum ApplicationStatus {
+  pending
+  approved
+  rejected
+}
+
+// ============================================
+// USER MODELS
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  username  String   @unique
+  avatar    String?
+  role      UserRole @default(visitor)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  creatorProfile CreatorProfile?
+  websites       Website[]
+  bookmarks      Bookmark[]
+  reviews        Review[]
+  reports        Report[] @relation("UserReports")
+  messageThreads MessageThreadParticipant[]
+  creatorApplication CreatorApplication?
+
+  @@index([email])
+  @@index([username])
+  @@index([role])
+  @@map("users")
+}
+
+model CreatorProfile {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  bio                    String?
+  professionalRole       String?
+  institution            String?
+  professionalBackground String?
+  expertise              String[]
+  portfolioUrl           String?
+  linkedinUrl            String?
+  instagramUrl           String?
+  tiktokUrl              String?
+  xUrl                   String?
+  websiteUrl             String?
+  isVerified             Boolean  @default(false)
+  verifiedAt             DateTime?
+  totalWebsites          Int      @default(0)
+  rating                 Float    @default(0)
+  reviewCount            Int      @default(0)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isVerified])
+  @@map("creator_profiles")
+}
+
+// ============================================
+// CATEGORY MODEL
+// ============================================
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  icon        String?
+  color       String?
+  isActive    Boolean @default(true)
+  sortOrder   Int     @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  websites Website[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@map("categories")
+}
+
+// ============================================
+// WEBSITE MODEL
+// ============================================
+
+model Website {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  description      String        @db.Text
+  shortDescription String
+  categoryId       String
+  creatorId        String
+  thumbnail        String
+  screenshots      String[]
+  demoVideoUrl     String?
+  externalUrl      String
+  techStack        String[]
+  useCases         String[]
+  hasFreeTrial     Boolean       @default(false)
+  freeTrialDetails String?
+  rating           Float         @default(0)
+  reviewCount      Int           @default(0)
+  viewCount        Int           @default(0)
+  clickCount       Int           @default(0)
+  status           WebsiteStatus @default(draft)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  category Category @relation(fields: [categoryId], references: [id])
+  creator  User     @relation(fields: [creatorId], references: [id])
+  bookmarks Bookmark[]
+  reviews   Review[]
+  faqs      WebsiteFAQ[]
+  reports   Report[]
+  messageThreads MessageThread[]
+  analytics WebsiteAnalytics?
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([rating])
+  @@index([createdAt])
+  @@map("websites")
+}
+
+model WebsiteFAQ {
+  id        String @id @default(cuid())
+  websiteId String
+  question  String
+  answer    String @db.Text
+  sortOrder Int    @default(0)
+  createdAt DateTime @default(now())
+
+  // Relations
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@index([websiteId])
+  @@map("website_faqs")
+}
+
+// ============================================
+// BOOKMARK MODEL
+// ============================================
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  websiteId String
+  userId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([websiteId, userId])
+  @@index([userId])
+  @@index([websiteId])
+  @@map("bookmarks")
+}
+
+// ============================================
+// REVIEW MODEL
+// ============================================
+
+model Review {
+  id            String   @id @default(cuid())
+  websiteId     String
+  userId        String
+  rating        Int
+  title         String
+  content       String   @db.Text
+  helpfulCount  Int      @default(0)
+  isVerified    Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([websiteId, userId])
+  @@index([websiteId])
+  @@index([userId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+// ============================================
+// MESSAGING MODELS (Simplified for now)
+// ============================================
+
+model MessageThread {
+  id          String   @id @default(cuid())
+  websiteId   String?
+  unreadCount Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  website  Website?                    @relation(fields: [websiteId], references: [id])
+  participants MessageThreadParticipant[]
+
+  @@index([websiteId])
+  @@index([updatedAt])
+  @@map("message_threads")
+}
+
+model MessageThreadParticipant {
+  id        String @id @default(cuid())
+  threadId  String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  // Relations
+  thread MessageThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+  @@index([threadId])
+  @@index([userId])
+  @@map("message_thread_participants")
+}
+
+// ============================================
+// REPORT MODEL
+// ============================================
+
+model Report {
+  id          String       @id @default(cuid())
+  websiteId   String
+  reporterId  String
+  reason      String
+  description String       @db.Text
+  status      ReportStatus @default(pending)
+  createdAt   DateTime     @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  resolution  String?
+
+  // Relations
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  reporter User    @relation("UserReports", fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([websiteId])
+  @@index([reporterId])
+  @@index([status])
+  @@map("reports")
+}
+
+// ============================================
+// CREATOR APPLICATION MODEL
+// ============================================
+
+model CreatorApplication {
+  id                     String            @id @default(cuid())
+  userId                 String            @unique
+  bio                    String            @db.Text
+  professionalBackground String?
+  expertise              String[]
+  portfolioUrl           String?
+  motivation             String            @db.Text
+  status                 ApplicationStatus @default(pending)
+  createdAt              DateTime          @default(now())
+  reviewedAt             DateTime?
+  reviewedBy             String?
+  rejectionReason        String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("creator_applications")
+}
+
+// ============================================
+// ANALYTICS MODEL
+// ============================================
+
+model WebsiteAnalytics {
+  id        String   @id @default(cuid())
+  websiteId String   @unique
+  views     Int      @default(0)
+  clicks    Int      @default(0)
+  ctr       Float    @default(0)
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@index([websiteId])
+  @@map("website_analytics")
+}

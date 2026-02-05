@@ -1,5 +1,6 @@
 'use client';
 import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef } from 'react';
+import { motion } from 'framer-motion';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -16,7 +17,11 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     ({ label, error, hint, className = '', ...props }, ref) => {
         return (
-            <div className="input-wrapper">
+            <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="input-wrapper"
+            >
                 {label && <label className="label">{label}</label>}
                 <input
                     ref={ref}
@@ -24,7 +29,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     {...props}
                 />
                 {hint && !error && <span className="hint">{hint}</span>}
-                {error && <span className="error">{error}</span>}
+                {error && (
+                    <motion.span 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="error"
+                    >
+                        {error}
+                    </motion.span>
+                )}
 
                 <style jsx>{`
           .input-wrapper {
@@ -53,6 +66,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             outline: none;
             border-color: var(--foreground);
             box-shadow: 0 0 0 3px rgb(0 0 0 / 0.05);
+            transform: scale(1.01);
           }
           
           .input::placeholder {
@@ -61,6 +75,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           
           .input-error {
             border-color: var(--error);
+            animation: shake 0.5s ease-in-out;
           }
           
           .input-error:focus {
@@ -77,8 +92,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             font-size: 0.8125rem;
             color: var(--error);
           }
+          
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
         `}</style>
-            </div>
+            </motion.div>
         );
     }
 );
@@ -88,7 +109,11 @@ Input.displayName = 'Input';
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     ({ label, error, hint, className = '', ...props }, ref) => {
         return (
-            <div className="textarea-wrapper">
+            <motion.div 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="textarea-wrapper"
+            >
                 {label && <label className="label">{label}</label>}
                 <textarea
                     ref={ref}
@@ -96,7 +121,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
                     {...props}
                 />
                 {hint && !error && <span className="hint">{hint}</span>}
-                {error && <span className="error">{error}</span>}
+                {error && (
+                    <motion.span 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="error"
+                    >
+                        {error}
+                    </motion.span>
+                )}
 
                 <style jsx>{`
           .textarea-wrapper {
@@ -128,6 +161,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             outline: none;
             border-color: var(--foreground);
             box-shadow: 0 0 0 3px rgb(0 0 0 / 0.05);
+            transform: scale(1.005);
           }
           
           .textarea::placeholder {
@@ -136,6 +170,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           
           .textarea-error {
             border-color: var(--error);
+            animation: shake 0.5s ease-in-out;
           }
           
           .hint {
@@ -147,8 +182,14 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             font-size: 0.8125rem;
             color: var(--error);
           }
+          
+          @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+          }
         `}</style>
-            </div>
+            </motion.div>
         );
     }
 );
@@ -163,7 +204,11 @@ export function Select({
     ...props
 }: InputProps & { children: React.ReactNode }) {
     return (
-        <div className="select-wrapper">
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="select-wrapper"
+        >
             {label && <label className="label">{label}</label>}
             <select
                 className={`select ${error ? 'select-error' : ''}`}
@@ -172,7 +217,15 @@ export function Select({
                 {children}
             </select>
             {hint && !error && <span className="hint">{hint}</span>}
-            {error && <span className="error">{error}</span>}
+            {error && (
+                <motion.span 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="error"
+                >
+                    {error}
+                </motion.span>
+            )}
 
             <style jsx>{`
         .select-wrapper {
@@ -207,10 +260,12 @@ export function Select({
           outline: none;
           border-color: var(--foreground);
           box-shadow: 0 0 0 3px rgb(0 0 0 / 0.05);
+          transform: scale(1.01);
         }
         
         .select-error {
           border-color: var(--error);
+          animation: shake 0.5s ease-in-out;
         }
         
         .hint {
@@ -222,7 +277,13 @@ export function Select({
           font-size: 0.8125rem;
           color: var(--error);
         }
+        
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
       `}</style>
-        </div>
+        </motion.div>
     );
 }

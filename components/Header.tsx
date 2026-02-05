@@ -14,7 +14,7 @@ const categories = [
 ];
 
 export default function Header() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -24,7 +24,7 @@ export default function Header() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 20);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -76,16 +76,20 @@ export default function Header() {
             </Link>
 
             {/* Auth Buttons */}
-            {isAuthenticated && user ? (
+            {isLoading ? (
+              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+            ) : isAuthenticated && user ? (
               <div className="relative">
                 <button
-                  className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200"
+                  className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-expanded={userMenuOpen}
+                  aria-haspopup="menu"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
-                    {user.name.charAt(0)}
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm" aria-label={`User: ${user?.name || 'Unknown'}`}>
+                    {user?.name?.charAt(0) || '?'}
                   </div>
-                  <ChevronDown size={14} className={`text-gray-500 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`text-gray-500 transition-transform duration-200 ${userMenuOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
                 </button>
 
                 {/* User Dropdown */}

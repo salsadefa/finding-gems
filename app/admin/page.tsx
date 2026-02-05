@@ -4,7 +4,7 @@ import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useAuth } from '@/lib/store';
-import { mockPlatformStats, mockCreatorApplications, mockReports, mockCreatorProfiles, mockWebsites } from '@/lib/mockData';
+import { mockPlatformStats, mockCreatorApplications, mockReports, mockCreatorProfiles, mockWebsites, mockUsers } from '@/lib/mockData';
 import { formatPrice } from '@/lib/utils';
 import {
     TrendingUp,
@@ -41,95 +41,111 @@ import {
 
 function AdminDashboardContent() {
     const searchParams = useSearchParams();
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, isLoading } = useAuth();
 
     // Hooks must be at the top level
     const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(null);
     const [isSlideOverOpen, setIsSlideOverOpen] = useState(false);
     const [isSuperAdmin, setIsSuperAdmin] = useState(false); // Toggle for masking demo
 
-    // Helper to get creator display info (derived from websites for this mock)
-    // In a real app, we'd have a users array.
-    const [creatorsList, setCreatorsList] = useState(() => {
-        return Array.from(new Set(mockWebsites.map(w => w.creatorId))).map(id => {
-            const website = mockWebsites.find(w => w.creatorId === id);
-            const profile = mockCreatorProfiles.find(p => p.userId === id);
+    // Creators list derived from mock data - combine user and profile data
+    const creatorsList = mockUsers
+        .filter(u => u.role === 'creator')
+        .map(user => {
+            const profile = mockCreatorProfiles.find(p => p.userId === user.id);
             return {
-                id,
-                name: website?.creator.name || 'Unknown User',
-                email: website?.creator.email || 'user@example.com',
-                joinedAt: 'Jan 12, 2025', // Mock
-                totalProducts: profile?.totalWebsites || 0,
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                joinedAt: new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                 status: profile?.isVerified ? 'verified' : 'pending',
-                profile: profile
+                totalProducts: profile?.totalWebsites || 0,
+                profile: profile || null
             };
         });
-    });
 
-    const selectedCreator = creatorsList.find(c => c.id === selectedCreatorId);
+    // Get selected creator object from ID
+    const selectedCreator = creatorsList.find(c => c.id === selectedCreatorId) || null;
 
-    const handleViewCreator = (id: string) => {
-        setSelectedCreatorId(id);
+    // Handler functions
+    const handleViewCreator = (creatorId: string) => {
+        setSelectedCreatorId(creatorId);
         setIsSlideOverOpen(true);
     };
 
     const handleUpdateStatus = (status: string) => {
-        if (!selectedCreatorId) return;
-        setCreatorsList(prev => prev.map(c =>
-            c.id === selectedCreatorId ? { ...c, status } : c
-        ));
-        setIsSlideOverOpen(false); // Optional: close on action
+        // In a real app, this would update the creator status
+        console.log('Updating creator status to:', status);
+        setIsSlideOverOpen(false);
     };
 
-    // Inspection Modal State
-    const [inspectionModal, setInspectionModal] = useState<{ isOpen: boolean, websiteId: string | null }>({ isOpen: false, websiteId: null });
-    const [inspectionMode, setInspectionMode] = useState<'screenshot' | 'live'>('screenshot');
+    // Inspection modal state and handlers for Reports tab
+    const [inspectionModal, setInspectionModal] = useState<{ isOpen: boolean; websiteId: string | null }>({
+        isOpen: false,
+        websiteId: null
+    });
     const [inspectionChecklist, setInspectionChecklist] = useState({
         urlLoads: false,
         professional: false,
         safe: false
     });
     const [rejectReasonOpen, setRejectReasonOpen] = useState(false);
+    const [inspectionMode, setInspectionMode] = useState<'screenshot' | 'live'>('screenshot');
 
-    // Settings Tab State
-    const [settingsTab, setSettingsTab] = useState<'general' | 'team' | 'audit'>('general');
-    const [generalSettings, setGeneralSettings] = useState({
-        platformName: 'Dualangka',
-        supportEmail: 'support@dualangka.com',
-        commissionFee: 10,
-        minPayout: 500000,
-        maintenanceMode: false
-    });
-    const [adminTeam, setAdminTeam] = useState([
-        { id: 1, name: 'You', email: 'admin@dualangka.com', role: 'Superadmin', status: 'Active' },
-        { id: 2, name: 'Sarah Support', email: 'sarah@dualangka.com', role: 'Admin', status: 'Active' }
-    ]);
-    const [inviteModalOpen, setInviteModalOpen] = useState(false);
-    const [inviteEmail, setInviteEmail] = useState('');
-    const [inviteRole, setInviteRole] = useState('Admin');
+    const inspectingWebsite = mockWebsites.find(w => w.id === inspectionModal.websiteId) || null;
 
-    const inspectingWebsite = mockWebsites.find(w => w.id === inspectionModal.websiteId);
-
-    const handleOpenInspection = (id: string) => {
-        setInspectionModal({ isOpen: true, websiteId: id });
+    const handleOpenInspection = (websiteId: string) => {
+        setInspectionModal({ isOpen: true, websiteId });
         setInspectionChecklist({ urlLoads: false, professional: false, safe: false });
         setInspectionMode('screenshot');
-        setRejectReasonOpen(false);
     };
 
     const handleInspectionAction = (action: 'approve' | 'reject') => {
-        console.log(`Processing inspection action: ${action}`);
-        // In a real app, API call here.
-        // For MVP, we effectively close the modal. 
-        // We could update a local state version of mockWebsites if we wanted dynamic feedback.
+        console.log('Inspection action:', action);
         setInspectionModal({ isOpen: false, websiteId: null });
+        setRejectReasonOpen(false);
     };
 
+    // Settings tab state
+    const [settingsTab, setSettingsTab] = useState<'general' | 'team' | 'audit'>('general');
+    const [generalSettings, setGeneralSettings] = useState({
+        platformName: 'DualAngka',
+        supportEmail: 'support@dualangka.com',
+        maintenanceMode: false
+    });
+    const [adminTeam, setAdminTeam] = useState([
+        { id: 1, name: 'Sarah Support', email: 'sarah@dualangka.com', role: 'Admin', status: 'Active' },
+        { id: 2, name: 'John Admin', email: 'john@dualangka.com', role: 'Superadmin', status: 'Active' }
+    ]);
+    const [inviteModalOpen, setInviteModalOpen] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviteRole, setInviteRole] = useState<'Admin' | 'Superadmin'>('Admin');
 
-    // Auth Check
+
+    // Auth Check - wait for loading to complete
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-8 h-8 border-4 border-gray-200 border-t-black rounded-full animate-spin" />
+                    <p className="text-gray-500">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
     if (!isAuthenticated || user?.role !== 'admin') {
         // Rely on layout or middleware, but fail safe here
-        return <div className="p-8 text-center text-gray-500">Access Denied</div>;
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
+                <div className="text-6xl mb-4">🚫</div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+                <p className="text-gray-500 mb-6">You don&apos;t have permission to access this page.</p>
+                <a href="/" className="px-6 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
+                    Go Home
+                </a>
+            </div>
+        );
     }
 
     const stats = mockPlatformStats;
@@ -435,12 +451,12 @@ function AdminDashboardContent() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-sm text-gray-900">{website.creator.name}</div>
-                                            <div className="text-xs text-gray-500">{website.creator.email}</div>
+                                            <div className="text-sm text-gray-900">{website.creator?.name}</div>
+                                            <div className="text-xs text-gray-500">{website.creator?.email}</div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                                {website.category.name}
+                                                {website.category?.name}
                                             </span>
                                         </td>
 
@@ -557,7 +573,7 @@ function AdminDashboardContent() {
                                                     <div className="font-medium text-gray-900">{website.name}</div>
                                                     <div className="text-xs text-gray-500 truncate max-w-[150px]">{website.shortDescription}</div>
                                                 </td>
-                                                <td className="px-6 py-4 text-gray-600">{website.creator.name}</td>
+                                                <td className="px-6 py-4 text-gray-600">{website.creator?.name}</td>
                                                 <td className="px-6 py-4 text-gray-400">Today</td>
                                                 <td className="px-6 py-4 text-right">
                                                     <button
@@ -640,7 +656,7 @@ function AdminDashboardContent() {
                                         <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 space-y-1">
                                             <div className="flex justify-between">
                                                 <span className="text-sm text-gray-500">Category</span>
-                                                <span className="text-sm font-medium text-gray-900">{inspectingWebsite.category.name}</span>
+                                                <span className="text-sm font-medium text-gray-900">{inspectingWebsite.category?.name}</span>
                                             </div>
                                         </div>
                                     </section>
@@ -651,11 +667,11 @@ function AdminDashboardContent() {
                                         <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Creator</h4>
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-indigo-50 flex items-center justify-center text-blue-600 font-bold border border-white shadow-sm">
-                                                {inspectingWebsite.creator.name.charAt(0)}
+                                                {inspectingWebsite.creator?.name.charAt(0)}
                                             </div>
                                             <div className="overflow-hidden">
-                                                <div className="font-bold text-gray-900 truncate">{inspectingWebsite.creator.name}</div>
-                                                <div className="text-xs text-gray-500 truncate">{inspectingWebsite.creator.email}</div>
+                                                <div className="font-bold text-gray-900 truncate">{inspectingWebsite.creator?.name}</div>
+                                                <div className="text-xs text-gray-500 truncate">{inspectingWebsite.creator?.email}</div>
                                             </div>
                                         </div>
                                     </section>

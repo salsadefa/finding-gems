@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "@/lib/store";
+import { ReactQueryProvider } from "@/lib/providers";
 import ToastContainer from "@/components/Toast";
 import LayoutShell from "@/components/LayoutShell";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,12 +34,16 @@ export default function RootLayout({
         suppressHydrationWarning={true}
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppProviders>
-          <LayoutShell>
-            {children}
-          </LayoutShell>
-          <ToastContainer />
-        </AppProviders>
+        <ReactQueryProvider>
+          <AppProviders>
+            <ErrorBoundary>
+              <LayoutShell>
+                {children}
+              </LayoutShell>
+            </ErrorBoundary>
+            <ToastContainer />
+          </AppProviders>
+        </ReactQueryProvider>
       </body>
     </html>
   );

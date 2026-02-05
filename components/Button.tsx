@@ -1,15 +1,16 @@
 'use client';
-import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'ref'> {
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline';
     size?: 'sm' | 'md' | 'lg';
     children: ReactNode;
     loading?: boolean;
     fullWidth?: boolean;
 }
 
-export default function Button({
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     variant = 'primary',
     size = 'md',
     children,
@@ -18,9 +19,13 @@ export default function Button({
     className = '',
     disabled,
     ...props
-}: ButtonProps) {
+}, ref) => {
     return (
-        <button
+        <motion.button
+            ref={ref}
+            whileHover={!disabled && !loading ? { scale: 1.02, y: -1 } : undefined}
+            whileTap={!disabled && !loading ? { scale: 0.98 } : undefined}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
             className={`btn btn-${variant} btn-${size} ${fullWidth ? 'full-width' : ''} ${className}`}
             disabled={disabled || loading}
             {...props}
@@ -40,6 +45,13 @@ export default function Button({
           cursor: pointer;
           transition: all var(--transition-fast);
           white-space: nowrap;
+        }
+        
+        .btn:focus-visible {
+          outline: none;
+          ring: 2px;
+          ring-offset: 2px;
+          ring-color: var(--foreground);
         }
         
         .btn:disabled {
@@ -66,10 +78,13 @@ export default function Button({
           background: var(--foreground);
           color: var(--background);
           border-color: var(--foreground);
+          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
         
         .btn-primary:hover:not(:disabled) {
-          opacity: 0.9;
+          background: var(--gray-800);
+          border-color: var(--gray-800);
+          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         }
         
         .btn-secondary {
@@ -81,6 +96,7 @@ export default function Button({
         .btn-secondary:hover:not(:disabled) {
           background: var(--gray-100);
           border-color: var(--gray-400);
+          box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
         }
         
         .btn-ghost {
@@ -100,21 +116,37 @@ export default function Button({
         }
         
         .btn-danger:hover:not(:disabled) {
-          opacity: 0.9;
+          background: #dc2626;
+          border-color: #dc2626;
+          box-shadow: 0 4px 6px -1px rgb(220 38 38 / 0.2);
+        }
+        
+        .btn-outline {
+          background: transparent;
+          color: var(--gray-700);
+          border-color: var(--gray-300);
+        }
+        
+        .btn-outline:hover:not(:disabled) {
+          background: var(--gray-50);
+          border-color: var(--gray-400);
         }
         
         .full-width {
           width: 100%;
         }
       `}</style>
-        </button>
+        </motion.button>
     );
-}
+});
+
+Button.displayName = 'Button';
 
 function Spinner() {
     return (
-        <svg
-            className="spinner"
+        <motion.svg
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
             width="16"
             height="16"
             viewBox="0 0 24 24"
@@ -124,19 +156,13 @@ function Spinner() {
         >
             <circle className="spinner-circle" cx="12" cy="12" r="10" />
             <style jsx>{`
-        .spinner {
-          animation: spin 1s linear infinite;
-        }
-        
         .spinner-circle {
           stroke-dasharray: 50;
           stroke-dashoffset: 35;
         }
-        
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
       `}</style>
-        </svg>
+        </motion.svg>
     );
 }
+
+export default Button;

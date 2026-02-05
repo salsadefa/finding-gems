@@ -2,13 +2,61 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { mockWebsites } from '@/lib/mockData';
+import { useMyWebsites } from '@/lib/api/websites';
 import EmptyState, { EmptyListingsIcon } from '@/components/EmptyState';
 import Button from '@/components/Button';
-import { Plus, Eye, Star } from 'lucide-react';
+import { Plus, Star } from 'lucide-react';
 
 export default function CreatorListingsPage() {
-    const creatorWebsites = mockWebsites.filter(w => w.creatorId === 'user-2'); // Mock user
+    const { data: creatorWebsites, isLoading, error } = useMyWebsites();
+
+    if (isLoading) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">My Listings</h2>
+                        <p className="text-gray-500 mt-1">Manage your software and tool listings.</p>
+                    </div>
+                    <Link href="/creator/listings/new" className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                        <Plus size={18} />
+                        New Listing
+                    </Link>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-2xl p-12 flex justify-center items-center">
+                    <div className="text-center">
+                        <div className="w-8 h-8 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4"></div>
+                        <p className="text-gray-500">Loading your listings...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 max-w-7xl mx-auto">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">My Listings</h2>
+                        <p className="text-gray-500 mt-1">Manage your software and tool listings.</p>
+                    </div>
+                    <Link href="/creator/listings/new" className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition-colors">
+                        <Plus size={18} />
+                        New Listing
+                    </Link>
+                </div>
+                <div className="bg-white border border-gray-200 rounded-2xl p-12">
+                    <EmptyState
+                        icon={<EmptyListingsIcon />}
+                        title="Error loading listings"
+                        description="There was a problem fetching your listings. Please try again later."
+                        action={<Link href="/creator/listings"><Button>Retry</Button></Link>}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
@@ -24,7 +72,7 @@ export default function CreatorListingsPage() {
             </div>
 
             <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
-                {creatorWebsites.length > 0 ? (
+                {creatorWebsites && creatorWebsites.length > 0 ? (
                     <div className="divide-y divide-gray-100">
                         <div className="grid grid-cols-[2fr_1fr_0.7fr_0.7fr_0.8fr_1.2fr] gap-4 p-6 bg-gray-50 text-xs font-semibold uppercase text-gray-500 tracking-wider">
                             <span>Website</span>
@@ -49,7 +97,7 @@ export default function CreatorListingsPage() {
                                         <p className="text-xs text-gray-500 truncate max-w-[200px]">{website.shortDescription}</p>
                                     </div>
                                 </div>
-                                <div className="text-sm text-gray-600">{website.category.name}</div>
+                                <div className="text-sm text-gray-600">{website.category?.name}</div>
                                 <div className="text-sm text-gray-600">{website.viewCount}</div>
                                 <div className="text-sm text-gray-600 flex items-center gap-1">
                                     <Star size={14} className="text-yellow-400 fill-yellow-400" /> {website.rating}

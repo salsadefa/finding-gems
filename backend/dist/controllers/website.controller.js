@@ -1,0 +1,400 @@
+"use strict";
+// ============================================
+// Website Controller - Finding Gems Backend
+// ============================================
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getMyWebsites = exports.deleteWebsite = exports.updateWebsite = exports.createWebsite = exports.getWebsiteById = exports.getWebsites = void 0;
+const supabase_1 = require("../config/supabase");
+const catchAsync_1 = require("../utils/catchAsync");
+const errors_1 = require("../utils/errors");
+/**
+ * Generate slug from name
+ */
+const generateSlug = (name) => {
+    return name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+};
+/**
+ * @desc    Get all websites with filters, pagination, and sorting
+ * @route   GET /api/v1/websites
+ * @access  Public
+ */
+exports.getWebsites = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', search, category, status, hasFreeTrial, minRating, } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+    // Build query
+    let query = supabase_1.supabase
+        .from('websites')
+        .select(`*, 
+      creator:users(id, name, username, avatar), 
+      category:categories(id, name, slug, icon)`, { count: 'exact' });
+    // Only show active websites to non-admins/creators
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'creator')) {
+        query = query.eq('status', 'active');
+    }
+    else if (status) {
+        query = query.eq('status', status);
+    }
+    if (search) {
+        query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,short_description.ilike.%${search}%`);
+    }
+    if (category) {
+        query = query.eq('categories.slug', category);
+    }
+    if (hasFreeTrial !== undefined) {
+        query = query.eq('has_free_trial', String(hasFreeTrial) === 'true');
+    }
+    if (minRating) {
+        query = query.gte('rating', Number(minRating));
+    }
+    const { data: websites, error, count } = await query
+        .order(sortBy, { ascending: sortOrder === 'asc' })
+        .range(skip, skip + take - 1);
+    if (error)
+        throw error;
+    const total = count || 0;
+    const totalPages = Math.ceil(total / take);
+    res.status(200).json({
+        success: true,
+        data: {
+            websites: websites || [],
+            pagination: {
+                page: Number(page),
+                limit: take,
+                total,
+                totalPages,
+                hasNext: Number(page) < totalPages,
+                hasPrev: Number(page) > 1,
+            },
+        },
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Get website by ID or slug
+ * @route   GET /api/v1/websites/:id
+ * @access  Public
+ */
+exports.getWebsiteById = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { id } = req.params;
+    // Check if ID is a UUID or slug
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let query = supabase_1.supabase
+        .from('websites')
+        .select(`*, 
+      creator:users(id, name, username, avatar), 
+      category:categories(id, name, slug, icon, description),
+      reviews:reviews(*, user:users(id, name, username, avatar)),
+      faqs:faqs(*),
+      analytics:website_analytics(*)`);
+    if (isUuid) {
+        query = query.eq('id', id);
+    }
+    else {
+        query = query.eq('slug', id);
+    }
+    const { data: website, error } = await query.single();
+    if (error || !website) {
+        throw new errors_1.NotFoundError('Website not found');
+    }
+    // Only active websites are visible to public
+    if (website.status !== 'active') {
+        if (!req.user) {
+            throw new errors_1.NotFoundError('Website not found');
+        }
+        const isCreator = website.creator_id === req.user.id;
+        const isAdmin = req.user.role === 'admin';
+        if (!isCreator && !isAdmin) {
+            throw new errors_1.NotFoundError('Website not found');
+        }
+    }
+    // Increment view count
+    await supabase_1.supabase
+        .from('websites')
+        .update({ view_count: (website.view_count || 0) + 1 })
+        .eq('id', website.id);
+    res.status(200).json({
+        success: true,
+        data: {
+            website,
+        },
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Create new website (creators only)
+ * @route   POST /api/v1/websites
+ * @access  Private (Creator)
+ */
+exports.createWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    if (!req.user) {
+        throw new errors_1.NotFoundError('User not found');
+    }
+    // Only creators and admins can create websites
+    if (req.user.role !== 'creator' && req.user.role !== 'admin') {
+        throw new errors_1.ForbiddenError('Only creators can create websites');
+    }
+    const { name, description, shortDescription, categoryId, externalUrl, thumbnail, screenshots, demoVideoUrl, techStack, useCases, hasFreeTrial, freeTrialDetails, } = req.body;
+    // Validate required fields
+    if (!name || !description || !categoryId || !externalUrl) {
+        throw new errors_1.ValidationError('Name, description, categoryId, and externalUrl are required');
+    }
+    // Check if category exists
+    const { data: category, error: categoryError } = await supabase_1.supabase
+        .from('categories')
+        .select('id')
+        .eq('id', categoryId)
+        .single();
+    if (categoryError || !category) {
+        throw new errors_1.NotFoundError('Category not found');
+    }
+    // Generate unique slug
+    let slug = generateSlug(name);
+    let slugExists = true;
+    let counter = 1;
+    while (slugExists) {
+        const { data: existing } = await supabase_1.supabase
+            .from('websites')
+            .select('id')
+            .eq('slug', slug)
+            .single();
+        if (!existing) {
+            slugExists = false;
+        }
+        else {
+            slug = `${generateSlug(name)}-${counter}`;
+            counter++;
+        }
+    }
+    // Create website
+    const { data: website, error } = await supabase_1.supabase
+        .from('websites')
+        .insert({
+        name: name.trim(),
+        slug,
+        description: description.trim(),
+        short_description: shortDescription?.trim() || description.slice(0, 150).trim(),
+        category_id: categoryId,
+        creator_id: req.user.id,
+        thumbnail: thumbnail || '',
+        screenshots: screenshots || [],
+        demo_video_url: demoVideoUrl,
+        external_url: externalUrl.trim(),
+        tech_stack: techStack || [],
+        use_cases: useCases || [],
+        has_free_trial: hasFreeTrial || false,
+        free_trial_details: freeTrialDetails,
+        status: 'pending',
+    })
+        .select(`*, 
+      creator:users(id, name, username, avatar), 
+      category:categories(id, name, slug, icon)`)
+        .single();
+    if (error)
+        throw error;
+    // Update creator profile website count
+    await supabase_1.supabase.rpc('increment_creator_websites', { user_id: req.user.id });
+    res.status(201).json({
+        success: true,
+        data: {
+            website,
+        },
+        message: 'Website created successfully and is pending approval',
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Update website (creator or admin)
+ * @route   PATCH /api/v1/websites/:id
+ * @access  Private (Creator/Admin)
+ */
+exports.updateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    if (!req.user) {
+        throw new errors_1.NotFoundError('User not found');
+    }
+    const { id } = req.params;
+    // Check if website exists
+    const { data: existingWebsite, error: findError } = await supabase_1.supabase
+        .from('websites')
+        .select('*')
+        .eq('id', id)
+        .single();
+    if (findError || !existingWebsite) {
+        throw new errors_1.NotFoundError('Website not found');
+    }
+    // Check ownership
+    const isCreator = existingWebsite.creator_id === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isCreator && !isAdmin) {
+        throw new errors_1.ForbiddenError('You can only update your own websites');
+    }
+    const { name, description, shortDescription, categoryId, externalUrl, thumbnail, screenshots, demoVideoUrl, techStack, useCases, hasFreeTrial, freeTrialDetails, status, } = req.body;
+    // If changing category, verify it exists
+    if (categoryId && categoryId !== existingWebsite.category_id) {
+        const { data: category } = await supabase_1.supabase
+            .from('categories')
+            .select('id')
+            .eq('id', categoryId)
+            .single();
+        if (!category) {
+            throw new errors_1.NotFoundError('Category not found');
+        }
+    }
+    // Build update data
+    const updateData = {};
+    if (name) {
+        updateData.name = name.trim();
+        if (name !== existingWebsite.name) {
+            let slug = generateSlug(name);
+            let slugExists = true;
+            let counter = 1;
+            while (slugExists) {
+                const { data: existing } = await supabase_1.supabase
+                    .from('websites')
+                    .select('id')
+                    .eq('slug', slug)
+                    .neq('id', id)
+                    .single();
+                if (!existing) {
+                    slugExists = false;
+                }
+                else {
+                    slug = `${generateSlug(name)}-${counter}`;
+                    counter++;
+                }
+            }
+            updateData.slug = slug;
+        }
+    }
+    if (description)
+        updateData.description = description.trim();
+    if (shortDescription)
+        updateData.short_description = shortDescription.trim();
+    if (categoryId)
+        updateData.category_id = categoryId;
+    if (externalUrl)
+        updateData.external_url = externalUrl.trim();
+    if (thumbnail !== undefined)
+        updateData.thumbnail = thumbnail;
+    if (screenshots !== undefined)
+        updateData.screenshots = screenshots;
+    if (demoVideoUrl !== undefined)
+        updateData.demo_video_url = demoVideoUrl;
+    if (techStack !== undefined)
+        updateData.tech_stack = techStack;
+    if (useCases !== undefined)
+        updateData.use_cases = useCases;
+    if (hasFreeTrial !== undefined)
+        updateData.has_free_trial = hasFreeTrial;
+    if (freeTrialDetails !== undefined)
+        updateData.free_trial_details = freeTrialDetails;
+    // Only admin can change status
+    if (status && isAdmin) {
+        updateData.status = status;
+    }
+    const { data: updatedWebsite, error } = await supabase_1.supabase
+        .from('websites')
+        .update(updateData)
+        .eq('id', id)
+        .select(`*, 
+      creator:users(id, name, username, avatar), 
+      category:categories(id, name, slug, icon)`)
+        .single();
+    if (error)
+        throw error;
+    res.status(200).json({
+        success: true,
+        data: {
+            website: updatedWebsite,
+        },
+        message: 'Website updated successfully',
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Delete website (creator or admin)
+ * @route   DELETE /api/v1/websites/:id
+ * @access  Private (Creator/Admin)
+ */
+exports.deleteWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    if (!req.user) {
+        throw new errors_1.NotFoundError('User not found');
+    }
+    const { id } = req.params;
+    // Check if website exists
+    const { data: existingWebsite, error: findError } = await supabase_1.supabase
+        .from('websites')
+        .select('*')
+        .eq('id', id)
+        .single();
+    if (findError || !existingWebsite) {
+        throw new errors_1.NotFoundError('Website not found');
+    }
+    // Check ownership
+    const isCreator = existingWebsite.creator_id === req.user.id;
+    const isAdmin = req.user.role === 'admin';
+    if (!isCreator && !isAdmin) {
+        throw new errors_1.ForbiddenError('You can only delete your own websites');
+    }
+    // Delete website
+    const { error } = await supabase_1.supabase.from('websites').delete().eq('id', id);
+    if (error)
+        throw error;
+    // Update creator profile website count
+    await supabase_1.supabase.rpc('decrement_creator_websites', { user_id: existingWebsite.creator_id });
+    res.status(200).json({
+        success: true,
+        message: 'Website deleted successfully',
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Get current user's websites (creator only)
+ * @route   GET /api/v1/websites/my-websites
+ * @access  Private (Creator)
+ */
+exports.getMyWebsites = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    if (!req.user) {
+        throw new errors_1.NotFoundError('User not found');
+    }
+    if (req.user.role !== 'creator' && req.user.role !== 'admin') {
+        throw new errors_1.ForbiddenError('Only creators can have websites');
+    }
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc', status, } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
+    let query = supabase_1.supabase
+        .from('websites')
+        .select(`*, 
+      category:categories(id, name, slug, icon)`, { count: 'exact' })
+        .eq('creator_id', req.user.id);
+    if (status) {
+        query = query.eq('status', status);
+    }
+    const { data: websites, error, count } = await query
+        .order(sortBy, { ascending: sortOrder === 'asc' })
+        .range(skip, skip + take - 1);
+    if (error)
+        throw error;
+    const total = count || 0;
+    const totalPages = Math.ceil(total / take);
+    res.status(200).json({
+        success: true,
+        data: {
+            websites: websites || [],
+            pagination: {
+                page: Number(page),
+                limit: take,
+                total,
+                totalPages,
+                hasNext: Number(page) < totalPages,
+                hasPrev: Number(page) > 1,
+            },
+        },
+        timestamp: new Date().toISOString(),
+    });
+});
+//# sourceMappingURL=website.controller.js.map
