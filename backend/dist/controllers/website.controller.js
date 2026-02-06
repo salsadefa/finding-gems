@@ -135,7 +135,7 @@ exports.createWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (req.user.role !== 'creator' && req.user.role !== 'admin') {
         throw new errors_1.ForbiddenError('Only creators can create websites');
     }
-    const { name, description, shortDescription, categoryId, externalUrl, thumbnail, screenshots, demoVideoUrl, techStack, useCases, hasFreeTrial, freeTrialDetails, } = req.body;
+    const { name, description, shortDescription, categoryId, externalUrl, thumbnail, screenshots, techStack, useCases, hasFreeTrial, } = req.body;
     // Validate required fields
     if (!name || !description || !categoryId || !externalUrl) {
         throw new errors_1.ValidationError('Name, description, categoryId, and externalUrl are required');
@@ -174,17 +174,15 @@ exports.createWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
         name: name.trim(),
         slug,
         description: description.trim(),
-        short_description: shortDescription?.trim() || description.slice(0, 150).trim(),
+        shortDescription: shortDescription?.trim() || description.slice(0, 150).trim(),
         categoryId: categoryId,
-        creator_id: req.user.id,
+        creatorId: req.user.id,
         thumbnail: thumbnail || '',
         screenshots: screenshots || [],
-        demo_video_url: demoVideoUrl,
-        external_url: externalUrl.trim(),
-        tech_stack: techStack || [],
-        use_cases: useCases || [],
-        has_free_trial: hasFreeTrial || false,
-        free_trial_details: freeTrialDetails,
+        externalUrl: externalUrl.trim(),
+        techStack: techStack || [],
+        useCases: useCases || [],
+        hasFreeTrial: hasFreeTrial || false,
         status: 'pending',
     })
         .select(`*, 
@@ -270,25 +268,21 @@ exports.updateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (description)
         updateData.description = description.trim();
     if (shortDescription)
-        updateData.short_description = shortDescription.trim();
+        updateData.shortDescription = shortDescription.trim();
     if (categoryId)
         updateData.categoryId = categoryId;
     if (externalUrl)
-        updateData.external_url = externalUrl.trim();
+        updateData.externalUrl = externalUrl.trim();
     if (thumbnail !== undefined)
         updateData.thumbnail = thumbnail;
     if (screenshots !== undefined)
         updateData.screenshots = screenshots;
-    if (demoVideoUrl !== undefined)
-        updateData.demo_video_url = demoVideoUrl;
     if (techStack !== undefined)
-        updateData.tech_stack = techStack;
+        updateData.techStack = techStack;
     if (useCases !== undefined)
-        updateData.use_cases = useCases;
+        updateData.useCases = useCases;
     if (hasFreeTrial !== undefined)
-        updateData.has_free_trial = hasFreeTrial;
-    if (freeTrialDetails !== undefined)
-        updateData.free_trial_details = freeTrialDetails;
+        updateData.hasFreeTrial = hasFreeTrial;
     // Only admin can change status
     if (status && isAdmin) {
         updateData.status = status;

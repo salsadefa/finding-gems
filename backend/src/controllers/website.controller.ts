@@ -191,11 +191,9 @@ export const createWebsite = catchAsync(async (req: Request, res: Response) => {
     externalUrl,
     thumbnail,
     screenshots,
-    demoVideoUrl,
     techStack,
     useCases,
     hasFreeTrial,
-    freeTrialDetails,
   } = req.body as CreateWebsiteRequest;
 
   // Validate required fields
@@ -241,17 +239,15 @@ export const createWebsite = catchAsync(async (req: Request, res: Response) => {
       name: name.trim(),
       slug,
       description: description.trim(),
-      short_description: shortDescription?.trim() || description.slice(0, 150).trim(),
+      shortDescription: shortDescription?.trim() || description.slice(0, 150).trim(),
       categoryId: categoryId,
-      creator_id: req.user.id,
+      creatorId: req.user.id,
       thumbnail: thumbnail || '',
       screenshots: screenshots || [],
-      demo_video_url: demoVideoUrl,
-      external_url: externalUrl.trim(),
-      tech_stack: techStack || [],
-      use_cases: useCases || [],
-      has_free_trial: hasFreeTrial || false,
-      free_trial_details: freeTrialDetails,
+      externalUrl: externalUrl.trim(),
+      techStack: techStack || [],
+      useCases: useCases || [],
+      hasFreeTrial: hasFreeTrial || false,
       status: 'pending',
     })
     .select(
@@ -366,16 +362,14 @@ export const updateWebsite = catchAsync(async (req: Request, res: Response) => {
   }
 
   if (description) updateData.description = description.trim();
-  if (shortDescription) updateData.short_description = shortDescription.trim();
+  if (shortDescription) updateData.shortDescription = shortDescription.trim();
   if (categoryId) updateData.categoryId = categoryId;
-  if (externalUrl) updateData.external_url = externalUrl.trim();
+  if (externalUrl) updateData.externalUrl = externalUrl.trim();
   if (thumbnail !== undefined) updateData.thumbnail = thumbnail;
   if (screenshots !== undefined) updateData.screenshots = screenshots;
-  if (demoVideoUrl !== undefined) updateData.demo_video_url = demoVideoUrl;
-  if (techStack !== undefined) updateData.tech_stack = techStack;
-  if (useCases !== undefined) updateData.use_cases = useCases;
-  if (hasFreeTrial !== undefined) updateData.has_free_trial = hasFreeTrial;
-  if (freeTrialDetails !== undefined) updateData.free_trial_details = freeTrialDetails;
+  if (techStack !== undefined) updateData.techStack = techStack;
+  if (useCases !== undefined) updateData.useCases = useCases;
+  if (hasFreeTrial !== undefined) updateData.hasFreeTrial = hasFreeTrial;
 
   // Only admin can change status
   if (status && isAdmin) {
