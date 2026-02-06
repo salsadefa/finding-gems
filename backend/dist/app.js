@@ -13,6 +13,7 @@ const morgan_1 = __importDefault(require("morgan"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const logger_1 = require("./config/logger");
+const sentry_1 = require("./config/sentry");
 // Import routes
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const user_routes_1 = __importDefault(require("./routes/user.routes"));
@@ -29,6 +30,8 @@ const payment_routes_1 = __importDefault(require("./routes/payment.routes"));
 const payout_routes_1 = __importDefault(require("./routes/payout.routes"));
 const refund_routes_1 = __importDefault(require("./routes/refund.routes"));
 const app = (0, express_1.default)();
+// Initialize Sentry (must be done early)
+(0, sentry_1.initSentry)(app);
 // ============================================
 // Security Middleware
 // ============================================
@@ -156,6 +159,8 @@ app.use(`${API_PREFIX}/refunds`, refund_routes_1.default);
 // ============================================
 // Handle undefined routes
 app.use(errorHandler_1.notFoundHandler);
+// Sentry error handler (must be before other error handlers)
+app.use(sentry_1.sentryErrorHandler);
 // Global error handler
 app.use(errorHandler_1.errorHandler);
 exports.default = app;

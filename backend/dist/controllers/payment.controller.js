@@ -11,6 +11,7 @@ exports.confirmPayment = exports.handlePaymentWebhook = exports.handleXenditWebh
 const supabase_1 = require("../config/supabase");
 const catchAsync_1 = require("../utils/catchAsync");
 const xendit_service_1 = require("../services/xendit.service");
+const email_service_1 = require("../services/email.service");
 const crypto_1 = __importDefault(require("crypto"));
 // ============================================
 // PAYMENT INITIATION
@@ -450,7 +451,7 @@ async function grantAccessAndCreateInvoice(orderId) {
     const { data: invoiceNumResult } = await supabase_1.supabase.rpc('generate_invoice_number');
     const invoiceNumber = invoiceNumResult || `INV-${Date.now()}`;
     // Create invoice
-    const { error: invoiceError } = await supabase_1.supabase
+    const { data: invoice, error: invoiceError } = await supabase_1.supabase
         .from('invoices')
         .insert({
         invoice_number: invoiceNumber,
@@ -472,9 +473,51 @@ async function grantAccessAndCreateInvoice(orderId) {
         status: 'paid',
         issued_at: new Date().toISOString(),
         paid_at: new Date().toISOString()
-    });
+    })
+        .select()
+        .single();
     if (invoiceError) {
         console.error('Failed to create invoice:', invoiceError);
+    }
+    // Send email notifications (async, don't await)
+    const invoiceUrl = `${process.env.APP_BASE_URL || 'http://localhost:3000'}/dashboard/purchases/${orderId}/invoice`;
+    // Email to buyer
+    if (order.buyer?.email) {
+        (0, email_service_1.sendPaymentSuccessEmail)(order.buyer.email, {
+            userName: order.buyer.name || 'Customer',
+            orderNumber: order.order_number,
+            websiteName: order.item_name || 'Product',
+            amount: order.total_amount,
+            paymentMethod: 'Xendit',
+            invoiceUrl
+        }).catch(err => console.error('Failed to send payment success email:', err));
+        // Also send invoice
+        if (invoice) {
+            (0, email_service_1.sendInvoiceEmail)(order.buyer.email, {
+                userName: order.buyer.name || 'Customer',
+                invoiceNumber: invoice.invoice_number,
+                orderNumber: order.order_number,
+                websiteName: order.item_name || 'Product',
+                amount: order.total_amount,
+                issueDate: new Date().toISOString(),
+                invoiceUrl
+            }).catch(err => console.error('Failed to send invoice email:', err));
+        }
+    }
+    // Email to creator (sale notification)
+    if (order.creator?.email) {
+        const platformFee = order.platform_fee || 0;
+        const creatorEarning = order.total_amount - platformFee;
+        (0, email_service_1.sendNewSaleEmail)(order.creator.email, {
+            creatorName: order.creator.name || 'Creator',
+            buyerName: order.buyer?.name || 'Customer',
+            websiteName: order.item_name || 'Product',
+            tierName: order.tier_name || 'Standard',
+            amount: order.total_amount,
+            platformFee,
+            creatorEarning,
+            orderNumber: order.order_number
+        }).catch(err => console.error('Failed to send sale notification email:', err));
     }
     console.log(`Access granted and invoice created for order ${orderId}`);
 }

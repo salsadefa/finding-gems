@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.processRefund = exports.getAllRefunds = exports.cancelRefund = exports.getRefundDetail = exports.getRefunds = exports.requestRefund = void 0;
 const supabase_1 = require("../config/supabase");
 const catchAsync_1 = require("../utils/catchAsync");
+const email_service_1 = require("../services/email.service");
 // ============================================
 // BUYER/CREATOR REFUND REQUESTS
 // ============================================
@@ -113,7 +114,7 @@ exports.getRefunds = (0, catchAsync_1.catchAsync)(async (req, res) => {
       order:orders(id, order_number, total_amount, status)
     `, { count: 'exact' })
         .eq('requested_by', user.id)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -236,7 +237,7 @@ exports.getAllRefunds = (0, catchAsync_1.catchAsync)(async (req, res) => {
       order:orders(id, order_number, total_amount),
       requester:users!refunds_requested_by_fkey(id, name, email)
     `, { count: 'exact' })
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -380,6 +381,23 @@ exports.processRefund = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .eq('id', id);
     if (error) {
         return res.status(500).json({ success: false, error: { message: error.message } });
+    }
+    // Send email notification to requester
+    const { data: requester } = await supabase_1.supabase
+        .from('users')
+        .select('email, name')
+        .eq('id', refund.requested_by)
+        .single();
+    if (requester?.email && ['approved', 'rejected', 'completed'].includes(newStatus)) {
+        const order = refund.order;
+        (0, email_service_1.sendRefundStatusEmail)(requester.email, {
+            userName: requester.name || 'Customer',
+            refundNumber: refund.refund_number,
+            orderNumber: order?.order_number || 'N/A',
+            amount: Number(refund.refund_amount),
+            status: newStatus,
+            message: status_message
+        }).catch((err) => console.error('Failed to send refund status email:', err));
     }
     res.status(200).json({
         success: true,

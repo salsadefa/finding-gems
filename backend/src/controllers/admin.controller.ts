@@ -173,9 +173,10 @@ export const moderateWebsite = catchAsync(async (req: Request, res: Response) =>
     moderated_by: req.user!.id,
   };
 
-  if (adminNote) {
-    updateData.admin_note = adminNote;
-  }
+  // Note: admin_note field removed - not in current schema
+  // if (adminNote) {
+  //   updateData.admin_note = adminNote;
+  // }
 
   const { data: website, error } = await supabase
     .from('websites')
@@ -300,9 +301,10 @@ export const updateUserAdmin = catchAsync(async (req: Request, res: Response) =>
     updateData.isActive = isActive;
   }
 
-  if (adminNote) {
-    updateData.admin_note = adminNote;
-  }
+  // Note: admin_note field removed - not in current schema
+  // if (adminNote) {
+  //   updateData.admin_note = adminNote;
+  // }
 
   if (Object.keys(updateData).length === 0) {
     throw new ValidationError('No valid fields to update');

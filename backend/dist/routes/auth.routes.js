@@ -37,5 +37,17 @@ router.post('/refresh', auth_controller_1.refresh);
  * @access  Private
  */
 router.get('/me', auth_1.authenticate, auth_controller_1.getMe);
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    Request password reset
+ * @access  Public
+ */
+router.post('/forgot-password', auth_controller_1.forgotPassword);
+/**
+ * @route   POST /api/v1/auth/reset-password
+ * @desc    Reset password with token
+ * @access  Public
+ */
+router.post('/reset-password', auth_controller_1.resetPassword);
 exports.default = router;
 //# sourceMappingURL=auth.routes.js.map

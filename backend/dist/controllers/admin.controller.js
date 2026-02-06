@@ -45,9 +45,9 @@ exports.getPlatformStats = (0, catchAsync_1.catchAsync)(async (req, res) => {
         // Pending reports
         supabase_1.supabase.from('reports').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         // Websites this month
-        supabase_1.supabase.from('websites').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+        supabase_1.supabase.from('websites').select('*', { count: 'exact', head: true }).gte('createdAt', startOfMonth),
         // Users this month
-        supabase_1.supabase.from('users').select('*', { count: 'exact', head: true }).gte('created_at', startOfMonth),
+        supabase_1.supabase.from('users').select('*', { count: 'exact', head: true }).gte('createdAt', startOfMonth),
     ]);
     const stats = {
         totalWebsites: totalWebsites || 0,
@@ -84,7 +84,7 @@ exports.getPendingWebsites = (0, catchAsync_1.catchAsync)(async (req, res) => {
       category:categories(id, name, slug)
     `, { count: 'exact' })
         .eq('status', 'pending')
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(skip, skip + take - 1);
     if (error)
         throw error;
@@ -135,9 +135,10 @@ exports.moderateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
         moderated_at: new Date().toISOString(),
         moderated_by: req.user.id,
     };
-    if (adminNote) {
-        updateData.admin_note = adminNote;
-    }
+    // Note: admin_note field removed - not in current schema
+    // if (adminNote) {
+    //   updateData.admin_note = adminNote;
+    // }
     const { data: website, error } = await supabase_1.supabase
         .from('websites')
         .update(updateData)
@@ -164,7 +165,7 @@ exports.moderateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
  */
 exports.getAllUsers = (0, catchAsync_1.catchAsync)(async (req, res) => {
     requireAdmin(req);
-    const { page = 1, limit = 20, role, search, sortBy = 'created_at', sortOrder = 'desc', } = req.query;
+    const { page = 1, limit = 20, role, search, sortBy = 'createdAt', sortOrder = 'desc', } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     let query = supabase_1.supabase
@@ -233,11 +234,12 @@ exports.updateUserAdmin = (0, catchAsync_1.catchAsync)(async (req, res) => {
         updateData.role = role;
     }
     if (isActive !== undefined) {
-        updateData.is_active = isActive;
+        updateData.isActive = isActive;
     }
-    if (adminNote) {
-        updateData.admin_note = adminNote;
-    }
+    // Note: admin_note field removed - not in current schema
+    // if (adminNote) {
+    //   updateData.admin_note = adminNote;
+    // }
     if (Object.keys(updateData).length === 0) {
         throw new errors_1.ValidationError('No valid fields to update');
     }
@@ -245,7 +247,7 @@ exports.updateUserAdmin = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .from('users')
         .update(updateData)
         .eq('id', id)
-        .select('id, email, name, username, role, is_active, avatar, created_at')
+        .select('id, email, name, username, role, isActive, avatar, createdAt')
         .single();
     if (error)
         throw error;
@@ -263,7 +265,7 @@ exports.updateUserAdmin = (0, catchAsync_1.catchAsync)(async (req, res) => {
  */
 exports.getReports = (0, catchAsync_1.catchAsync)(async (req, res) => {
     requireAdmin(req);
-    const { page = 1, limit = 20, status, sortBy = 'created_at', sortOrder = 'desc', } = req.query;
+    const { page = 1, limit = 20, status, sortBy = 'createdAt', sortOrder = 'desc', } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     let query = supabase_1.supabase
@@ -357,7 +359,7 @@ exports.handleReport = (0, catchAsync_1.catchAsync)(async (req, res) => {
  */
 exports.getAllWebsitesAdmin = (0, catchAsync_1.catchAsync)(async (req, res) => {
     requireAdmin(req);
-    const { page = 1, limit = 20, status, search, sortBy = 'created_at', sortOrder = 'desc', } = req.query;
+    const { page = 1, limit = 20, status, search, sortBy = 'createdAt', sortOrder = 'desc', } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
     let query = supabase_1.supabase

@@ -1,4 +1,5 @@
-export declare const supabase: import("@supabase/supabase-js").SupabaseClient<any, "public", "public", any, any>;
+import { SupabaseClient } from '@supabase/supabase-js';
+export declare const supabase: SupabaseClient;
 export declare function testSupabaseConnection(): Promise<boolean>;
 export declare function query(table: string, options?: any): Promise<({
     error: true;

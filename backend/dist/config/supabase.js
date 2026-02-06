@@ -13,17 +13,29 @@ const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("./logger");
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const isTestEnv = process.env.NODE_ENV === 'test';
+// Create Supabase client or mock for test environment
+let supabaseClient = null;
 if (!supabaseUrl || !supabaseKey) {
-    logger_1.logger.error('Missing Supabase credentials. Please check SUPABASE_URL and SUPABASE_ANON_KEY in .env');
-    process.exit(1);
+    if (isTestEnv) {
+        // In test environment, allow tests to run with mocked client
+        logger_1.logger.warn('Supabase credentials not configured. Running in test mode.');
+    }
+    else {
+        logger_1.logger.error('Missing Supabase credentials. Please check SUPABASE_URL and SUPABASE_ANON_KEY in .env');
+        process.exit(1);
+    }
 }
-// Create Supabase client
-exports.supabase = (0, supabase_js_1.createClient)(supabaseUrl, supabaseKey, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-    },
-});
+else {
+    supabaseClient = (0, supabase_js_1.createClient)(supabaseUrl, supabaseKey, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+        },
+    });
+}
+// Export supabase client (may be null in test environment without env vars)
+exports.supabase = supabaseClient;
 // Test connection
 async function testSupabaseConnection() {
     try {

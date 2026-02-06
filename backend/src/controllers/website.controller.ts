@@ -242,7 +242,7 @@ export const createWebsite = catchAsync(async (req: Request, res: Response) => {
       slug,
       description: description.trim(),
       short_description: shortDescription?.trim() || description.slice(0, 150).trim(),
-      category_id: categoryId,
+      categoryId: categoryId,
       creator_id: req.user.id,
       thumbnail: thumbnail || '',
       screenshots: screenshots || [],
@@ -324,7 +324,7 @@ export const updateWebsite = catchAsync(async (req: Request, res: Response) => {
   } = req.body as UpdateWebsiteRequest;
 
   // If changing category, verify it exists
-  if (categoryId && categoryId !== existingWebsite.category_id) {
+  if (categoryId && categoryId !== existingWebsite.categoryId) {
     const { data: category } = await supabase
       .from('categories')
       .select('id')
@@ -367,7 +367,7 @@ export const updateWebsite = catchAsync(async (req: Request, res: Response) => {
 
   if (description) updateData.description = description.trim();
   if (shortDescription) updateData.short_description = shortDescription.trim();
-  if (categoryId) updateData.category_id = categoryId;
+  if (categoryId) updateData.categoryId = categoryId;
   if (externalUrl) updateData.external_url = externalUrl.trim();
   if (thumbnail !== undefined) updateData.thumbnail = thumbnail;
   if (screenshots !== undefined) updateData.screenshots = screenshots;

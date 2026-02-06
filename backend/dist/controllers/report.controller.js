@@ -97,7 +97,7 @@ exports.getMyReports = (0, catchAsync_1.catchAsync)(async (req, res) => {
       website:websites(id, name, slug, thumbnail)
     `, { count: 'exact' })
         .eq('reporter_id', req.user.id)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(skip, skip + take - 1);
     if (error)
         throw error;

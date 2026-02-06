@@ -274,3 +274,116 @@ export const getMe = catchAsync(async (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+/**
+ * @desc    Request password reset
+ * @route   POST /api/v1/auth/forgot-password
+ * @access  Public
+ */
+export const forgotPassword = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  // 1. Validate email
+  if (!email) {
+    throw new ValidationError('Email is required', [
+      { field: 'email', message: 'Please provide your email address' },
+    ]);
+  }
+
+  // 2. Check if user exists
+  const { data: user } = await supabase
+    .from('users')
+    .select('id, email, name')
+    .eq('email', email.toLowerCase())
+    .single();
+
+  // Always return success to prevent email enumeration
+  // In production, this would send an email with a reset token
+  if (user) {
+    // Generate reset token (in production, store this in DB with expiry)
+    const crypto = await import('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    // Store reset token in user record (with 1 hour expiry)
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    
+    await supabase
+      .from('users')
+      .update({
+        reset_token: resetToken,
+        reset_token_expiry: resetExpiry,
+      })
+      .eq('id', user.id);
+
+    // TODO: In production, send email with reset link
+    // For now, we just log it (remove in production)
+    console.log(`Password reset requested for ${email}. Token: ${resetToken}`);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'If an account with that email exists, a password reset link has been sent.',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * @desc    Reset password with token
+ * @route   POST /api/v1/auth/reset-password
+ * @access  Public
+ */
+export const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+
+  // 1. Validate inputs
+  if (!token || !password) {
+    throw new ValidationError('Token and password are required', [
+      ...(!token ? [{ field: 'token', message: 'Reset token is required' }] : []),
+      ...(!password ? [{ field: 'password', message: 'New password is required' }] : []),
+    ]);
+  }
+
+  // 2. Validate password strength
+  const passwordValidation = validatePasswordStrength(password);
+  if (!passwordValidation.isValid) {
+    throw new ValidationError('Password does not meet requirements', passwordValidation.errors.map(msg => ({
+      field: 'password',
+      message: msg,
+    })));
+  }
+
+  // 3. Find user with valid reset token
+  const { data: user, error } = await supabase
+    .from('users')
+    .select('id, email, reset_token, reset_token_expiry')
+    .eq('reset_token', token)
+    .single();
+
+  if (error || !user) {
+    throw new ValidationError('Invalid or expired reset token');
+  }
+
+  // 4. Check if token is expired
+  if (user.reset_token_expiry && new Date(user.reset_token_expiry) < new Date()) {
+    throw new ValidationError('Reset token has expired. Please request a new one.');
+  }
+
+  // 5. Hash new password
+  const hashedPassword = await hashPassword(password);
+
+  // 6. Update password and clear reset token
+  await supabase
+    .from('users')
+    .update({
+      password: hashedPassword,
+      reset_token: null,
+      reset_token_expiry: null,
+    })
+    .eq('id', user.id);
+
+  res.status(200).json({
+    success: true,
+    message: 'Password has been reset successfully. You can now login with your new password.',
+    timestamp: new Date().toISOString(),
+  });
+});

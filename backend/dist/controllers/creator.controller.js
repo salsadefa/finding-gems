@@ -19,7 +19,7 @@ exports.getCreators = (0, catchAsync_1.catchAsync)(async (req, res) => {
     let query = supabase_1.supabase
         .from('users')
         .select(`
-      id, name, username, avatar, role, created_at,
+      id, name, username, avatar, role, createdAt,
       creator_profiles(
         bio,
         professional_background,
@@ -40,7 +40,7 @@ exports.getCreators = (0, catchAsync_1.catchAsync)(async (req, res) => {
     // Sort options
     const sortColumn = sortBy === 'rating' ? 'creator_profiles.rating' :
         sortBy === 'websites' ? 'creator_profiles.total_websites' :
-            sortBy === 'newest' ? 'created_at' : 'name';
+            sortBy === 'newest' ? 'createdAt' : 'name';
     const { data: creators, error, count } = await query
         .order(sortColumn, { ascending: sortOrder === 'asc' })
         .range(skip, skip + take - 1);
@@ -76,7 +76,7 @@ exports.getCreatorProfile = (0, catchAsync_1.catchAsync)(async (req, res) => {
     let query = supabase_1.supabase
         .from('users')
         .select(`
-      id, name, username, avatar, role, created_at,
+      id, name, username, avatar, role, createdAt,
       creator_profiles(
         bio,
         professional_background,
@@ -111,7 +111,7 @@ exports.getCreatorProfile = (0, catchAsync_1.catchAsync)(async (req, res) => {
     `)
         .eq('creator_id', creator.id)
         .eq('status', 'active')
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .limit(10);
     res.status(200).json({
         success: true,

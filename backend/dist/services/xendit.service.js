@@ -100,11 +100,15 @@ class XenditService {
                 ],
             };
             const response = await this.client.Invoice.createInvoice({ data: invoiceData });
+            // Validate response
+            if (!response || !response.id) {
+                throw new Error('Invalid response from Xendit API');
+            }
             return {
                 invoiceId: response.id,
-                invoiceUrl: response.invoiceUrl,
+                invoiceUrl: response.invoiceUrl || '',
                 externalId: response.externalId,
-                status: response.status,
+                status: response.status || 'PENDING',
                 amount: Number(response.amount),
                 expiryDate: response.expiryDate?.toISOString() || new Date(Date.now() + DEFAULT_INVOICE_DURATION * 1000).toISOString(),
             };

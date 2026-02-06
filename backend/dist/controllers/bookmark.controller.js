@@ -4,7 +4,7 @@
 // ============================================
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.checkBookmark = exports.deleteBookmark = exports.createBookmark = exports.getMyBookmarks = void 0;
-const database_1 = require("../config/database");
+const supabase_1 = require("../config/supabase");
 const catchAsync_1 = require("../utils/catchAsync");
 const errors_1 = require("../utils/errors");
 /**
@@ -16,35 +16,26 @@ exports.getMyBookmarks = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (!req.user) {
         throw new errors_1.NotFoundError('User not found');
     }
-    const bookmarks = await database_1.prisma.bookmark.findMany({
-        where: { userId: req.user.id },
-        orderBy: { createdAt: 'desc' },
-        include: {
-            website: {
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    thumbnail: true,
-                    category: {
-                        select: {
-                            name: true,
-                            slug: true,
-                        },
-                    },
-                    creator: {
-                        select: {
-                            name: true,
-                            username: true,
-                        },
-                    },
-                },
-            },
-        },
-    });
+    const { data: bookmarks, error } = await supabase_1.supabase
+        .from('bookmarks')
+        .select(`
+      *,
+      website:websites(
+        id,
+        name,
+        slug,
+        thumbnail,
+        category:categories(name, slug),
+        creator:users(name, username)
+      )
+    `)
+        .eq('user_id', req.user.id)
+        .order('createdAt', { ascending: false });
+    if (error)
+        throw error;
     res.status(200).json({
         success: true,
-        data: { bookmarks },
+        data: { bookmarks: bookmarks || [] },
         timestamp: new Date().toISOString(),
     });
 });
@@ -62,52 +53,45 @@ exports.createBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
         throw new errors_1.ValidationError('Website ID is required');
     }
     // Check if website exists
-    const website = await database_1.prisma.website.findUnique({
-        where: { id: websiteId },
-    });
-    if (!website) {
+    const { data: website, error: websiteError } = await supabase_1.supabase
+        .from('websites')
+        .select('id, name, slug, thumbnail')
+        .eq('id', websiteId)
+        .single();
+    if (websiteError || !website) {
         throw new errors_1.NotFoundError('Website not found');
     }
     // Check if already bookmarked
-    const existingBookmark = await database_1.prisma.bookmark.findUnique({
-        where: {
-            websiteId_userId: {
-                websiteId,
-                userId: req.user.id,
-            },
-        },
-    });
+    const { data: existingBookmark } = await supabase_1.supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('website_id', websiteId)
+        .eq('user_id', req.user.id)
+        .single();
     if (existingBookmark) {
         throw new errors_1.ConflictError('Website already bookmarked');
     }
-    const bookmark = await database_1.prisma.bookmark.create({
-        data: {
-            websiteId,
-            userId: req.user.id,
-        },
-        include: {
-            website: {
-                select: {
-                    id: true,
-                    name: true,
-                    slug: true,
-                    thumbnail: true,
-                    category: {
-                        select: {
-                            name: true,
-                            slug: true,
-                        },
-                    },
-                    creator: {
-                        select: {
-                            name: true,
-                            username: true,
-                        },
-                    },
-                },
-            },
-        },
-    });
+    // Create bookmark
+    const { data: bookmark, error } = await supabase_1.supabase
+        .from('bookmarks')
+        .insert({
+        website_id: websiteId,
+        user_id: req.user.id,
+    })
+        .select(`
+      *,
+      website:websites(
+        id,
+        name,
+        slug,
+        thumbnail,
+        category:categories(name, slug),
+        creator:users(name, username)
+      )
+    `)
+        .single();
+    if (error)
+        throw error;
     res.status(201).json({
         success: true,
         data: { bookmark },
@@ -126,25 +110,23 @@ exports.deleteBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
     }
     const { websiteId } = req.params;
     // Check if bookmark exists
-    const bookmark = await database_1.prisma.bookmark.findUnique({
-        where: {
-            websiteId_userId: {
-                websiteId,
-                userId: req.user.id,
-            },
-        },
-    });
-    if (!bookmark) {
+    const { data: bookmark, error: findError } = await supabase_1.supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('website_id', websiteId)
+        .eq('user_id', req.user.id)
+        .single();
+    if (findError || !bookmark) {
         throw new errors_1.NotFoundError('Bookmark not found');
     }
-    await database_1.prisma.bookmark.delete({
-        where: {
-            websiteId_userId: {
-                websiteId,
-                userId: req.user.id,
-            },
-        },
-    });
+    // Delete bookmark
+    const { error } = await supabase_1.supabase
+        .from('bookmarks')
+        .delete()
+        .eq('website_id', websiteId)
+        .eq('user_id', req.user.id);
+    if (error)
+        throw error;
     res.status(200).json({
         success: true,
         message: 'Bookmark removed successfully',
@@ -161,14 +143,12 @@ exports.checkBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
         throw new errors_1.NotFoundError('User not found');
     }
     const { websiteId } = req.params;
-    const bookmark = await database_1.prisma.bookmark.findUnique({
-        where: {
-            websiteId_userId: {
-                websiteId,
-                userId: req.user.id,
-            },
-        },
-    });
+    const { data: bookmark } = await supabase_1.supabase
+        .from('bookmarks')
+        .select('id')
+        .eq('website_id', websiteId)
+        .eq('user_id', req.user.id)
+        .single();
     res.status(200).json({
         success: true,
         data: { isBookmarked: !!bookmark },

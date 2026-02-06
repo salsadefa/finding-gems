@@ -87,9 +87,7 @@ exports.getWebsiteById = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .select(`*, 
       creator:users(id, name, username, avatar), 
       category:categories(id, name, slug, icon, description),
-      reviews:reviews(*, user:users(id, name, username, avatar)),
-      faqs:faqs(*),
-      analytics:website_analytics(*)`);
+      reviews:reviews(*, user:users(id, name, username, avatar))`);
     if (isUuid) {
         query = query.eq('id', id);
     }
@@ -177,7 +175,7 @@ exports.createWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
         slug,
         description: description.trim(),
         short_description: shortDescription?.trim() || description.slice(0, 150).trim(),
-        category_id: categoryId,
+        categoryId: categoryId,
         creator_id: req.user.id,
         thumbnail: thumbnail || '',
         screenshots: screenshots || [],
@@ -233,7 +231,7 @@ exports.updateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
     }
     const { name, description, shortDescription, categoryId, externalUrl, thumbnail, screenshots, demoVideoUrl, techStack, useCases, hasFreeTrial, freeTrialDetails, status, } = req.body;
     // If changing category, verify it exists
-    if (categoryId && categoryId !== existingWebsite.category_id) {
+    if (categoryId && categoryId !== existingWebsite.categoryId) {
         const { data: category } = await supabase_1.supabase
             .from('categories')
             .select('id')
@@ -274,7 +272,7 @@ exports.updateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (shortDescription)
         updateData.short_description = shortDescription.trim();
     if (categoryId)
-        updateData.category_id = categoryId;
+        updateData.categoryId = categoryId;
     if (externalUrl)
         updateData.external_url = externalUrl.trim();
     if (thumbnail !== undefined)

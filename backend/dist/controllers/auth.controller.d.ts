@@ -29,4 +29,16 @@ export declare const refresh: (req: Request, res: Response, next: import("expres
  * @access  Private
  */
 export declare const getMe: (req: Request, res: Response, next: import("express").NextFunction) => void;
+/**
+ * @desc    Request password reset
+ * @route   POST /api/v1/auth/forgot-password
+ * @access  Public
+ */
+export declare const forgotPassword: (req: Request, res: Response, next: import("express").NextFunction) => void;
+/**
+ * @desc    Reset password with token
+ * @route   POST /api/v1/auth/reset-password
+ * @access  Public
+ */
+export declare const resetPassword: (req: Request, res: Response, next: import("express").NextFunction) => void;
 //# sourceMappingURL=auth.controller.d.ts.map

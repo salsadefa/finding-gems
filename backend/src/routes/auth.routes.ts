@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from 'express';
-import { register, login, logout, refresh, getMe } from '../controllers/auth.controller';
+import { register, login, logout, refresh, getMe, forgotPassword, resetPassword } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -42,5 +42,19 @@ router.post('/refresh', refresh);
  * @access  Private
  */
 router.get('/me', authenticate, getMe);
+
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    Request password reset
+ * @access  Public
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * @route   POST /api/v1/auth/reset-password
+ * @desc    Reset password with token
+ * @access  Public
+ */
+router.post('/reset-password', resetPassword);
 
 export default router;

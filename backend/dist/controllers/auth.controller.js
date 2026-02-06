@@ -2,8 +2,41 @@
 // ============================================
 // Authentication Controller - Finding Gems Backend
 // ============================================
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getMe = exports.refresh = exports.logout = exports.login = exports.register = void 0;
+exports.resetPassword = exports.forgotPassword = exports.getMe = exports.refresh = exports.logout = exports.login = exports.register = void 0;
 const supabase_1 = require("../config/supabase");
 const catchAsync_1 = require("../utils/catchAsync");
 const errors_1 = require("../utils/errors");
@@ -227,6 +260,102 @@ exports.getMe = (0, catchAsync_1.catchAsync)(async (req, res) => {
         data: {
             user: sanitizeUser(user),
         },
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Request password reset
+ * @route   POST /api/v1/auth/forgot-password
+ * @access  Public
+ */
+exports.forgotPassword = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { email } = req.body;
+    // 1. Validate email
+    if (!email) {
+        throw new errors_1.ValidationError('Email is required', [
+            { field: 'email', message: 'Please provide your email address' },
+        ]);
+    }
+    // 2. Check if user exists
+    const { data: user } = await supabase_1.supabase
+        .from('users')
+        .select('id, email, name')
+        .eq('email', email.toLowerCase())
+        .single();
+    // Always return success to prevent email enumeration
+    // In production, this would send an email with a reset token
+    if (user) {
+        // Generate reset token (in production, store this in DB with expiry)
+        const crypto = await Promise.resolve().then(() => __importStar(require('crypto')));
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        // Store reset token in user record (with 1 hour expiry)
+        const resetExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        await supabase_1.supabase
+            .from('users')
+            .update({
+            reset_token: resetToken,
+            reset_token_expiry: resetExpiry,
+        })
+            .eq('id', user.id);
+        // TODO: In production, send email with reset link
+        // For now, we just log it (remove in production)
+        console.log(`Password reset requested for ${email}. Token: ${resetToken}`);
+    }
+    res.status(200).json({
+        success: true,
+        message: 'If an account with that email exists, a password reset link has been sent.',
+        timestamp: new Date().toISOString(),
+    });
+});
+/**
+ * @desc    Reset password with token
+ * @route   POST /api/v1/auth/reset-password
+ * @access  Public
+ */
+exports.resetPassword = (0, catchAsync_1.catchAsync)(async (req, res) => {
+    const { token, password } = req.body;
+    // 1. Validate inputs
+    if (!token || !password) {
+        throw new errors_1.ValidationError('Token and password are required', [
+            ...(!token ? [{ field: 'token', message: 'Reset token is required' }] : []),
+            ...(!password ? [{ field: 'password', message: 'New password is required' }] : []),
+        ]);
+    }
+    // 2. Validate password strength
+    const passwordValidation = (0, password_1.validatePasswordStrength)(password);
+    if (!passwordValidation.isValid) {
+        throw new errors_1.ValidationError('Password does not meet requirements', passwordValidation.errors.map(msg => ({
+            field: 'password',
+            message: msg,
+        })));
+    }
+    // 3. Find user with valid reset token
+    const { data: user, error } = await supabase_1.supabase
+        .from('users')
+        .select('id, email, reset_token, reset_token_expiry')
+        .eq('reset_token', token)
+        .single();
+    if (error || !user) {
+        throw new errors_1.ValidationError('Invalid or expired reset token');
+    }
+    // 4. Check if token is expired
+    if (user.reset_token_expiry && new Date(user.reset_token_expiry) < new Date()) {
+        throw new errors_1.ValidationError('Reset token has expired. Please request a new one.');
+    }
+    // 5. Hash new password
+    const hashedPassword = await (0, password_1.hashPassword)(password);
+    // 6. Update password and clear reset token
+    await supabase_1.supabase
+        .from('users')
+        .update({
+        password: hashedPassword,
+        reset_token: null,
+        reset_token_expiry: null,
+    })
+        .eq('id', user.id);
+    res.status(200).json({
+        success: true,
+        message: 'Password has been reset successfully. You can now login with your new password.',
         timestamp: new Date().toISOString(),
     });
 });

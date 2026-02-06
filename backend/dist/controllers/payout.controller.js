@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.processPayout = exports.getAllPayouts = exports.cancelPayout = exports.requestPayout = exports.getPayouts = exports.deleteBankAccount = exports.addBankAccount = exports.getBankAccounts = exports.recalculateBalance = exports.getCreatorBalance = void 0;
 const supabase_1 = require("../config/supabase");
 const catchAsync_1 = require("../utils/catchAsync");
+const email_service_1 = require("../services/email.service");
 // ============================================
 // CREATOR BALANCE
 // ============================================
@@ -206,7 +207,7 @@ exports.getPayouts = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .from('payouts')
         .select('*', { count: 'exact' })
         .eq('creator_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -237,6 +238,10 @@ exports.requestPayout = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const user = req.user;
     if (!user) {
         return res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
+    }
+    // Check if user is a creator
+    if (user.role !== 'creator' && user.role !== 'admin') {
+        return res.status(403).json({ success: false, error: { message: 'Only creators can request payouts' } });
     }
     const { amount, bank_account_id, notes } = req.body;
     if (!amount || amount <= 0) {
@@ -329,6 +334,17 @@ exports.requestPayout = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (error) {
         return res.status(500).json({ success: false, error: { message: error.message } });
     }
+    // Send email notification (async)
+    if (user.email) {
+        (0, email_service_1.sendPayoutRequestedEmail)(user.email, {
+            creatorName: user.name || 'Creator',
+            payoutNumber: payoutNumber,
+            amount: netAmount,
+            bankName: bankAccount.bank_name,
+            accountNumber: bankAccount.account_number.replace(/\d(?=\d{4})/g, '*'),
+            estimatedDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('id-ID')
+        }).catch(err => console.error('Failed to send payout request email:', err));
+    }
     res.status(201).json({
         success: true,
         data: { payout },
@@ -399,7 +415,7 @@ exports.getAllPayouts = (0, catchAsync_1.catchAsync)(async (req, res) => {
       *,
       creator:users!payouts_creator_id_fkey(id, name, email)
     `, { count: 'exact' })
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -486,6 +502,22 @@ exports.processPayout = (0, catchAsync_1.catchAsync)(async (req, res) => {
                 .eq('creator_id', payout.creator_id);
         }
     }
+    // Send email notification to creator
+    const { data: creator } = await supabase_1.supabase
+        .from('users')
+        .select('email, name')
+        .eq('id', payout.creator_id)
+        .single();
+    if (creator?.email) {
+        (0, email_service_1.sendPayoutProcessedEmail)(creator.email, {
+            creatorName: creator.name || 'Creator',
+            payoutNumber: payout.payout_number,
+            amount: payout.net_amount,
+            status: newStatus,
+            rejectionReason: newStatus === 'rejected' ? status_message : undefined,
+            transferReference: transfer_reference
+        }).catch(err => console.error('Failed to send payout processed email:', err));
+    }
     res.status(200).json({
         success: true,
         message: `Payout ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
@@ -502,7 +534,7 @@ async function calculateCreatorBalance(creatorId) {
     // Get all paid orders for this creator
     const { data: orders } = await supabase_1.supabase
         .from('orders')
-        .select('total_amount, platform_fee, status, created_at')
+        .select('total_amount, platform_fee, status, createdAt')
         .eq('creator_id', creatorId)
         .eq('status', 'paid');
     const now = new Date();
@@ -513,7 +545,7 @@ async function calculateCreatorBalance(creatorId) {
     orders?.forEach(order => {
         const creatorEarning = Number(order.total_amount) - Number(order.platform_fee);
         totalEarnings += creatorEarning;
-        const orderDate = new Date(order.created_at);
+        const orderDate = new Date(order.createdAt);
         const daysSinceOrder = Math.floor((now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
         if (daysSinceOrder >= settlementDays) {
             availableBalance += creatorEarning;

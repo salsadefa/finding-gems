@@ -323,7 +323,7 @@ exports.getOrder = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .from('transactions')
         .select('*')
         .eq('order_id', orderId)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .limit(1)
         .single();
     // Get invoice if exists
@@ -360,7 +360,7 @@ exports.getMyOrders = (0, catchAsync_1.catchAsync)(async (req, res) => {
       websites!inner(id, name, slug, thumbnail)
     `, { count: 'exact' })
         .eq('buyer_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -487,7 +487,7 @@ exports.getMyInvoices = (0, catchAsync_1.catchAsync)(async (req, res) => {
       orders!inner(buyer_id, website_id, websites(name, slug))
     `, { count: 'exact' })
         .eq('orders.buyer_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -604,7 +604,7 @@ exports.getCreatorSales = (0, catchAsync_1.catchAsync)(async (req, res) => {
       buyer:users!orders_buyer_id_fkey(id, name, email)
     `, { count: 'exact' })
         .eq('creator_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('createdAt', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
