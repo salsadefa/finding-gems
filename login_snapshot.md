@@ -1,0 +1,105 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - generic [ref=e7]:
+          - link "Search" [ref=e8] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e9]
+          - generic [ref=e12]:
+            - link "Log In" [ref=e13] [cursor=pointer]:
+              - /url: /login
+            - link "Sign Up" [ref=e14] [cursor=pointer]:
+              - /url: /signup
+          - button [ref=e15]:
+            - img [ref=e16]
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - link "Dualangka" [ref=e22] [cursor=pointer]:
+            - /url: /
+          - heading "Welcome back" [level=1] [ref=e23]
+          - paragraph [ref=e24]: Sign in to your account
+        - generic [ref=e25]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: Email
+            - textbox "you@example.com" [ref=e29]
+          - generic [ref=e30]:
+            - generic [ref=e31]:
+              - generic [ref=e32]: Password
+              - link "Forgot password?" [ref=e33] [cursor=pointer]:
+                - /url: /forgot-password
+            - textbox "••••••••" [ref=e35]
+          - button "Sign In" [ref=e37] [cursor=pointer]
+        - generic [ref=e38]: or try demo accounts
+        - generic [ref=e39]:
+          - button "Login as Buyer" [ref=e40]
+          - button "Login as Creator" [ref=e41]
+          - button "Login as Admin" [ref=e42]
+        - paragraph [ref=e43]:
+          - text: Don't have an account?
+          - link "Sign up" [ref=e44] [cursor=pointer]:
+            - /url: /signup
+    - contentinfo [ref=e45]:
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e48]:
+            - link "Dualangka" [ref=e49] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e50]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e52]:
+            - generic [ref=e53]:
+              - heading "Product" [level=4] [ref=e54]
+              - list [ref=e55]:
+                - listitem [ref=e56]:
+                  - link "Explore" [ref=e57] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e58]:
+                  - link "Categories" [ref=e59] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e60]:
+                  - link "For Creators" [ref=e61] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e62]:
+                  - link "Pricing" [ref=e63] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e64]:
+              - heading "Company" [level=4] [ref=e65]
+              - list [ref=e66]:
+                - listitem [ref=e67]:
+                  - link "About" [ref=e68] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e69]:
+                  - link "Blog" [ref=e70] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e71]:
+                  - link "Careers" [ref=e72] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e73]:
+                  - link "Contact" [ref=e74] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e75]:
+              - heading "Legal" [level=4] [ref=e76]
+              - list [ref=e77]:
+                - listitem [ref=e78]:
+                  - link "Privacy Policy" [ref=e79] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e80]:
+                  - link "Terms of Service" [ref=e81] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e82]:
+                  - link "Cookie Policy" [ref=e83] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e84]:
+          - paragraph [ref=e85]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e86]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e87]:
+    - img [ref=e89]
+    - button "Open Tanstack query devtools" [ref=e137] [cursor=pointer]:
+      - img [ref=e138]
+  - button "Open Next.js Dev Tools" [ref=e191] [cursor=pointer]:
+    - img [ref=e192]
+  - alert [ref=e195]

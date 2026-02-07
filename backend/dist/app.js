@@ -10,6 +10,7 @@ const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
+const compression_1 = __importDefault(require("compression"));
 const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const logger_1 = require("./config/logger");
@@ -33,6 +34,21 @@ const app = (0, express_1.default)();
 // Initialize Sentry (must be done early)
 (0, sentry_1.initSentry)(app);
 // ============================================
+// Performance Middleware (BEST PRACTICE)
+// ============================================
+// Gzip compression - reduces payload size by ~70%
+// Best Practice: Enable compression for all responses
+app.use((0, compression_1.default)({
+    level: 6, // Balanced compression (1-9, higher = more compression, slower)
+    threshold: 1024, // Only compress responses > 1KB
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression_1.default.filter(req, res);
+    }
+}));
+// ============================================
 // Security Middleware
 // ============================================
 // Helmet - Security headers
@@ -48,8 +64,26 @@ app.use((0, helmet_1.default)({
     crossOriginEmbedderPolicy: false,
 }));
 // CORS - Cross-Origin Resource Sharing
+// SEC-007 Fix: Properly validate origins
+const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'http://localhost:3000',
+    'https://finding-gems.vercel.app',
+    'https://findinggems.id',
+];
 app.use((0, cors_1.default)({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl)
+        if (!origin) {
+            return callback(null, true);
+        }
+        // Check if origin is in whitelist
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        // Reject all other origins
+        return callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
     optionsSuccessStatus: 200,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -72,17 +106,26 @@ const apiLimiter = (0, express_rate_limit_1.default)({
         timestamp: new Date().toISOString(),
     },
 });
+// Environment-aware auth rate limiting
+// Relaxed in development for QA testing, strict in production
+const isDevelopment = process.env.NODE_ENV !== 'production';
 const authLimiter = (0, express_rate_limit_1.default)({
-    windowMs: 60 * 1000, // 1 minute (reduced for testing)
-    max: 100, // 100 login attempts per window (increased for testing)
+    windowMs: isDevelopment ? 5 * 60 * 1000 : 15 * 60 * 1000, // 5 min (dev) / 15 min (prod)
+    max: isDevelopment ? 20 : 5, // 20 attempts (dev) / 5 attempts (prod)
     skipSuccessfulRequests: true,
-    message: {
-        success: false,
-        error: {
-            code: 'RATE_LIMIT_EXCEEDED',
-            message: 'Too many login attempts, please try again later',
-        },
-        timestamp: new Date().toISOString(),
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (_req, res) => {
+        res.status(429).json({
+            success: false,
+            error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: isDevelopment
+                    ? 'Too many login attempts, please try again after 5 minutes'
+                    : 'Too many login attempts, please try again after 15 minutes',
+            },
+            timestamp: new Date().toISOString(),
+        });
     },
 });
 // Apply rate limiting to all API routes
@@ -92,10 +135,34 @@ app.use('/api/v1/auth/register', authLimiter);
 // ============================================
 // Body Parsing & Logging
 // ============================================
-// JSON body parsing with size limit
-app.use(express_1.default.json({ limit: '10mb' }));
+// JSON body parsing with size limit (1MB max)
+app.use(express_1.default.json({
+    limit: '1mb',
+    verify: (_req, _res, buf) => {
+        if (buf.length > 1024 * 1024) {
+            const err = new Error('Payload too large');
+            err.status = 413;
+            err.type = 'entity.too.large';
+            throw err;
+        }
+    }
+}));
 // URL-encoded body parsing
-app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express_1.default.urlencoded({ extended: true, limit: '1mb' }));
+// Handle payload too large errors
+app.use((err, _req, res, next) => {
+    if (err.type === 'entity.too.large' || err.status === 413) {
+        return res.status(413).json({
+            success: false,
+            error: {
+                code: 'PAYLOAD_TOO_LARGE',
+                message: 'Request body exceeds the maximum allowed size of 1MB',
+            },
+            timestamp: new Date().toISOString(),
+        });
+    }
+    next(err);
+});
 // HTTP request logging
 app.use((0, morgan_1.default)('combined', { stream: logger_1.morganStream }));
 // ============================================

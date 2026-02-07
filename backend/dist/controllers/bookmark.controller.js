@@ -29,7 +29,7 @@ exports.getMyBookmarks = (0, catchAsync_1.catchAsync)(async (req, res) => {
         creator:users(name, username)
       )
     `)
-        .eq('user_id', req.user.id)
+        .eq('userId', req.user.id)
         .order('createdAt', { ascending: false });
     if (error)
         throw error;
@@ -65,8 +65,8 @@ exports.createBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { data: existingBookmark } = await supabase_1.supabase
         .from('bookmarks')
         .select('id')
-        .eq('website_id', websiteId)
-        .eq('user_id', req.user.id)
+        .eq('websiteId', websiteId)
+        .eq('userId', req.user.id)
         .single();
     if (existingBookmark) {
         throw new errors_1.ConflictError('Website already bookmarked');
@@ -75,8 +75,8 @@ exports.createBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { data: bookmark, error } = await supabase_1.supabase
         .from('bookmarks')
         .insert({
-        website_id: websiteId,
-        user_id: req.user.id,
+        websiteId: websiteId,
+        userId: req.user.id,
     })
         .select(`
       *,
@@ -90,8 +90,13 @@ exports.createBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
       )
     `)
         .single();
-    if (error)
+    // Handle unique constraint violation (race condition / duplicate insert)
+    if (error) {
+        if (error.code === '23505') { // Unique violation
+            throw new errors_1.ConflictError('Website already bookmarked');
+        }
         throw error;
+    }
     res.status(201).json({
         success: true,
         data: { bookmark },
@@ -113,8 +118,8 @@ exports.deleteBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { data: bookmark, error: findError } = await supabase_1.supabase
         .from('bookmarks')
         .select('id')
-        .eq('website_id', websiteId)
-        .eq('user_id', req.user.id)
+        .eq('websiteId', websiteId)
+        .eq('userId', req.user.id)
         .single();
     if (findError || !bookmark) {
         throw new errors_1.NotFoundError('Bookmark not found');
@@ -123,8 +128,8 @@ exports.deleteBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { error } = await supabase_1.supabase
         .from('bookmarks')
         .delete()
-        .eq('website_id', websiteId)
-        .eq('user_id', req.user.id);
+        .eq('websiteId', websiteId)
+        .eq('userId', req.user.id);
     if (error)
         throw error;
     res.status(200).json({
@@ -146,8 +151,8 @@ exports.checkBookmark = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { data: bookmark } = await supabase_1.supabase
         .from('bookmarks')
         .select('id')
-        .eq('website_id', websiteId)
-        .eq('user_id', req.user.id)
+        .eq('websiteId', websiteId)
+        .eq('userId', req.user.id)
         .single();
     res.status(200).json({
         success: true,

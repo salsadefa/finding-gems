@@ -1,23 +1,36 @@
 import { Request, Response } from 'express';
 import { getMyBookmarks, createBookmark, deleteBookmark, checkBookmark } from '../../src/controllers/bookmark.controller';
-import { prisma } from '../../src/config/database';
+import { supabase } from '../../src/config/supabase';
 
-jest.mock('../../src/config/database', () => ({
-  prisma: {
-    bookmark: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      delete: jest.fn(),
-    },
-    website: {
-      findUnique: jest.fn(),
-    }
-  }
+// Mock Supabase
+jest.mock('../../src/config/supabase', () => ({
+  supabase: {
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      insert: jest.fn().mockReturnThis(),
+      delete: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockReturnThis(),
+      single: jest.fn(),
+    })),
+  },
 }));
 
 // Helper to wait for async catchAsync to propagate
 const waitForAsync = () => new Promise(resolve => setImmediate(resolve));
+
+// Helper to create chainable mock
+const createSupabaseMock = (finalResult: { data?: any; error?: any }) => {
+  const chainMock = {
+    select: jest.fn().mockReturnThis(),
+    insert: jest.fn().mockReturnThis(),
+    delete: jest.fn().mockReturnThis(),
+    eq: jest.fn().mockReturnThis(),
+    order: jest.fn().mockReturnThis(),
+    single: jest.fn().mockResolvedValue(finalResult),
+  };
+  return chainMock;
+};
 
 describe('Bookmark Controller', () => {
   let req: Partial<Request>;
@@ -43,17 +56,22 @@ describe('Bookmark Controller', () => {
       const mockBookmarks = [
         { 
           id: 'b1', 
-          websiteId: 'w1', 
+          website_id: 'w1', 
           website: { id: 'w1', name: 'Site 1', slug: 'site-1' } 
         },
         { 
           id: 'b2', 
-          websiteId: 'w2', 
+          website_id: 'w2', 
           website: { id: 'w2', name: 'Site 2', slug: 'site-2' } 
         }
       ];
 
-      (prisma.bookmark.findMany as jest.Mock).mockResolvedValue(mockBookmarks);
+      const mockChain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: mockBookmarks, error: null }),
+      };
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
       getMyBookmarks(req as Request, res as Response, next);
       await waitForAsync();
@@ -68,7 +86,12 @@ describe('Bookmark Controller', () => {
     it('should return empty array if no bookmarks', async () => {
       req.user = { id: 'user-123' } as any;
 
-      (prisma.bookmark.findMany as jest.Mock).mockResolvedValue([]);
+      const mockChain = {
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        order: jest.fn().mockResolvedValue({ data: [], error: null }),
+      };
+      (supabase.from as jest.Mock).mockReturnValue(mockChain);
 
       getMyBookmarks(req as Request, res as Response, next);
       await waitForAsync();
@@ -88,17 +111,41 @@ describe('Bookmark Controller', () => {
       const mockWebsite = { id: 'website-123', name: 'Test Site' };
       const mockBookmark = { 
         id: 'bookmark-123', 
-        websiteId: 'website-123', 
-        userId: 'user-123',
+        website_id: 'website-123', 
+        user_id: 'user-123',
         website: mockWebsite
       };
 
-      // Mock: website exists
-      (prisma.website.findUnique as jest.Mock).mockResolvedValue(mockWebsite);
-      // Mock: no existing bookmark
-      (prisma.bookmark.findUnique as jest.Mock).mockResolvedValue(null);
-      // Mock: bookmark creation
-      (prisma.bookmark.create as jest.Mock).mockResolvedValue(mockBookmark);
+      // Track call count
+      let callCount = 0;
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'websites') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: mockWebsite, error: null }),
+          };
+        }
+        if (table === 'bookmarks') {
+          callCount++;
+          if (callCount === 1) {
+            // First call - check existing
+            return {
+              select: jest.fn().mockReturnThis(),
+              eq: jest.fn().mockReturnThis(),
+              single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+            };
+          } else {
+            // Second call - insert
+            return {
+              insert: jest.fn().mockReturnThis(),
+              select: jest.fn().mockReturnThis(),
+              single: jest.fn().mockResolvedValue({ data: mockBookmark, error: null }),
+            };
+          }
+        }
+        return createSupabaseMock({ data: null, error: null });
+      });
 
       createBookmark(req as Request, res as Response, next);
       await waitForAsync();
@@ -114,10 +161,23 @@ describe('Bookmark Controller', () => {
       req.user = { id: 'user-123' } as any;
       req.body = { websiteId: 'website-123' };
 
-      // Mock: website exists
-      (prisma.website.findUnique as jest.Mock).mockResolvedValue({ id: 'website-123' });
-      // Mock: bookmark already exists
-      (prisma.bookmark.findUnique as jest.Mock).mockResolvedValue({ id: 'existing-bookmark' });
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'websites') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id: 'website-123' }, error: null }),
+          };
+        }
+        if (table === 'bookmarks') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: { id: 'existing-bookmark' }, error: null }),
+          };
+        }
+        return createSupabaseMock({ data: null, error: null });
+      });
 
       createBookmark(req as Request, res as Response, next);
       await waitForAsync();
@@ -132,8 +192,16 @@ describe('Bookmark Controller', () => {
       req.user = { id: 'user-123' } as any;
       req.body = { websiteId: 'nonexistent' };
 
-      // Mock: website doesn't exist
-      (prisma.website.findUnique as jest.Mock).mockResolvedValue(null);
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'websites') {
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: jest.fn().mockReturnThis(),
+            single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+          };
+        }
+        return createSupabaseMock({ data: null, error: null });
+      });
 
       createBookmark(req as Request, res as Response, next);
       await waitForAsync();
@@ -162,17 +230,34 @@ describe('Bookmark Controller', () => {
       req.user = { id: 'user-123' } as any;
       req.params = { websiteId: 'website-123' };
 
-      // Mock: bookmark exists
-      (prisma.bookmark.findUnique as jest.Mock).mockResolvedValue({ 
-        id: 'bookmark-123',
-        websiteId: 'website-123',
-        userId: 'user-123'
+      let callCount = 0;
+      (supabase.from as jest.Mock).mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          // First call - find bookmark
+          const eqMock = jest.fn().mockReturnThis();
+          return {
+            select: jest.fn().mockReturnThis(),
+            eq: eqMock,
+            single: jest.fn().mockResolvedValue({ 
+              data: { id: 'bookmark-123', website_id: 'website-123', user_id: 'user-123' }, 
+              error: null 
+            }),
+          };
+        } else {
+          // Second call - delete (chains: delete().eq().eq())
+          const eqMock = jest.fn().mockImplementation(() => ({
+            eq: jest.fn().mockResolvedValue({ error: null }),
+          }));
+          return {
+            delete: jest.fn().mockReturnValue({ eq: eqMock }),
+          };
+        }
       });
-      // Mock: delete
-      (prisma.bookmark.delete as jest.Mock).mockResolvedValue({});
 
       deleteBookmark(req as Request, res as Response, next);
       await waitForAsync();
+      await new Promise(resolve => setTimeout(resolve, 50)); // Extra wait
 
       expect(status).toHaveBeenCalledWith(200);
       expect(json).toHaveBeenCalledWith(expect.objectContaining({
@@ -185,8 +270,11 @@ describe('Bookmark Controller', () => {
       req.user = { id: 'user-123' } as any;
       req.params = { websiteId: 'website-123' };
 
-      // Mock: bookmark doesn't exist
-      (prisma.bookmark.findUnique as jest.Mock).mockResolvedValue(null);
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+      });
 
       deleteBookmark(req as Request, res as Response, next);
       await waitForAsync();
@@ -203,7 +291,11 @@ describe('Bookmark Controller', () => {
       req.user = { id: 'user-123' } as any;
       req.params = { websiteId: 'website-123' };
 
-      (prisma.bookmark.findUnique as jest.Mock).mockResolvedValue({ id: 'bookmark-123' });
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: { id: 'bookmark-123' }, error: null }),
+      });
 
       checkBookmark(req as Request, res as Response, next);
       await waitForAsync();
@@ -218,7 +310,11 @@ describe('Bookmark Controller', () => {
       req.user = { id: 'user-123' } as any;
       req.params = { websiteId: 'website-123' };
 
-      (prisma.bookmark.findUnique as jest.Mock).mockResolvedValue(null);
+      (supabase.from as jest.Mock).mockReturnValue({
+        select: jest.fn().mockReturnThis(),
+        eq: jest.fn().mockReturnThis(),
+        single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } }),
+      });
 
       checkBookmark(req as Request, res as Response, next);
       await waitForAsync();

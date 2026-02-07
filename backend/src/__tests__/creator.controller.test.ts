@@ -319,8 +319,8 @@ describe('Creator Controller', () => {
     test('returns creator stats', async () => {
       fromMock.mockImplementationOnce(() => new MockQuery({ 
         data: [
-          { id: 'web-1', status: 'active', view_count: 100, rating: 4.5, review_count: 10 },
-          { id: 'web-2', status: 'active', view_count: 50, rating: 4.0, review_count: 5 }
+          { id: 'web-1', status: 'active', viewCount: 100, clickCount: 50, rating: 4.5, reviewCount: 10 },
+          { id: 'web-2', status: 'active', viewCount: 50, clickCount: 25, rating: 4.0, reviewCount: 5 }
         ], 
         error: null 
       }));

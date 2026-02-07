@@ -130,10 +130,10 @@ export const getCreatorProfile = catchAsync(async (req: Request, res: Response) 
   const { data: websites } = await supabase
     .from('websites')
     .select(`
-      id, name, slug, thumbnail, short_description, rating, view_count,
+      id, name, slug, thumbnail, shortDescription, rating, viewCount,
       category:categories(id, name, slug)
     `)
-    .eq('creator_id', creator.id)
+    .eq('creatorId', creator.id)
     .eq('status', 'active')
     .order('createdAt', { ascending: false })
     .limit(10);
@@ -305,19 +305,19 @@ export const getCreatorStats = catchAsync(async (req: Request, res: Response) =>
   // Get website stats
   const { data: websites } = await supabase
     .from('websites')
-    .select('id, status, view_count, click_count, rating, review_count')
-    .eq('creator_id', req.user.id);
+    .select('id, status, viewCount, clickCount, rating, reviewCount')
+    .eq('creatorId', req.user.id);
 
   const stats = {
     totalWebsites: websites?.length || 0,
     activeWebsites: websites?.filter(w => w.status === 'active').length || 0,
     pendingWebsites: websites?.filter(w => w.status === 'pending').length || 0,
-    totalViews: websites?.reduce((sum, w) => sum + (w.view_count || 0), 0) || 0,
-    totalClicks: websites?.reduce((sum, w) => sum + (w.click_count || 0), 0) || 0,
+    totalViews: websites?.reduce((sum, w) => sum + (w.viewCount || 0), 0) || 0,
+    totalClicks: websites?.reduce((sum, w) => sum + (w.clickCount || 0), 0) || 0,
     averageRating: websites?.length 
       ? (websites.reduce((sum, w) => sum + (w.rating || 0), 0) / websites.length).toFixed(1)
       : 0,
-    totalReviews: websites?.reduce((sum, w) => sum + (w.review_count || 0), 0) || 0,
+    totalReviews: websites?.reduce((sum, w) => sum + (w.reviewCount || 0), 0) || 0,
   };
 
   res.status(200).json({

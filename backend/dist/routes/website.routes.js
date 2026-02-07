@@ -6,13 +6,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const website_controller_1 = require("../controllers/website.controller");
 const auth_1 = require("../middleware/auth");
+const cache_1 = require("../middleware/cache");
 const router = (0, express_1.Router)();
 /**
  * @route   GET /api/v1/websites
  * @desc    Get all websites with filters and pagination
  * @access  Public
+ * @cache   60 seconds (public data)
  */
-router.get('/', auth_1.optionalAuth, website_controller_1.getWebsites);
+router.get('/', (0, cache_1.cacheMiddleware)(60000), auth_1.optionalAuth, website_controller_1.getWebsites);
 /**
  * @route   GET /api/v1/websites/my-websites
  * @desc    Get current user's websites

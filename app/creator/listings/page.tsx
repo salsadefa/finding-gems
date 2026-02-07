@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { useMyWebsites } from '@/lib/api/websites';
 import EmptyState, { EmptyListingsIcon } from '@/components/EmptyState';
 import Button from '@/components/Button';
@@ -87,20 +86,22 @@ export default function CreatorListingsPage() {
                                 <div className="flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0 text-lg font-bold text-gray-400 overflow-hidden relative">
                                         {website.thumbnail && !website.thumbnail.includes('placeholder') ? (
-                                            <Image src={website.thumbnail} fill className="object-cover" alt={website.name} />
+                                            // Use regular img for user-submitted URLs to avoid Next.js domain restrictions
+                                            // eslint-disable-next-line @next/next/no-img-element
+                                            <img src={website.thumbnail} className="w-full h-full object-cover" alt={website.name || 'Website'} />
                                         ) : (
-                                            website.name.charAt(0)
+                                            (website.name || 'W').charAt(0)
                                         )}
                                     </div>
                                     <div className="min-w-0">
-                                        <h3 className="font-semibold text-gray-900 truncate">{website.name}</h3>
-                                        <p className="text-xs text-gray-500 truncate max-w-[200px]">{website.shortDescription}</p>
+                                        <h3 className="font-semibold text-gray-900 truncate">{website.name || 'Untitled'}</h3>
+                                        <p className="text-xs text-gray-500 truncate max-w-[200px]">{website.shortDescription || ''}</p>
                                     </div>
                                 </div>
-                                <div className="text-sm text-gray-600">{website.category?.name}</div>
-                                <div className="text-sm text-gray-600">{website.viewCount}</div>
+                                <div className="text-sm text-gray-600">{website.category?.name || 'Uncategorized'}</div>
+                                <div className="text-sm text-gray-600">{website.viewCount ?? 0}</div>
                                 <div className="text-sm text-gray-600 flex items-center gap-1">
-                                    <Star size={14} className="text-yellow-400 fill-yellow-400" /> {website.rating}
+                                    <Star size={14} className="text-yellow-400 fill-yellow-400" /> {website.rating ?? 0}
                                 </div>
                                 <div>
                                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${website.status === 'active' ? 'bg-green-50 text-green-700 border-green-100' :

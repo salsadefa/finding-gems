@@ -1,0 +1,126 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - generic [ref=e7]:
+          - link "Search" [ref=e8] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e9]
+          - 'button "User: QA Buyer Updated 3" [ref=e13]':
+            - 'generic "User: QA Buyer Updated 3" [ref=e14]': Q
+            - img [ref=e15]
+          - button [ref=e17]:
+            - img [ref=e18]
+    - main [ref=e19]:
+      - generic [ref=e21]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic:
+              - img
+            - textbox "Search for tools, creative assets, or inspiration..." [ref=e26]
+          - generic [ref=e27]:
+            - generic:
+              - img
+            - combobox [ref=e28] [cursor=pointer]:
+              - option "Recommended" [selected]
+              - option "Newest Arrivals"
+              - option "Most Popular"
+              - option "Alphabetical (A-Z)"
+        - generic [ref=e30]:
+          - complementary [ref=e31]:
+            - generic [ref=e32]:
+              - button "CATEGORIES" [ref=e33]:
+                - heading "CATEGORIES" [level=3] [ref=e34]
+                - img [ref=e36]
+              - generic [ref=e38]:
+                - generic [ref=e39] [cursor=pointer]:
+                  - img [ref=e41]
+                  - generic [ref=e43]: All Categories
+                  - generic [ref=e44]: "0"
+                - generic [ref=e45]:
+                  - generic [ref=e287] [cursor=pointer]:
+                    - generic [ref=e289]: AI Tools
+                    - generic [ref=e290]: "0"
+                  - generic [ref=e291] [cursor=pointer]:
+                    - generic [ref=e293]: Education
+                    - generic [ref=e294]: "0"
+                  - generic [ref=e295] [cursor=pointer]:
+                    - generic [ref=e297]: Finance
+                    - generic [ref=e298]: "0"
+                  - generic [ref=e299] [cursor=pointer]:
+                    - generic [ref=e301]: Productivity
+                    - generic [ref=e302]: "0"
+                  - generic [ref=e303] [cursor=pointer]:
+                    - generic [ref=e305]: Security
+                    - generic [ref=e306]: "0"
+            - generic [ref=e61]:
+              - button "FEATURES" [ref=e62]:
+                - heading "FEATURES" [level=3] [ref=e63]
+                - img [ref=e65]
+              - generic [ref=e70] [cursor=pointer]: Free Trial Available
+            - button "Reset all filters" [ref=e71]
+          - main [ref=e72]:
+            - heading "Loading..." [level=1] [ref=e74]
+    - contentinfo [ref=e136]:
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e139]:
+            - link "Dualangka" [ref=e140] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e141]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - heading "Product" [level=4] [ref=e145]
+              - list [ref=e146]:
+                - listitem [ref=e147]:
+                  - link "Explore" [ref=e148] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e149]:
+                  - link "Categories" [ref=e150] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e151]:
+                  - link "For Creators" [ref=e152] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e153]:
+                  - link "Pricing" [ref=e154] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e155]:
+              - heading "Company" [level=4] [ref=e156]
+              - list [ref=e157]:
+                - listitem [ref=e158]:
+                  - link "About" [ref=e159] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e160]:
+                  - link "Blog" [ref=e161] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e162]:
+                  - link "Careers" [ref=e163] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e164]:
+                  - link "Contact" [ref=e165] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e166]:
+              - heading "Legal" [level=4] [ref=e167]
+              - list [ref=e168]:
+                - listitem [ref=e169]:
+                  - link "Privacy Policy" [ref=e170] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e171]:
+                  - link "Terms of Service" [ref=e172] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e173]:
+                  - link "Cookie Policy" [ref=e174] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e175]:
+          - paragraph [ref=e176]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e177]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e178]:
+    - img [ref=e180]
+    - button "Open Tanstack query devtools" [ref=e228] [cursor=pointer]:
+      - img [ref=e229]
+  - button "Open Next.js Dev Tools" [ref=e282] [cursor=pointer]:
+    - img [ref=e283]
+  - alert [ref=e286]

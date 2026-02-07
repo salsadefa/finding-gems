@@ -42,6 +42,7 @@ const catchAsync_1 = require("../utils/catchAsync");
 const errors_1 = require("../utils/errors");
 const password_1 = require("../utils/password");
 const jwt_1 = require("../utils/jwt");
+const sanitize_1 = require("../utils/sanitize");
 /**
  * Sanitize user object by removing password
  */
@@ -87,6 +88,19 @@ exports.register = (0, catchAsync_1.catchAsync)(async (req, res) => {
             { field: 'username', message: 'Username must be 3-20 characters and can only contain letters, numbers, underscores, and hyphens' },
         ]);
     }
+    // 4.5. Sanitize name (SEC-002 XSS fix) and validate max length (NEG-004 fix)
+    const MAX_NAME_LENGTH = 100;
+    const sanitizedName = (0, sanitize_1.sanitizeText)(name);
+    if (sanitizedName.length > MAX_NAME_LENGTH) {
+        throw new errors_1.ValidationError('Name is too long', [
+            { field: 'name', message: `Name must not exceed ${MAX_NAME_LENGTH} characters` },
+        ]);
+    }
+    if (sanitizedName.length < 2) {
+        throw new errors_1.ValidationError('Name is too short', [
+            { field: 'name', message: 'Name must be at least 2 characters' },
+        ]);
+    }
     // 5. Check if email already exists
     const { data: existingEmail } = await supabase_1.supabase
         .from('users')
@@ -113,7 +127,7 @@ exports.register = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .insert({
         email: email.toLowerCase(),
         password: hashedPassword,
-        name: name.trim(),
+        name: sanitizedName,
         username: username.toLowerCase(),
         role,
         isActive: true,

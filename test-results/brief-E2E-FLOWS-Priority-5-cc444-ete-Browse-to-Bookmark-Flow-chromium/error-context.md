@@ -1,0 +1,142 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - navigation [ref=e7]:
+          - link "Explore" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Productivity" [ref=e9] [cursor=pointer]:
+            - /url: /search?category=productivity
+          - link "Administration" [ref=e10] [cursor=pointer]:
+            - /url: /search?category=administration
+          - link "Education" [ref=e11] [cursor=pointer]:
+            - /url: /search?category=education
+          - link "AI Tools" [ref=e12] [cursor=pointer]:
+            - /url: /search?category=ai-tools
+        - generic [ref=e13]:
+          - link "Search" [ref=e14] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e15]
+          - generic [ref=e18]:
+            - link "Log In" [ref=e19] [cursor=pointer]:
+              - /url: /login
+            - link "Sign Up" [ref=e20] [cursor=pointer]:
+              - /url: /signup
+    - main [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - img "Hero Background" [ref=e25]
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - img [ref=e30]
+              - generic [ref=e33]: Curated for Quality
+            - heading "The Internet's Best Tools. Hand-Picked." [level=1] [ref=e34]:
+              - text: The Internet's Best Tools.
+              - text: Hand-Picked.
+            - paragraph [ref=e35]: We filter the noise so you don't have to. Explore a directory of verified, high-quality websites designed to upgrade how you work.
+            - generic [ref=e37]:
+              - generic [ref=e38]:
+                - generic:
+                  - img
+                - textbox "Search for tools, AI assistants..." [ref=e39]: Analytics
+              - paragraph [ref=e42]:
+                - text: No tools found matching
+                - generic [ref=e43]: "\"Analytics\""
+            - generic [ref=e44]:
+              - generic [ref=e45]: Stripe
+              - generic [ref=e46]: Vercel
+              - generic [ref=e47]: Linear
+              - generic [ref=e48]: Notion
+        - generic [ref=e50]:
+          - generic [ref=e51]:
+            - generic [ref=e52]:
+              - heading "Browse by Category" [level=2] [ref=e53]
+              - paragraph [ref=e54]: Find exactly what you need.
+            - link "View All" [ref=e55] [cursor=pointer]:
+              - /url: /search
+              - text: View All
+              - img [ref=e56]
+          - generic [ref=e58]: Failed to load categories. Please try again.
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]:
+              - heading "Featured Listings" [level=2] [ref=e63]
+              - paragraph [ref=e64]: Hand-picked by our team.
+            - generic [ref=e65]:
+              - generic [ref=e66]: "Sort by:"
+              - combobox [ref=e67]:
+                - option "Top Rated" [selected]
+                - option "Newest"
+                - option "Alphabetical"
+          - generic [ref=e68]: Failed to load websites. Please try again.
+          - link "View All Listings" [ref=e70] [cursor=pointer]:
+            - /url: /search
+            - text: View All Listings
+            - img [ref=e71]
+    - contentinfo [ref=e73]:
+      - generic [ref=e74]:
+        - generic [ref=e75]:
+          - generic [ref=e76]:
+            - link "Dualangka" [active] [ref=e77] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e78]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e80]:
+            - generic [ref=e81]:
+              - heading "Product" [level=4] [ref=e82]
+              - list [ref=e83]:
+                - listitem [ref=e84]:
+                  - link "Explore" [ref=e85] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e86]:
+                  - link "Categories" [ref=e87] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e88]:
+                  - link "For Creators" [ref=e89] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e90]:
+                  - link "Pricing" [ref=e91] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e92]:
+              - heading "Company" [level=4] [ref=e93]
+              - list [ref=e94]:
+                - listitem [ref=e95]:
+                  - link "About" [ref=e96] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e97]:
+                  - link "Blog" [ref=e98] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e99]:
+                  - link "Careers" [ref=e100] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e101]:
+                  - link "Contact" [ref=e102] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e103]:
+              - heading "Legal" [level=4] [ref=e104]
+              - list [ref=e105]:
+                - listitem [ref=e106]:
+                  - link "Privacy Policy" [ref=e107] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e108]:
+                  - link "Terms of Service" [ref=e109] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e110]:
+                  - link "Cookie Policy" [ref=e111] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e112]:
+          - paragraph [ref=e113]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e114]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e115]:
+    - img [ref=e117]
+    - button "Open Tanstack query devtools" [ref=e165] [cursor=pointer]:
+      - img [ref=e166]
+  - button "Open Next.js Dev Tools" [ref=e219] [cursor=pointer]:
+    - img [ref=e220]
+  - alert [ref=e223]
+```

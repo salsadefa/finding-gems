@@ -283,19 +283,32 @@ export const handleXenditWebhook = catchAsync(async (req: Request, res: Response
   }
 
   // Update transaction
-  await supabase
+  // Note: Xendit sends payment_method in UPPERCASE but our enum uses lowercase
+  const normalizedPaymentMethod = payload.payment_method 
+    ? payload.payment_method.toLowerCase().replace(/ /g, '_')
+    : transaction.payment_method;
+    
+  console.log(`[Webhook] Updating transaction ${transaction.id} status to: ${transactionStatus}, payment_method: ${normalizedPaymentMethod}`);
+  const { error: updateTxError } = await supabase
     .from('transactions')
     .update({
       status: transactionStatus,
       gateway_response: req.body,
       paid_at: transactionStatus === 'success' ? payload.paid_at : null,
-      payment_method: payload.payment_method || transaction.payment_method,
+      payment_method: normalizedPaymentMethod,
       updated_at: new Date().toISOString()
     })
     .eq('id', transaction.id);
 
+  if (updateTxError) {
+    console.error('[Webhook] Failed to update transaction:', updateTxError);
+  } else {
+    console.log(`[Webhook] Transaction ${transaction.id} status updated to: ${transactionStatus}`);
+  }
+
   // Update order
-  await supabase
+  console.log(`[Webhook] Updating order ${orderId} status to: ${orderStatus}`);
+  const { error: updateOrderError } = await supabase
     .from('orders')
     .update({
       status: orderStatus,
@@ -303,12 +316,18 @@ export const handleXenditWebhook = catchAsync(async (req: Request, res: Response
     })
     .eq('id', orderId);
 
+  if (updateOrderError) {
+    console.error('[Webhook] Failed to update order:', updateOrderError);
+  } else {
+    console.log(`[Webhook] Order ${orderId} status updated to: ${orderStatus}`);
+  }
+
   // If payment successful, grant access and create invoice
   if (transactionStatus === 'success') {
     await grantAccessAndCreateInvoice(orderId);
   }
 
-  console.log(`[Webhook] Order ${orderId} updated: ${orderStatus}`);
+  console.log(`[Webhook] Order ${orderId} processing complete. Transaction: ${transactionStatus}, Order: ${orderStatus}`);
 
   // Always return 200 to acknowledge webhook
   res.status(200).json({ success: true, message: 'Webhook processed' });

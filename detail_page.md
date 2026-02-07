@@ -1,0 +1,179 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - generic [ref=e7]:
+          - link "Search" [ref=e8] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e9]
+          - generic [ref=e12]:
+            - link "Log In" [ref=e13] [cursor=pointer]:
+              - /url: /login
+            - link "Sign Up" [ref=e14] [cursor=pointer]:
+              - /url: /signup
+          - button [ref=e15]:
+            - img [ref=e16]
+    - main [ref=e17]:
+      - generic [ref=e536]:
+        - generic [ref=e547]:
+          - img "DataVault Analytics" [ref=e550]
+          - generic [ref=e551]:
+            - heading "DataVault Analytics" [level=1] [ref=e552]
+            - generic [ref=e553]:
+              - link "Finance" [ref=e554] [cursor=pointer]:
+                - /url: /search?category=finance
+              - generic [ref=e555]: •
+              - generic [ref=e556]:
+                - generic [ref=e557]: "5"
+                - img [ref=e558]
+              - generic [ref=e560]: (1 reviews)
+              - generic [ref=e561]: •
+              - generic [ref=e562]:
+                - generic [ref=e563]: By
+                - link "Jane Creator" [ref=e564] [cursor=pointer]:
+                  - /url: /profile/janecreator
+            - generic [ref=e565]:
+              - link "Visit Website" [ref=e566] [cursor=pointer]:
+                - /url: https://datavault.example.com
+                - text: Visit Website
+                - img [ref=e567]
+              - button "Bookmark" [ref=e571]:
+                - img [ref=e572]
+              - button "Share" [ref=e574]:
+                - img [ref=e575]
+        - img "Screenshot 1" [ref=e584] [cursor=pointer]
+        - generic [ref=e586]:
+          - generic [ref=e587]:
+            - generic [ref=e588]:
+              - generic [ref=e589]:
+                - heading "About this tool" [level=2] [ref=e590]
+                - img [ref=e591]
+              - paragraph [ref=e594]: Enterprise-grade data analytics platform with real-time dashboards, custom reporting, and AI-powered insights. Perfect for businesses wanting to make data-driven decisions.
+              - generic [ref=e595]:
+                - generic [ref=e596]: Business Intelligence
+                - generic [ref=e597]: Financial Analysis
+            - generic [ref=e598]:
+              - generic [ref=e599]:
+                - heading "Ratings and reviews" [level=2] [ref=e600]
+                - button "See all" [ref=e601]:
+                  - text: See all
+                  - img [ref=e602]
+              - generic [ref=e605]:
+                - generic [ref=e606]:
+                  - generic [ref=e607]: "5"
+                  - generic [ref=e609]:
+                    - button "1 star" [disabled] [ref=e610]:
+                      - img [ref=e611]
+                    - button "2 stars" [disabled] [ref=e613]:
+                      - img [ref=e614]
+                    - button "3 stars" [disabled] [ref=e616]:
+                      - img [ref=e617]
+                    - button "4 stars" [disabled] [ref=e619]:
+                      - img [ref=e620]
+                    - button "5 stars" [disabled] [ref=e622]:
+                      - img [ref=e623]
+                  - generic [ref=e625]: 1 total
+                - generic [ref=e626]:
+                  - generic [ref=e628]: "5"
+                  - generic [ref=e632]: "4"
+                  - generic [ref=e636]: "3"
+                  - generic [ref=e640]: "2"
+                  - generic [ref=e644]: "1"
+              - generic [ref=e648]:
+                - generic [ref=e649]:
+                  - generic [ref=e650]: QA Buyer Updated 3
+                  - generic [ref=e651]: •
+                  - generic [ref=e652]: Feb 6, 2026
+                - generic [ref=e654]:
+                  - button "1 star" [disabled] [ref=e655]:
+                    - img [ref=e656]
+                  - button "2 stars" [disabled] [ref=e658]:
+                    - img [ref=e659]
+                  - button "3 stars" [disabled] [ref=e661]:
+                    - img [ref=e662]
+                  - button "4 stars" [disabled] [ref=e664]:
+                    - img [ref=e665]
+                  - button "5 stars" [disabled] [ref=e667]:
+                    - img [ref=e668]
+                - paragraph [ref=e670]: This website is really helpful for finding gems.
+          - generic [ref=e671]:
+            - generic [ref=e672]:
+              - heading "Tech Stack" [level=3] [ref=e673]
+              - generic [ref=e674]:
+                - generic [ref=e675]: Python
+                - generic [ref=e676]: Apache Spark
+                - generic [ref=e677]: Tableau
+                - generic [ref=e678]: PostgreSQL
+            - generic [ref=e679]:
+              - heading "Data safety" [level=3] [ref=e680]:
+                - generic [ref=e681]: Data safety
+                - img [ref=e682]
+              - paragraph [ref=e685]: Safety starts with understanding how developers collect and share your data. Data privacy and security practices may vary based on your use, region, and age.
+              - generic [ref=e687]:
+                - img [ref=e689]
+                - generic [ref=e695]:
+                  - generic [ref=e696]: No data shared with third parties
+                  - generic [ref=e697]: The developer says this app doesn't share user data with other companies or organizations.
+    - contentinfo [ref=e134]:
+      - generic [ref=e135]:
+        - generic [ref=e136]:
+          - generic [ref=e137]:
+            - link "Dualangka" [ref=e138] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e139]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e141]:
+            - generic [ref=e142]:
+              - heading "Product" [level=4] [ref=e143]
+              - list [ref=e144]:
+                - listitem [ref=e145]:
+                  - link "Explore" [ref=e146] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e147]:
+                  - link "Categories" [ref=e148] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e149]:
+                  - link "For Creators" [ref=e150] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e151]:
+                  - link "Pricing" [ref=e152] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e153]:
+              - heading "Company" [level=4] [ref=e154]
+              - list [ref=e155]:
+                - listitem [ref=e156]:
+                  - link "About" [ref=e157] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e158]:
+                  - link "Blog" [ref=e159] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e160]:
+                  - link "Careers" [ref=e161] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e162]:
+                  - link "Contact" [ref=e163] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e164]:
+              - heading "Legal" [level=4] [ref=e165]
+              - list [ref=e166]:
+                - listitem [ref=e167]:
+                  - link "Privacy Policy" [ref=e168] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e169]:
+                  - link "Terms of Service" [ref=e170] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e171]:
+                  - link "Cookie Policy" [ref=e172] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e173]:
+          - paragraph [ref=e174]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e175]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e176]:
+    - img [ref=e178]
+    - button "Open Tanstack query devtools" [ref=e226] [cursor=pointer]:
+      - img [ref=e227]
+  - button "Open Next.js Dev Tools" [ref=e280] [cursor=pointer]:
+    - img [ref=e281]
+  - alert [ref=e284]

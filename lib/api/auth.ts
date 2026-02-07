@@ -146,3 +146,45 @@ export const getStoredUser = (): UserProfile | null => {
   const userStr = localStorage.getItem('user');
   return userStr ? JSON.parse(userStr) : null;
 };
+
+// Password Reset Types
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+  timestamp: string;
+}
+
+// Forgot Password mutation
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: async (data: ForgotPasswordRequest) => {
+      const response = await api.post<ForgotPasswordResponse>('/auth/forgot-password', data);
+      return response;
+    },
+  });
+};
+
+// Reset Password mutation
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: async (data: ResetPasswordRequest) => {
+      const response = await api.post<ResetPasswordResponse>('/auth/reset-password', data);
+      return response;
+    },
+  });
+};

@@ -8,7 +8,7 @@ import { useLogin } from '@/lib/api/auth';
 import { useToast } from '@/lib/store';
 import { Input } from '@/components/Input';
 import Button from '@/components/Button';
-import { fadeInUp, staggerContainer, scaleIn } from '@/lib/animations';
+import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 function LoginContent() {
   const router = useRouter();
@@ -47,10 +47,8 @@ function LoginContent() {
       const result = await loginMutation.mutateAsync({ email, password });
       showToast('Welcome back!', 'success');
       
-      // Access user from nested data structure
       const user = result.data.user;
       
-      // Redirect based on role
       if (user.role === 'admin') {
         router.push('/admin');
       } else if (user.role === 'creator') {
@@ -63,7 +61,6 @@ function LoginContent() {
     }
   };
 
-  // Quick login helpers for testing
   const quickLogin = async (role: 'buyer' | 'creator' | 'admin') => {
     const credentials: Record<string, { email: string; password: string }> = {
       buyer: { email: 'buyer@test.com', password: 'BuyerPass123!' },
@@ -91,219 +88,175 @@ function LoginContent() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="auth-page"
+      className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 bg-slate-50"
     >
       <motion.div 
-        initial={{ y: 30, opacity: 0 }}
+        initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="auth-card"
+        transition={{ duration: 0.4, delay: 0.1 }}
+        className="w-full max-w-md"
       >
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          className="auth-header"
-        >
-          <motion.div variants={fadeInUp}>
-            <Link href="/" className="auth-logo">Dualangka</Link>
-          </motion.div>
-          <motion.h1 variants={fadeInUp}>Welcome back</motion.h1>
-          <motion.p variants={fadeInUp}>Sign in to your account</motion.p>
-        </motion.div>
-
-        <motion.form 
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          onSubmit={handleSubmit} 
-          className="auth-form"
-        >
-          <motion.div variants={fadeInUp}>
-            <Input 
-              label="Email" 
-              type="email" 
-              value={email} 
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors({...errors, email: undefined});
-              }} 
-              placeholder="you@example.com" 
-              required 
-              error={errors.email}
-            />
-          </motion.div>
+        {/* Card Container */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 sm:p-10">
           
-          <motion.div variants={fadeInUp}>
-            <Input 
-              label="Password" 
-              type="password" 
-              value={password} 
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (errors.password) setErrors({...errors, password: undefined});
-              }} 
-              placeholder="••••••••" 
-              required 
-              error={errors.password}
-            />
-          </motion.div>
-          
-          <motion.div variants={fadeInUp}>
-            <Button 
-              type="submit" 
-              fullWidth 
-              loading={loginMutation.isPending}
+          {/* Header */}
+          <motion.div 
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="text-center mb-8"
+          >
+            <motion.div variants={fadeInUp}>
+              <Link 
+                href="/" 
+                className="text-2xl font-bold text-slate-900 hover:text-slate-700 transition-colors"
+              >
+                Dualangka
+              </Link>
+            </motion.div>
+            <motion.h1 
+              variants={fadeInUp}
+              className="mt-6 text-2xl font-bold text-slate-900"
             >
-              {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
-            </Button>
+              Welcome back
+            </motion.h1>
+            <motion.p 
+              variants={fadeInUp}
+              className="mt-2 text-sm text-slate-500"
+            >
+              Sign in to your account
+            </motion.p>
           </motion.div>
-        </motion.form>
 
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="divider"
-        >
-          <span>or try demo accounts</span>
-        </motion.div>
+          {/* Form */}
+          <motion.form 
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            onSubmit={handleSubmit} 
+            className="space-y-5"
+          >
+            <motion.div variants={fadeInUp}>
+              <Input 
+                label="Email" 
+                type="email" 
+                value={email} 
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors({...errors, email: undefined});
+                }} 
+                placeholder="you@example.com" 
+                required 
+                error={errors.email}
+              />
+            </motion.div>
+            
+            <motion.div variants={fadeInUp}>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-medium text-slate-900">
+                  Password
+                </label>
+                <Link 
+                  href="/forgot-password" 
+                  className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+              <Input 
+                type="password" 
+                value={password} 
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors({...errors, password: undefined});
+                }} 
+                placeholder="••••••••" 
+                required 
+                error={errors.password}
+              />
+            </motion.div>
+            
+            <motion.div variants={fadeInUp}>
+              <Button 
+                type="submit" 
+                fullWidth 
+                loading={loginMutation.isPending}
+              >
+                {loginMutation.isPending ? 'Signing in...' : 'Sign In'}
+              </Button>
+            </motion.div>
+          </motion.form>
 
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-          className="demo-buttons"
-        >
-          <motion.button 
-            variants={fadeInUp}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="demo-btn" 
-            onClick={() => quickLogin('buyer')}
-            disabled={loginMutation.isPending}
-          >
-            Login as Buyer
-          </motion.button>
-          
-          <motion.button 
-            variants={fadeInUp}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="demo-btn" 
-            onClick={() => quickLogin('creator')}
-            disabled={loginMutation.isPending}
-          >
-            Login as Creator
-          </motion.button>
-          
-          <motion.button 
-            variants={fadeInUp}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            className="demo-btn" 
-            onClick={() => quickLogin('admin')}
-            disabled={loginMutation.isPending}
-          >
-            Login as Admin
-          </motion.button>
-        </motion.div>
+          {/* Divider */}
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white px-4 text-slate-400">
+                or try demo accounts
+              </span>
+            </div>
+          </div>
 
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="auth-footer"
-        >
-          Don&apos;t have an account? <Link href="/signup">Sign up</Link>
-        </motion.p>
+          {/* Demo Buttons */}
+          <motion.div 
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+          >
+            <motion.button 
+              variants={fadeInUp}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+              onClick={() => quickLogin('buyer')}
+              disabled={loginMutation.isPending}
+            >
+              Buyer
+            </motion.button>
+            
+            <motion.button 
+              variants={fadeInUp}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+              onClick={() => quickLogin('creator')}
+              disabled={loginMutation.isPending}
+            >
+              Creator
+            </motion.button>
+            
+            <motion.button 
+              variants={fadeInUp}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+              onClick={() => quickLogin('admin')}
+              disabled={loginMutation.isPending}
+            >
+              Admin
+            </motion.button>
+          </motion.div>
+
+          {/* Footer */}
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-8 text-center text-sm text-slate-500"
+          >
+            Don&apos;t have an account?{' '}
+            <Link 
+              href="/signup" 
+              className="font-semibold text-slate-900 hover:text-slate-700 transition-colors"
+            >
+              Sign up
+            </Link>
+          </motion.p>
+        </div>
       </motion.div>
-
-      <style jsx>{`
-        .auth-page { 
-          min-height: 100vh; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          padding: 32px; 
-          background: var(--gray-50); 
-        }
-        .auth-card { 
-          width: 100%; 
-          max-width: 400px; 
-          padding: 40px; 
-          background: var(--background); 
-          border-radius: 16px; 
-          border: 1px solid var(--gray-200); 
-          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-        }
-        .auth-header { 
-          text-align: center; 
-          margin-bottom: 32px; 
-        }
-        .auth-logo { 
-          font-size: 1.5rem; 
-          font-weight: 700; 
-        }
-        .auth-header h1 { 
-          font-size: 1.5rem; 
-          margin-top: 24px; 
-        }
-        .auth-header p { 
-          color: var(--gray-500); 
-          margin-top: 4px; 
-        }
-        .auth-form { 
-          display: flex; 
-          flex-direction: column; 
-          gap: 16px; 
-        }
-        .divider { 
-          display: flex; 
-          align-items: center; 
-          gap: 16px; 
-          margin: 24px 0; 
-          color: var(--gray-400); 
-          font-size: 12px; 
-        }
-        .divider::before, .divider::after { 
-          content: ''; 
-          flex: 1; 
-          height: 1px; 
-          background: var(--gray-200); 
-        }
-        .demo-buttons { 
-          display: flex; 
-          flex-direction: column; 
-          gap: 8px; 
-        }
-        .demo-btn { 
-          padding: 10px; 
-          background: var(--gray-100); 
-          border: 1px solid var(--gray-200); 
-          border-radius: 8px; 
-          cursor: pointer; 
-          font-size: 14px; 
-          transition: all 0.2s; 
-        }
-        .demo-btn:hover:not(:disabled) { 
-          background: var(--gray-200); 
-        }
-        .demo-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .auth-footer { 
-          text-align: center; 
-          margin-top: 24px; 
-          font-size: 14px; 
-          color: var(--gray-500); 
-        }
-        .auth-footer a { 
-          color: var(--foreground); 
-          font-weight: 500; 
-        }
-      `}</style>
     </motion.div>
   );
 }
@@ -311,17 +264,9 @@ function LoginContent() {
 export default function LoginPage() {
   return (
     <Suspense fallback={
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="min-h-screen flex items-center justify-center bg-gray-50"
-      >
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-8 h-8 border-4 border-brand-blue border-t-transparent rounded-full"
-        />
-      </motion.div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      </div>
     }>
       <LoginContent />
     </Suspense>

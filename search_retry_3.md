@@ -1,0 +1,339 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - generic [ref=e7]:
+          - link "Search" [ref=e8] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e9]
+          - 'button "User: QA Buyer Updated 3" [ref=e13]':
+            - 'generic "User: QA Buyer Updated 3" [ref=e14]': Q
+            - img [ref=e15]
+          - button [ref=e17]:
+            - img [ref=e18]
+    - main [ref=e19]:
+      - generic [ref=e21]:
+        - generic [ref=e24]:
+          - generic [ref=e25]:
+            - generic:
+              - img
+            - textbox "Search for tools, creative assets, or inspiration..." [ref=e26]
+          - generic [ref=e27]:
+            - generic:
+              - img
+            - combobox [ref=e28] [cursor=pointer]:
+              - option "Recommended" [selected]
+              - option "Newest Arrivals"
+              - option "Most Popular"
+              - option "Alphabetical (A-Z)"
+        - generic [ref=e30]:
+          - complementary [ref=e31]:
+            - generic [ref=e32]:
+              - button "CATEGORIES" [ref=e33]:
+                - heading "CATEGORIES" [level=3] [ref=e34]
+                - img [ref=e36]
+              - generic [ref=e38]:
+                - generic [ref=e39] [cursor=pointer]:
+                  - img [ref=e41]
+                  - generic [ref=e43]: All Categories
+                  - generic [ref=e44]: "10"
+                - generic [ref=e45]:
+                  - generic [ref=e287] [cursor=pointer]:
+                    - generic [ref=e289]: AI Tools
+                    - generic [ref=e290]: "2"
+                  - generic [ref=e291] [cursor=pointer]:
+                    - generic [ref=e293]: Education
+                    - generic [ref=e294]: "1"
+                  - generic [ref=e295] [cursor=pointer]:
+                    - generic [ref=e297]: Finance
+                    - generic [ref=e298]: "2"
+                  - generic [ref=e299] [cursor=pointer]:
+                    - generic [ref=e301]: Productivity
+                    - generic [ref=e302]: "3"
+                  - generic [ref=e303] [cursor=pointer]:
+                    - generic [ref=e305]: Security
+                    - generic [ref=e306]: "2"
+            - generic [ref=e61]:
+              - button "FEATURES" [ref=e62]:
+                - heading "FEATURES" [level=3] [ref=e63]
+                - img [ref=e65]
+              - generic [ref=e70] [cursor=pointer]: Free Trial Available
+            - button "Reset all filters" [ref=e71]
+          - main [ref=e72]:
+            - heading "10 Results" [level=1] [ref=e307]
+            - generic [ref=e308]:
+              - generic [ref=e310]:
+                - link "DataVault Analytics thumbnail Free Trial Finance ★ 5.0 DataVault Analytics J Jane Creator View Tool →" [ref=e311] [cursor=pointer]:
+                  - /url: /website/datavault-analytics
+                  - generic [ref=e312]:
+                    - generic [ref=e313]:
+                      - img "DataVault Analytics thumbnail" [ref=e314]
+                      - generic [ref=e315]: Free Trial
+                    - generic [ref=e316]:
+                      - generic [ref=e317]:
+                        - generic [ref=e318]: Finance
+                        - generic [ref=e319]:
+                          - generic [ref=e320]: ★
+                          - generic [ref=e321]: "5.0"
+                      - heading "DataVault Analytics" [level=3] [ref=e322]
+                      - paragraph
+                      - generic [ref=e323]:
+                        - generic [ref=e324]:
+                          - generic [ref=e325]: J
+                          - generic [ref=e326]: Jane Creator
+                        - generic [ref=e327]: View Tool →
+                - button "Remove bookmark" [ref=e328]:
+                  - img [ref=e329]
+              - generic [ref=e332]:
+                - link "SecureSign Pro thumbnail Security ★ 5.0 SecureSign Pro J Jane Creator View Tool →" [ref=e333] [cursor=pointer]:
+                  - /url: /website/securesign-pro
+                  - generic [ref=e334]:
+                    - img "SecureSign Pro thumbnail" [ref=e336]
+                    - generic [ref=e337]:
+                      - generic [ref=e338]:
+                        - generic [ref=e339]: Security
+                        - generic [ref=e340]:
+                          - generic [ref=e341]: ★
+                          - generic [ref=e342]: "5.0"
+                      - heading "SecureSign Pro" [level=3] [ref=e343]
+                      - paragraph
+                      - generic [ref=e344]:
+                        - generic [ref=e345]:
+                          - generic [ref=e346]: J
+                          - generic [ref=e347]: Jane Creator
+                        - generic [ref=e348]: View Tool →
+                - button "Add bookmark" [ref=e349]:
+                  - img [ref=e350]
+              - generic [ref=e353]:
+                - link "PassVault Pro thumbnail Free Trial Security ★ 4.9 PassVault Pro J Jane Creator View Tool →" [ref=e354] [cursor=pointer]:
+                  - /url: /website/passvault-pro
+                  - generic [ref=e355]:
+                    - generic [ref=e356]:
+                      - img "PassVault Pro thumbnail" [ref=e357]
+                      - generic [ref=e358]: Free Trial
+                    - generic [ref=e359]:
+                      - generic [ref=e360]:
+                        - generic [ref=e361]: Security
+                        - generic [ref=e362]:
+                          - generic [ref=e363]: ★
+                          - generic [ref=e364]: "4.9"
+                      - heading "PassVault Pro" [level=3] [ref=e365]
+                      - paragraph
+                      - generic [ref=e366]:
+                        - generic [ref=e367]:
+                          - generic [ref=e368]: J
+                          - generic [ref=e369]: Jane Creator
+                        - generic [ref=e370]: View Tool →
+                - button "Add bookmark" [ref=e371]:
+                  - img [ref=e372]
+              - generic [ref=e375]:
+                - link "Image Generator Pro thumbnail AI Tools ★ 4.9 Image Generator Pro J Jane Creator View Tool →" [ref=e376] [cursor=pointer]:
+                  - /url: /website/image-generator-pro
+                  - generic [ref=e377]:
+                    - img "Image Generator Pro thumbnail" [ref=e379]
+                    - generic [ref=e380]:
+                      - generic [ref=e381]:
+                        - generic [ref=e382]: AI Tools
+                        - generic [ref=e383]:
+                          - generic [ref=e384]: ★
+                          - generic [ref=e385]: "4.9"
+                      - heading "Image Generator Pro" [level=3] [ref=e386]
+                      - paragraph
+                      - generic [ref=e387]:
+                        - generic [ref=e388]:
+                          - generic [ref=e389]: J
+                          - generic [ref=e390]: Jane Creator
+                        - generic [ref=e391]: View Tool →
+                - button "Add bookmark" [ref=e392]:
+                  - img [ref=e393]
+              - generic [ref=e396]:
+                - link "FocusFlow Timer thumbnail Free Trial Productivity ★ 4.8 FocusFlow Timer J Jane Creator View Tool →" [ref=e397] [cursor=pointer]:
+                  - /url: /website/focusflow-timer
+                  - generic [ref=e398]:
+                    - generic [ref=e399]:
+                      - img "FocusFlow Timer thumbnail" [ref=e400]
+                      - generic [ref=e401]: Free Trial
+                    - generic [ref=e402]:
+                      - generic [ref=e403]:
+                        - generic [ref=e404]: Productivity
+                        - generic [ref=e405]:
+                          - generic [ref=e406]: ★
+                          - generic [ref=e407]: "4.8"
+                      - heading "FocusFlow Timer" [level=3] [ref=e408]
+                      - paragraph
+                      - generic [ref=e409]:
+                        - generic [ref=e410]:
+                          - generic [ref=e411]: J
+                          - generic [ref=e412]: Jane Creator
+                        - generic [ref=e413]: View Tool →
+                - button "Add bookmark" [ref=e414]:
+                  - img [ref=e415]
+              - generic [ref=e418]:
+                - link "NotionCraft thumbnail Free Trial Productivity ★ 4.8 NotionCraft J Jane Creator View Tool →" [ref=e419] [cursor=pointer]:
+                  - /url: /website/notioncraft
+                  - generic [ref=e420]:
+                    - generic [ref=e421]:
+                      - img "NotionCraft thumbnail" [ref=e422]
+                      - generic [ref=e423]: Free Trial
+                    - generic [ref=e424]:
+                      - generic [ref=e425]:
+                        - generic [ref=e426]: Productivity
+                        - generic [ref=e427]:
+                          - generic [ref=e428]: ★
+                          - generic [ref=e429]: "4.8"
+                      - heading "NotionCraft" [level=3] [ref=e430]
+                      - paragraph
+                      - generic [ref=e431]:
+                        - generic [ref=e432]:
+                          - generic [ref=e433]: J
+                          - generic [ref=e434]: Jane Creator
+                        - generic [ref=e435]: View Tool →
+                - button "Add bookmark" [ref=e436]:
+                  - img [ref=e437]
+              - generic [ref=e440]:
+                - link "CourseForge thumbnail Free Trial Education ★ 4.8 CourseForge J Jane Creator View Tool →" [ref=e441] [cursor=pointer]:
+                  - /url: /website/courseforge
+                  - generic [ref=e442]:
+                    - generic [ref=e443]:
+                      - img "CourseForge thumbnail" [ref=e444]
+                      - generic [ref=e445]: Free Trial
+                    - generic [ref=e446]:
+                      - generic [ref=e447]:
+                        - generic [ref=e448]: Education
+                        - generic [ref=e449]:
+                          - generic [ref=e450]: ★
+                          - generic [ref=e451]: "4.8"
+                      - heading "CourseForge" [level=3] [ref=e452]
+                      - paragraph
+                      - generic [ref=e453]:
+                        - generic [ref=e454]:
+                          - generic [ref=e455]: J
+                          - generic [ref=e456]: Jane Creator
+                        - generic [ref=e457]: View Tool →
+                - button "Add bookmark" [ref=e458]:
+                  - img [ref=e459]
+              - generic [ref=e462]:
+                - link "TaskMaster Pro thumbnail Productivity ★ 4.8 TaskMaster Pro J Jane Creator View Tool →" [ref=e463] [cursor=pointer]:
+                  - /url: /website/taskmaster-pro
+                  - generic [ref=e464]:
+                    - img "TaskMaster Pro thumbnail" [ref=e466]
+                    - generic [ref=e467]:
+                      - generic [ref=e468]:
+                        - generic [ref=e469]: Productivity
+                        - generic [ref=e470]:
+                          - generic [ref=e471]: ★
+                          - generic [ref=e472]: "4.8"
+                      - heading "TaskMaster Pro" [level=3] [ref=e473]
+                      - paragraph
+                      - generic [ref=e474]:
+                        - generic [ref=e475]:
+                          - generic [ref=e476]: J
+                          - generic [ref=e477]: Jane Creator
+                        - generic [ref=e478]: View Tool →
+                - button "Add bookmark" [ref=e479]:
+                  - img [ref=e480]
+              - generic [ref=e483]:
+                - link "AI Content Writer thumbnail Free Trial AI Tools ★ 4.7 AI Content Writer J Jane Creator View Tool →" [ref=e484] [cursor=pointer]:
+                  - /url: /website/ai-content-writer
+                  - generic [ref=e485]:
+                    - generic [ref=e486]:
+                      - img "AI Content Writer thumbnail" [ref=e487]
+                      - generic [ref=e488]: Free Trial
+                    - generic [ref=e489]:
+                      - generic [ref=e490]:
+                        - generic [ref=e491]: AI Tools
+                        - generic [ref=e492]:
+                          - generic [ref=e493]: ★
+                          - generic [ref=e494]: "4.7"
+                      - heading "AI Content Writer" [level=3] [ref=e495]
+                      - paragraph
+                      - generic [ref=e496]:
+                        - generic [ref=e497]:
+                          - generic [ref=e498]: J
+                          - generic [ref=e499]: Jane Creator
+                        - generic [ref=e500]: View Tool →
+                - button "Add bookmark" [ref=e501]:
+                  - img [ref=e502]
+              - generic [ref=e505]:
+                - link "InvestTracker thumbnail Finance ★ 4.7 InvestTracker J Jane Creator View Tool →" [ref=e506] [cursor=pointer]:
+                  - /url: /website/investtracker
+                  - generic [ref=e507]:
+                    - img "InvestTracker thumbnail" [ref=e509]
+                    - generic [ref=e510]:
+                      - generic [ref=e511]:
+                        - generic [ref=e512]: Finance
+                        - generic [ref=e513]:
+                          - generic [ref=e514]: ★
+                          - generic [ref=e515]: "4.7"
+                      - heading "InvestTracker" [level=3] [ref=e516]
+                      - paragraph
+                      - generic [ref=e517]:
+                        - generic [ref=e518]:
+                          - generic [ref=e519]: J
+                          - generic [ref=e520]: Jane Creator
+                        - generic [ref=e521]: View Tool →
+                - button "Add bookmark" [ref=e522]:
+                  - img [ref=e523]
+    - contentinfo [ref=e136]:
+      - generic [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e139]:
+            - link "Dualangka" [ref=e140] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e141]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - heading "Product" [level=4] [ref=e145]
+              - list [ref=e146]:
+                - listitem [ref=e147]:
+                  - link "Explore" [ref=e148] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e149]:
+                  - link "Categories" [ref=e150] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e151]:
+                  - link "For Creators" [ref=e152] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e153]:
+                  - link "Pricing" [ref=e154] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e155]:
+              - heading "Company" [level=4] [ref=e156]
+              - list [ref=e157]:
+                - listitem [ref=e158]:
+                  - link "About" [ref=e159] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e160]:
+                  - link "Blog" [ref=e161] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e162]:
+                  - link "Careers" [ref=e163] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e164]:
+                  - link "Contact" [ref=e165] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e166]:
+              - heading "Legal" [level=4] [ref=e167]
+              - list [ref=e168]:
+                - listitem [ref=e169]:
+                  - link "Privacy Policy" [ref=e170] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e171]:
+                  - link "Terms of Service" [ref=e172] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e173]:
+                  - link "Cookie Policy" [ref=e174] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e175]:
+          - paragraph [ref=e176]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e177]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e178]:
+    - img [ref=e180]
+    - button "Open Tanstack query devtools" [ref=e228] [cursor=pointer]:
+      - img [ref=e229]
+  - button "Open Next.js Dev Tools" [ref=e282] [cursor=pointer]:
+    - img [ref=e283]
+  - alert [ref=e286]

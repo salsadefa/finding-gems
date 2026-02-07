@@ -12,6 +12,7 @@ import {
   getMyWebsites,
 } from '../controllers/website.controller';
 import { authenticate, authorize, optionalAuth } from '../middleware/auth';
+import { cacheMiddleware } from '../middleware/cache';
 
 const router = Router();
 
@@ -19,8 +20,9 @@ const router = Router();
  * @route   GET /api/v1/websites
  * @desc    Get all websites with filters and pagination
  * @access  Public
+ * @cache   60 seconds (public data)
  */
-router.get('/', optionalAuth, getWebsites);
+router.get('/', cacheMiddleware(60000), optionalAuth, getWebsites);
 
 /**
  * @route   GET /api/v1/websites/my-websites

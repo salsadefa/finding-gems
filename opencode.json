@@ -3,7 +3,10 @@
   "mcp": {
     "supabase": {
       "type": "remote",
-      "url": "https://mcp.supabase.com/mcp?project_ref=nhekpkolshsondldskaf",
+      "url": "https://mcp.supabase.com/mcp",
+      "headers": {
+        "Authorization": "Bearer sbp_6530265089d1e81a169c51b44df1bd8a939beb33"
+      },
       "enabled": true
     },
     "context7": {

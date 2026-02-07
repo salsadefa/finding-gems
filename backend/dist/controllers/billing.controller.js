@@ -61,6 +61,14 @@ exports.createPricingTier = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (website.creatorId !== user.id && user.role !== 'admin') {
         return res.status(403).json({ success: false, error: { message: 'Not authorized to manage this website pricing' } });
     }
+    // NEG-010 FIX: Validate price is greater than zero
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        return res.status(400).json({
+            success: false,
+            error: { message: 'Price must be greater than zero' }
+        });
+    }
     // Create pricing tier
     const { data: tier, error } = await supabase_1.supabase
         .from('pricing_tiers')
@@ -202,6 +210,10 @@ exports.createOrder = (0, catchAsync_1.catchAsync)(async (req, res) => {
     if (website.status !== 'active') {
         return res.status(400).json({ success: false, error: { message: 'Website is not available for purchase' } });
     }
+    // Prevent creator from buying their own website
+    if (website.creatorId === user.id) {
+        return res.status(400).json({ success: false, error: { message: 'You cannot purchase your own website' } });
+    }
     // Check if user already has access
     const { data: existingAccess } = await supabase_1.supabase
         .from('user_access')
@@ -212,6 +224,48 @@ exports.createOrder = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .single();
     if (existingAccess) {
         return res.status(400).json({ success: false, error: { message: 'You already have access to this website' } });
+    }
+    // PURCH-007 fix: Check for pending/unpaid orders that are NOT expired, OR paid orders
+    const { data: existingOrders, error: orderCheckError } = await supabase_1.supabase
+        .from('orders')
+        .select('id, status, expires_at')
+        .eq('buyer_id', user.id)
+        .eq('website_id', website_id)
+        .in('status', ['pending', 'awaiting_payment', 'paid'])
+        .limit(10);
+    console.log('[createOrder] Existing orders check:', {
+        user_id: user.id,
+        website_id,
+        found: existingOrders?.length || 0,
+        orders: existingOrders?.map(o => ({ id: o.id, status: o.status, expires_at: o.expires_at }))
+    });
+    if (orderCheckError) {
+        console.error('[createOrder] Order check error:', orderCheckError);
+    }
+    // Filter: block if paid OR (pending/awaiting and not expired)
+    const blockingOrders = (existingOrders || []).filter(order => {
+        // Paid orders always block
+        if (order.status === 'paid')
+            return true;
+        // Pending/awaiting_payment: only block if not expired
+        if (!order.expires_at)
+            return true; // No expiry = still active
+        return new Date(order.expires_at) > new Date(); // Not expired
+    });
+    console.log('[createOrder] Blocking orders:', blockingOrders.length, blockingOrders.map(o => o.id));
+    if (blockingOrders.length > 0) {
+        const firstBlocking = blockingOrders[0];
+        const message = firstBlocking.status === 'paid'
+            ? 'You already have access to this website (paid order exists)'
+            : 'You already have a pending order for this website';
+        return res.status(400).json({
+            success: false,
+            error: {
+                message,
+                existing_order_id: firstBlocking.id,
+                existing_order_status: firstBlocking.status
+            }
+        });
     }
     // Get pricing tier
     let itemPrice = 0;
@@ -323,7 +377,7 @@ exports.getOrder = (0, catchAsync_1.catchAsync)(async (req, res) => {
         .from('transactions')
         .select('*')
         .eq('order_id', orderId)
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .single();
     // Get invoice if exists
@@ -360,7 +414,7 @@ exports.getMyOrders = (0, catchAsync_1.catchAsync)(async (req, res) => {
       websites!inner(id, name, slug, thumbnail)
     `, { count: 'exact' })
         .eq('buyer_id', user.id)
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -487,7 +541,7 @@ exports.getMyInvoices = (0, catchAsync_1.catchAsync)(async (req, res) => {
       orders!inner(buyer_id, website_id, websites(name, slug))
     `, { count: 'exact' })
         .eq('orders.buyer_id', user.id)
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);
@@ -573,10 +627,20 @@ exports.checkAccess = (0, catchAsync_1.catchAsync)(async (req, res) => {
             hasAccess = true; // Lifetime access
         }
     }
+    // Debug logging
+    console.log('[checkAccess] Result:', {
+        user_id: user.id,
+        website_id: websiteId,
+        access_found: !!access,
+        has_access: hasAccess,
+        expires_at: access?.expires_at
+    });
+    // Ensure has_access is always a boolean (never null/undefined)
     res.status(200).json({
         success: true,
         data: {
-            has_access: hasAccess,
+            has_access: Boolean(hasAccess), // Explicit cast to boolean
+            hasAccess: Boolean(hasAccess), // Also include camelCase for compatibility
             access: hasAccess ? access : null
         },
         timestamp: new Date().toISOString()
@@ -604,7 +668,7 @@ exports.getCreatorSales = (0, catchAsync_1.catchAsync)(async (req, res) => {
       buyer:users!orders_buyer_id_fkey(id, name, email)
     `, { count: 'exact' })
         .eq('creator_id', user.id)
-        .order('createdAt', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(offset, offset + Number(limit) - 1);
     if (status) {
         query = query.eq('status', status);

@@ -114,7 +114,7 @@ exports.getPendingWebsites = (0, catchAsync_1.catchAsync)(async (req, res) => {
 exports.moderateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
     requireAdmin(req);
     const { id } = req.params;
-    const { status, adminNote } = req.body;
+    const { status } = req.body;
     // Validate status
     const validStatuses = ['pending', 'active', 'suspended', 'rejected'];
     if (!status || !validStatuses.includes(status)) {
@@ -123,17 +123,17 @@ exports.moderateWebsite = (0, catchAsync_1.catchAsync)(async (req, res) => {
     // Check if website exists
     const { data: existingWebsite, error: findError } = await supabase_1.supabase
         .from('websites')
-        .select('id, status, creator_id')
+        .select('id, status, creatorId')
         .eq('id', id)
         .single();
     if (findError || !existingWebsite) {
         throw new errors_1.NotFoundError('Website not found');
     }
     // Update website status
+    // Note: moderated_at and moderated_by columns may not exist in current schema
+    // We only update status which is the core moderation action
     const updateData = {
         status,
-        moderated_at: new Date().toISOString(),
-        moderated_by: req.user.id,
     };
     // Note: admin_note field removed - not in current schema
     // if (adminNote) {
@@ -210,7 +210,7 @@ exports.getAllUsers = (0, catchAsync_1.catchAsync)(async (req, res) => {
 exports.updateUserAdmin = (0, catchAsync_1.catchAsync)(async (req, res) => {
     requireAdmin(req);
     const { id } = req.params;
-    const { role, isActive, adminNote } = req.body;
+    const { role, isActive } = req.body;
     // Check if user exists
     const { data: existingUser, error: findError } = await supabase_1.supabase
         .from('users')

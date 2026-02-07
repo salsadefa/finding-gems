@@ -1,0 +1,108 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - navigation [ref=e7]:
+          - link "Explore" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Productivity" [ref=e9] [cursor=pointer]:
+            - /url: /search?category=productivity
+          - link "Administration" [ref=e10] [cursor=pointer]:
+            - /url: /search?category=administration
+          - link "Education" [ref=e11] [cursor=pointer]:
+            - /url: /search?category=education
+          - link "AI Tools" [ref=e12] [cursor=pointer]:
+            - /url: /search?category=ai-tools
+        - generic [ref=e13]:
+          - link "Search" [ref=e14] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e15]
+          - 'button "User: Test Creator" [ref=e19]':
+            - 'generic "User: Test Creator" [ref=e20]': T
+            - img [ref=e21]
+    - main [ref=e23]:
+      - generic [ref=e25]:
+        - generic [ref=e26]:
+          - generic [ref=e27]:
+            - heading "Welcome back, Test Creator" [level=1] [ref=e28]
+            - paragraph [ref=e29]: Manage your tools and reviews.
+          - button "Settings" [ref=e30]:
+            - img [ref=e31]
+            - text: Settings
+        - generic [ref=e34]:
+          - button "Saved Tools 0" [ref=e35]: Saved Tools 0
+          - button "My Reviews" [ref=e37]
+        - generic [ref=e40]:
+          - img [ref=e42]
+          - heading "No bookmarks yet" [level=3] [ref=e44]
+          - paragraph [ref=e45]: Save websites you're interested in for later.
+          - link "Explore Websites" [ref=e48] [cursor=pointer]:
+            - /url: /
+            - button "Explore Websites" [ref=e49]
+    - contentinfo [ref=e50]:
+      - generic [ref=e51]:
+        - generic [ref=e52]:
+          - generic [ref=e53]:
+            - link "Dualangka" [ref=e54] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e55]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - heading "Product" [level=4] [ref=e59]
+              - list [ref=e60]:
+                - listitem [ref=e61]:
+                  - link "Explore" [ref=e62] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e63]:
+                  - link "Categories" [ref=e64] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e65]:
+                  - link "For Creators" [ref=e66] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e67]:
+                  - link "Pricing" [ref=e68] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e69]:
+              - heading "Company" [level=4] [ref=e70]
+              - list [ref=e71]:
+                - listitem [ref=e72]:
+                  - link "About" [ref=e73] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e74]:
+                  - link "Blog" [ref=e75] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e76]:
+                  - link "Careers" [ref=e77] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e78]:
+                  - link "Contact" [ref=e79] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e80]:
+              - heading "Legal" [level=4] [ref=e81]
+              - list [ref=e82]:
+                - listitem [ref=e83]:
+                  - link "Privacy Policy" [ref=e84] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e85]:
+                  - link "Terms of Service" [ref=e86] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e87]:
+                  - link "Cookie Policy" [ref=e88] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e89]:
+          - paragraph [ref=e90]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e91]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e92]:
+    - img [ref=e94]
+    - button "Open Tanstack query devtools" [ref=e142] [cursor=pointer]:
+      - img [ref=e143]
+  - button "Open Next.js Dev Tools" [ref=e196] [cursor=pointer]:
+    - img [ref=e197]
+  - alert [ref=e200]
+```

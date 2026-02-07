@@ -12,27 +12,30 @@ exports.remove = remove;
 const supabase_js_1 = require("@supabase/supabase-js");
 const logger_1 = require("./logger");
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+// IMPORTANT: Backend MUST use SERVICE_ROLE_KEY to bypass RLS for server-side operations
+// ANON_KEY is subject to RLS and should only be used for client-side operations
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const isTestEnv = process.env.NODE_ENV === 'test';
 // Create Supabase client or mock for test environment
 let supabaseClient = null;
-if (!supabaseUrl || !supabaseKey) {
+if (!supabaseUrl || !supabaseServiceKey) {
     if (isTestEnv) {
         // In test environment, allow tests to run with mocked client
         logger_1.logger.warn('Supabase credentials not configured. Running in test mode.');
     }
     else {
-        logger_1.logger.error('Missing Supabase credentials. Please check SUPABASE_URL and SUPABASE_ANON_KEY in .env');
+        logger_1.logger.error('Missing Supabase credentials. Please check SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in .env');
         process.exit(1);
     }
 }
 else {
-    supabaseClient = (0, supabase_js_1.createClient)(supabaseUrl, supabaseKey, {
+    supabaseClient = (0, supabase_js_1.createClient)(supabaseUrl, supabaseServiceKey, {
         auth: {
             autoRefreshToken: false,
             persistSession: false,
         },
     });
+    logger_1.logger.info('Supabase client initialized with service role key (RLS bypassed)');
 }
 // Export supabase client (may be null in test environment without env vars)
 exports.supabase = supabaseClient;

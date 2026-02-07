@@ -13,6 +13,7 @@ import {
 } from '../utils/errors';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/password';
 import { generateTokens, verifyRefreshToken } from '../utils/jwt';
+import { sanitizeText } from '../utils/sanitize';
 import {
   RegisterRequestBody,
   LoginRequestBody,
@@ -71,6 +72,20 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     ]);
   }
 
+  // 4.5. Sanitize name (SEC-002 XSS fix) and validate max length (NEG-004 fix)
+  const MAX_NAME_LENGTH = 100;
+  const sanitizedName = sanitizeText(name);
+  if (sanitizedName.length > MAX_NAME_LENGTH) {
+    throw new ValidationError('Name is too long', [
+      { field: 'name', message: `Name must not exceed ${MAX_NAME_LENGTH} characters` },
+    ]);
+  }
+  if (sanitizedName.length < 2) {
+    throw new ValidationError('Name is too short', [
+      { field: 'name', message: 'Name must be at least 2 characters' },
+    ]);
+  }
+
   // 5. Check if email already exists
   const { data: existingEmail } = await supabase
     .from('users')
@@ -102,7 +117,7 @@ export const register = catchAsync(async (req: Request, res: Response) => {
     .insert({
       email: email.toLowerCase(),
       password: hashedPassword,
-      name: name.trim(),
+      name: sanitizedName,
       username: username.toLowerCase(),
       role,
       isActive: true,

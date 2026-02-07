@@ -45,62 +45,127 @@ export const getWebsites = catchAsync(async (req: Request, res: Response) => {
     minRating,
   } = req.query as PaginationParams & WebsiteFilters;
 
-  const skip = (Number(page) - 1) * Number(limit);
-  const take = Number(limit);
+  // Sanitize pagination params - prevent negative values (NEG-003 fix)
+  const parsedPage = Math.floor(Number(page));
+  const parsedLimit = Math.floor(Number(limit));
+  const sanitizedPage = (isNaN(parsedPage) || parsedPage < 1) ? 1 : parsedPage;
+  const sanitizedLimit = (isNaN(parsedLimit) || parsedLimit < 1) ? 10 : Math.min(100, parsedLimit);
+  
+  const skip = (sanitizedPage - 1) * sanitizedLimit;
+  const take = sanitizedLimit;
 
-  // Build query
-  let query = supabase
-    .from('websites')
-    .select(
-      `*, 
-      creator:users(id, name, username, avatar), 
-      category:categories(id, name, slug, icon)`,
-      { count: 'exact' }
-    );
+  // Helper function to build query with filters
+  // OPTIMIZATION: Only select fields needed for list view to reduce payload size
+  const buildQuery = (withCount: boolean = false) => {
+    let q = supabase
+      .from('websites')
+      .select(
+        `id, name, slug, shortDescription, thumbnail, rating, viewCount, hasFreeTrial, status, createdAt, categoryId, creatorId,
+        creator:users(id, name, username, avatar), 
+        category:categories(id, name, slug, icon)`,
+        withCount ? { count: 'exact' } : undefined
+      );
 
-  // Only show active websites to non-admins/creators
-  if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'creator')) {
-    query = query.eq('status', 'active');
-  } else if (status) {
-    query = query.eq('status', status);
-  }
+    // Only show active websites to non-admins/creators
+    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'creator')) {
+      q = q.eq('status', 'active');
+    } else if (status) {
+      q = q.eq('status', status);
+    }
 
-  if (search) {
-    query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,short_description.ilike.%${search}%`);
-  }
+    if (search) {
+      q = q.or(`name.ilike.%${search}%,description.ilike.%${search}%,"shortDescription".ilike.%${search}%`);
+    }
 
+    if (hasFreeTrial !== undefined) {
+      q = q.eq('hasFreeTrial', String(hasFreeTrial) === 'true');
+    }
+
+    if (minRating) {
+      q = q.gte('rating', Number(minRating));
+    }
+
+    return q;
+  };
+
+  // Handle category filter separately (needs async check)
+  let categoryId: string | null = null;
   if (category) {
-    query = query.eq('categories.slug', category);
+    const { data: cat } = await supabase
+      .from('categories')
+      .select('id')
+      .eq('slug', category)
+      .single();
+    
+    if (!cat) {
+      // Category doesn't exist, return empty
+      return res.status(200).json({
+        success: true,
+        data: {
+          websites: [],
+          pagination: { page: Number(page), limit: take, total: 0, totalPages: 0, hasNext: false, hasPrev: false },
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+    categoryId = cat.id;
   }
 
-  if (hasFreeTrial !== undefined) {
-    query = query.eq('has_free_trial', String(hasFreeTrial) === 'true');
+  // Build and execute count query
+  let countQuery = buildQuery(true);
+  if (categoryId) {
+    countQuery = countQuery.eq('categoryId', categoryId);
+  }
+  
+  const { count: totalCount, error: countError } = await countQuery;
+  
+  if (countError) throw countError;
+  
+  const total = totalCount || 0;
+  const totalPages = Math.ceil(total / take);
+  
+  // If page exceeds total pages, return empty result early
+  if (sanitizedPage > 1 && skip >= total) {
+    return res.status(200).json({
+      success: true,
+      data: {
+        websites: [],
+        pagination: {
+          page: sanitizedPage,
+          limit: take,
+          total,
+          totalPages,
+          hasNext: false,
+          hasPrev: sanitizedPage > 1,
+        },
+      },
+      timestamp: new Date().toISOString(),
+    });
   }
 
-  if (minRating) {
-    query = query.gte('rating', Number(minRating));
+  // Build and execute data query with pagination
+  let dataQuery = buildQuery(false);
+  if (categoryId) {
+    dataQuery = dataQuery.eq('categoryId', categoryId);
   }
 
-  const { data: websites, error, count } = await query
+  const { data: websites, error: dataError } = await dataQuery
     .order(sortBy, { ascending: sortOrder === 'asc' })
     .range(skip, skip + take - 1);
 
-  if (error) throw error;
-
-  const total = count || 0;
-  const totalPages = Math.ceil(total / take);
+  if (dataError) throw dataError;
 
   res.status(200).json({
     success: true,
     data: {
       websites: websites || [],
       pagination: {
-        page: Number(page),
+        page: sanitizedPage,
         limit: take,
         total,
         totalPages,
-        hasNext: Number(page) < totalPages,
-        hasPrev: Number(page) > 1,
+        hasNext: sanitizedPage < totalPages,
+        hasPrev: sanitizedPage > 1,
       },
     },
     timestamp: new Date().toISOString(),
@@ -145,7 +210,7 @@ export const getWebsiteById = catchAsync(async (req: Request, res: Response) => 
       throw new NotFoundError('Website not found');
     }
 
-    const isCreator = website.creator_id === req.user.id;
+    const isCreator = website.creatorId === req.user.id;
     const isAdmin = req.user.role === 'admin';
 
     if (!isCreator && !isAdmin) {
@@ -156,7 +221,7 @@ export const getWebsiteById = catchAsync(async (req: Request, res: Response) => 
   // Increment view count
   await supabase
     .from('websites')
-    .update({ view_count: (website.view_count || 0) + 1 })
+    .update({ viewCount: (website.viewCount || 0) + 1 })
     .eq('id', website.id);
 
   res.status(200).json({
@@ -199,6 +264,30 @@ export const createWebsite = catchAsync(async (req: Request, res: Response) => {
   // Validate required fields
   if (!name || !description || !categoryId || !externalUrl) {
     throw new ValidationError('Name, description, categoryId, and externalUrl are required');
+  }
+
+  // Validate data types
+  if (typeof name !== 'string' || typeof description !== 'string' || typeof externalUrl !== 'string') {
+    throw new ValidationError('name, description, and externalUrl must be strings');
+  }
+
+  // Validate max lengths
+  const MAX_NAME_LENGTH = 200;
+  const MAX_DESCRIPTION_LENGTH = 5000;
+  const MAX_URL_LENGTH = 500;
+  const MAX_SHORT_DESC_LENGTH = 300;
+
+  if (name.length > MAX_NAME_LENGTH) {
+    throw new ValidationError(`Name must not exceed ${MAX_NAME_LENGTH} characters`);
+  }
+  if (description.length > MAX_DESCRIPTION_LENGTH) {
+    throw new ValidationError(`Description must not exceed ${MAX_DESCRIPTION_LENGTH} characters`);
+  }
+  if (externalUrl.length > MAX_URL_LENGTH) {
+    throw new ValidationError(`External URL must not exceed ${MAX_URL_LENGTH} characters`);
+  }
+  if (shortDescription && shortDescription.length > MAX_SHORT_DESC_LENGTH) {
+    throw new ValidationError(`Short description must not exceed ${MAX_SHORT_DESC_LENGTH} characters`);
   }
 
   // Check if category exists
@@ -259,8 +348,7 @@ export const createWebsite = catchAsync(async (req: Request, res: Response) => {
 
   if (error) throw error;
 
-  // Update creator profile website count
-  await supabase.rpc('increment_creator_websites', { user_id: req.user.id });
+  // Note: Creator profile website count is automatically updated via database trigger
 
   res.status(201).json({
     success: true,
@@ -296,7 +384,7 @@ export const updateWebsite = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Check ownership
-  const isCreator = existingWebsite.creator_id === req.user.id;
+  const isCreator = existingWebsite.creatorId === req.user.id;
   const isAdmin = req.user.role === 'admin';
 
   if (!isCreator && !isAdmin) {
@@ -311,11 +399,9 @@ export const updateWebsite = catchAsync(async (req: Request, res: Response) => {
     externalUrl,
     thumbnail,
     screenshots,
-    demoVideoUrl,
     techStack,
     useCases,
     hasFreeTrial,
-    freeTrialDetails,
     status,
   } = req.body as UpdateWebsiteRequest;
 
@@ -423,7 +509,7 @@ export const deleteWebsite = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Check ownership
-  const isCreator = existingWebsite.creator_id === req.user.id;
+  const isCreator = existingWebsite.creatorId === req.user.id;
   const isAdmin = req.user.role === 'admin';
 
   if (!isCreator && !isAdmin) {
@@ -435,8 +521,7 @@ export const deleteWebsite = catchAsync(async (req: Request, res: Response) => {
 
   if (error) throw error;
 
-  // Update creator profile website count
-  await supabase.rpc('decrement_creator_websites', { user_id: existingWebsite.creator_id });
+  // Note: Creator profile website count is automatically updated via database trigger
 
   res.status(200).json({
     success: true,
@@ -477,7 +562,7 @@ export const getMyWebsites = catchAsync(async (req: Request, res: Response) => {
       category:categories(id, name, slug, icon)`,
       { count: 'exact' }
     )
-    .eq('creator_id', req.user.id);
+    .eq('creatorId', req.user.id);
 
   if (status) {
     query = query.eq('status', status);

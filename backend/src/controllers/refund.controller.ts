@@ -68,6 +68,18 @@ export const requestRefund = catchAsync(async (req: Request, res: Response) => {
     });
   }
 
+  // Check refund time limit (30 days)
+  const orderDate = new Date(order.created_at);
+  const daysSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+  const REFUND_TIME_LIMIT_DAYS = 30;
+  
+  if (daysSinceOrder > REFUND_TIME_LIMIT_DAYS) {
+    return res.status(400).json({ 
+      success: false, 
+      error: { message: `Refund requests are only allowed within ${REFUND_TIME_LIMIT_DAYS} days of purchase. This order is ${daysSinceOrder} days old.` } 
+    });
+  }
+
   // Generate refund number
   const { data: refundNumResult } = await supabase.rpc('generate_refund_number');
   const refundNumber = refundNumResult || `RF${Date.now()}`;
@@ -185,9 +197,9 @@ export const getRefundDetail = catchAsync(async (req: Request, res: Response) =>
     return res.status(404).json({ success: false, error: { message: 'Refund not found' } });
   }
 
-  // Verify access
-  const order = refund.order as any;
-  if (refund.requested_by !== user.id && order?.buyer_id !== user.id && order?.creator_id !== user.id && user.role !== 'admin') {
+  // Verify access - SEC-013 FIX: Only requester or admin can view refund details
+  // Creator should NOT have access to buyer's refund requests (IDOR vulnerability)
+  if (refund.requested_by !== user.id && user.role !== 'admin') {
     return res.status(403).json({ success: false, error: { message: 'Access denied' } });
   }
 
@@ -420,14 +432,21 @@ export const processRefund = catchAsync(async (req: Request, res: Response) => {
 
       // Revoke user access if full refund
       if (isFullRefund) {
-        await supabase
+        console.log(`[Refund] Revoking user access for order ${refund.order_id}`);
+        const { error: revokeError } = await supabase
           .from('user_access')
           .update({ 
-            status: 'revoked',
+            is_active: false,
             revoked_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
           .eq('order_id', refund.order_id);
+        
+        if (revokeError) {
+          console.error('[Refund] Failed to revoke user access:', revokeError);
+        } else {
+          console.log(`[Refund] User access revoked for order ${refund.order_id}`);
+        }
       }
       break;
 

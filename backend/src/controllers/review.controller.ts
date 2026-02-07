@@ -3,7 +3,7 @@
 // ============================================
 
 import { Request, Response } from 'express';
-import { prisma } from '../config/database';
+import { supabase } from '../config/supabase';
 import { catchAsync } from '../utils/catchAsync';
 import {
   ValidationError,
@@ -36,75 +36,62 @@ export const getReviews = catchAsync(async (req: Request, res: Response) => {
   const skip = (Number(page) - 1) * Number(limit);
   const take = Number(limit);
 
-  // Build where clause
-  const where: any = {};
+  // Build query
+  let query = supabase
+    .from('reviews')
+    .select(`
+      *,
+      user:users(id, name, username, avatar),
+      website:websites(id, name, slug, thumbnail)
+    `, { count: 'exact' });
 
   if (websiteId) {
-    where.websiteId = websiteId;
+    query = query.eq('websiteId', websiteId);
   }
 
   if (userId) {
-    where.userId = userId;
+    query = query.eq('userId', userId);
   }
 
   if (minRating) {
-    where.rating = { gte: Number(minRating) };
+    query = query.gte('rating', Number(minRating));
   }
 
   // Build order by
-  let orderBy: any = {};
+  let orderColumn = 'createdAt';
+  let ascending = false;
   switch (sortBy) {
     case 'oldest':
-      orderBy = { createdAt: 'asc' };
+      orderColumn = 'createdAt';
+      ascending = true;
       break;
     case 'highest':
-      orderBy = { rating: 'desc' };
+      orderColumn = 'rating';
+      ascending = false;
       break;
     case 'lowest':
-      orderBy = { rating: 'asc' };
-      break;
-    case 'helpful':
-      orderBy = { helpfulCount: 'desc' };
+      orderColumn = 'rating';
+      ascending = true;
       break;
     case 'newest':
     default:
-      orderBy = { createdAt: 'desc' };
+      orderColumn = 'createdAt';
+      ascending = false;
   }
 
-  const [reviews, total] = await Promise.all([
-    prisma.review.findMany({
-      where,
-      skip,
-      take,
-      orderBy,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            avatar: true,
-          },
-        },
-        website: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            thumbnail: true,
-          },
-        },
-      },
-    }),
-    prisma.review.count({ where }),
-  ]);
+  const { data: reviews, error, count } = await query
+    .order(orderColumn, { ascending })
+    .range(skip, skip + take - 1);
 
+  if (error) throw error;
+
+  const total = count || 0;
   const totalPages = Math.ceil(total / take);
 
   res.status(200).json({
     success: true,
     data: {
-      reviews,
+      reviews: reviews || [],
       pagination: {
         page: Number(page),
         limit: take,
@@ -126,29 +113,17 @@ export const getReviews = catchAsync(async (req: Request, res: Response) => {
 export const getReviewById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const review = await prisma.review.findUnique({
-    where: { id },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatar: true,
-        },
-      },
-      website: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          thumbnail: true,
-        },
-      },
-    },
-  });
+  const { data: review, error } = await supabase
+    .from('reviews')
+    .select(`
+      *,
+      user:users(id, name, username, avatar),
+      website:websites(id, name, slug, thumbnail)
+    `)
+    .eq('id', id)
+    .single();
 
-  if (!review) {
+  if (error || !review) {
     throw new NotFoundError('Review not found');
   }
 
@@ -189,73 +164,77 @@ export const createReview = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Check if website exists
-  const website = await prisma.website.findUnique({
-    where: { id: websiteId },
-  });
+  const { data: website, error: websiteError } = await supabase
+    .from('websites')
+    .select('id')
+    .eq('id', websiteId)
+    .single();
 
-  if (!website) {
+  if (websiteError || !website) {
     throw new NotFoundError('Website not found');
   }
 
   // Check if user already reviewed this website
-  const existingReview = await prisma.review.findUnique({
-    where: {
-      websiteId_userId: {
-        websiteId,
-        userId: req.user.id,
-      },
-    },
-  });
+  const { data: existingReview } = await supabase
+    .from('reviews')
+    .select('id')
+    .eq('websiteId', websiteId)
+    .eq('userId', req.user.id)
+    .single();
 
   if (existingReview) {
     throw new ConflictError('You have already reviewed this website');
   }
 
+  // Check if user has purchased this website (must have paid order)
+  const { data: purchase } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('buyer_id', req.user.id)
+    .eq('website_id', websiteId)
+    .eq('status', 'paid')
+    .single();
+
+  if (!purchase) {
+    throw new ForbiddenError('You must purchase this website before leaving a review');
+  }
+
   // Create review
-  const review = await prisma.review.create({
-    data: {
+  const { data: review, error } = await supabase
+    .from('reviews')
+    .insert({
       websiteId,
       userId: req.user.id,
       rating,
-      title,
-      content,
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatar: true,
-        },
-      },
-      website: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-    },
-  });
+      title: title.trim(),
+      content: content.trim(),
+    })
+    .select(`
+      *,
+      user:users(id, name, username, avatar),
+      website:websites(id, name, slug)
+    `)
+    .single();
+
+  if (error) throw error;
 
   // Update website rating and review count
-  const websiteReviews = await prisma.review.findMany({
-    where: { websiteId },
-    select: { rating: true },
-  });
+  const { data: websiteReviews } = await supabase
+    .from('reviews')
+    .select('rating')
+    .eq('websiteId', websiteId);
 
-  const avgRating = websiteReviews.length > 0
-    ? websiteReviews.reduce((sum, r) => sum + r.rating, 0) / websiteReviews.length
+  const avgRating = websiteReviews && websiteReviews.length > 0
+    ? websiteReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / websiteReviews.length
     : 0;
 
-  await prisma.website.update({
-    where: { id: websiteId },
-    data: {
+  await supabase
+    .from('websites')
+    .update({
       rating: Math.round(avgRating * 10) / 10,
-      reviewCount: websiteReviews.length,
-    },
-  });
+      reviewCount: websiteReviews?.length || 0,
+    })
+    .eq('id', websiteId);
 
   res.status(201).json({
     success: true,
@@ -279,11 +258,13 @@ export const updateReview = catchAsync(async (req: Request, res: Response) => {
   const { rating, title, content } = req.body as UpdateReviewRequest;
 
   // Check if review exists
-  const review = await prisma.review.findUnique({
-    where: { id },
-  });
+  const { data: review, error: findError } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (!review) {
+  if (findError || !review) {
     throw new NotFoundError('Review not found');
   }
 
@@ -305,50 +286,43 @@ export const updateReview = catchAsync(async (req: Request, res: Response) => {
     throw new ValidationError('Review content must be at least 10 characters');
   }
 
+  // Build update data
+  const updateData: any = {};
+  if (rating !== undefined) updateData.rating = rating;
+  if (title) updateData.title = title.trim();
+  if (content) updateData.content = content.trim();
+
   // Update review
-  const updatedReview = await prisma.review.update({
-    where: { id },
-    data: {
-      ...(rating !== undefined && { rating }),
-      ...(title && { title }),
-      ...(content && { content }),
-    },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          avatar: true,
-        },
-      },
-      website: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-    },
-  });
+  const { data: updatedReview, error } = await supabase
+    .from('reviews')
+    .update(updateData)
+    .eq('id', id)
+    .select(`
+      *,
+      user:users(id, name, username, avatar),
+      website:websites(id, name, slug)
+    `)
+    .single();
+
+  if (error) throw error;
 
   // Update website rating if rating changed
   if (rating !== undefined && rating !== review.rating) {
-    const websiteReviews = await prisma.review.findMany({
-      where: { websiteId: review.websiteId },
-      select: { rating: true },
-    });
+    const { data: websiteReviews } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('websiteId', review.websiteId);
 
-    const avgRating = websiteReviews.length > 0
-      ? websiteReviews.reduce((sum, r) => sum + r.rating, 0) / websiteReviews.length
+    const avgRating = websiteReviews && websiteReviews.length > 0
+      ? websiteReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / websiteReviews.length
       : 0;
 
-    await prisma.website.update({
-      where: { id: review.websiteId },
-      data: {
+    await supabase
+      .from('websites')
+      .update({
         rating: Math.round(avgRating * 10) / 10,
-      },
-    });
+      })
+      .eq('id', review.websiteId);
   }
 
   res.status(200).json({
@@ -372,11 +346,13 @@ export const deleteReview = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   // Check if review exists
-  const review = await prisma.review.findUnique({
-    where: { id },
-  });
+  const { data: review, error: findError } = await supabase
+    .from('reviews')
+    .select('*')
+    .eq('id', id)
+    .single();
 
-  if (!review) {
+  if (findError || !review) {
     throw new NotFoundError('Review not found');
   }
 
@@ -388,27 +364,30 @@ export const deleteReview = catchAsync(async (req: Request, res: Response) => {
   const websiteId = review.websiteId;
 
   // Delete review
-  await prisma.review.delete({
-    where: { id },
-  });
+  const { error } = await supabase
+    .from('reviews')
+    .delete()
+    .eq('id', id);
+
+  if (error) throw error;
 
   // Update website rating and review count
-  const remainingReviews = await prisma.review.findMany({
-    where: { websiteId },
-    select: { rating: true },
-  });
+  const { data: remainingReviews } = await supabase
+    .from('reviews')
+    .select('rating')
+    .eq('websiteId', websiteId);
 
-  const avgRating = remainingReviews.length > 0
-    ? remainingReviews.reduce((sum, r) => sum + r.rating, 0) / remainingReviews.length
+  const avgRating = remainingReviews && remainingReviews.length > 0
+    ? remainingReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / remainingReviews.length
     : 0;
 
-  await prisma.website.update({
-    where: { id: websiteId },
-    data: {
+  await supabase
+    .from('websites')
+    .update({
       rating: Math.round(avgRating * 10) / 10,
-      reviewCount: remainingReviews.length,
-    },
-  });
+      reviewCount: remainingReviews?.length || 0,
+    })
+    .eq('id', websiteId);
 
   res.status(200).json({
     success: true,
@@ -431,37 +410,25 @@ export const getMyReviews = catchAsync(async (req: Request, res: Response) => {
   const skip = (Number(page) - 1) * Number(limit);
   const take = Number(limit);
 
-  const [reviews, total] = await Promise.all([
-    prisma.review.findMany({
-      where: { userId: req.user.id },
-      skip,
-      take,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        website: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            thumbnail: true,
-            category: {
-              select: {
-                name: true,
-              },
-            },
-          },
-        },
-      },
-    }),
-    prisma.review.count({ where: { userId: req.user.id } }),
-  ]);
+  const { data: reviews, error, count } = await supabase
+    .from('reviews')
+    .select(`
+      *,
+      website:websites(id, name, slug, thumbnail, category:categories(name))
+    `, { count: 'exact' })
+    .eq('userId', req.user.id)
+    .order('createdAt', { ascending: false })
+    .range(skip, skip + take - 1);
 
+  if (error) throw error;
+
+  const total = count || 0;
   const totalPages = Math.ceil(total / take);
 
   res.status(200).json({
     success: true,
     data: {
-      reviews,
+      reviews: reviews || [],
       pagination: {
         page: Number(page),
         limit: take,

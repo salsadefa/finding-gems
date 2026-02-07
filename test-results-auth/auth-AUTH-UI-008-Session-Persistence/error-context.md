@@ -1,0 +1,118 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - navigation [ref=e7]:
+          - link "Explore" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Productivity" [ref=e9] [cursor=pointer]:
+            - /url: /search?category=productivity
+          - link "Administration" [ref=e10] [cursor=pointer]:
+            - /url: /search?category=administration
+          - link "Education" [ref=e11] [cursor=pointer]:
+            - /url: /search?category=education
+          - link "AI Tools" [ref=e12] [cursor=pointer]:
+            - /url: /search?category=ai-tools
+        - generic [ref=e13]:
+          - link "Search" [ref=e14] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e15]
+          - generic [ref=e18]:
+            - link "Log In" [ref=e19] [cursor=pointer]:
+              - /url: /login
+            - link "Sign Up" [ref=e20] [cursor=pointer]:
+              - /url: /signup
+    - main [ref=e21]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - link "Dualangka" [ref=e26] [cursor=pointer]:
+            - /url: /
+          - heading "Welcome back" [level=1] [ref=e27]
+          - paragraph [ref=e28]: Sign in to your account
+        - generic [ref=e29]:
+          - generic [ref=e31]:
+            - generic [ref=e32]: Email
+            - textbox "you@example.com" [ref=e33]
+          - generic [ref=e34]:
+            - generic [ref=e35]:
+              - generic [ref=e36]: Password
+              - link "Forgot password?" [ref=e37] [cursor=pointer]:
+                - /url: /forgot-password
+            - textbox "••••••••" [ref=e39]
+          - button "Sign In" [ref=e41] [cursor=pointer]
+        - generic [ref=e42]: or try demo accounts
+        - generic [ref=e43]:
+          - button "Login as Buyer" [ref=e44]
+          - button "Login as Creator" [ref=e45]
+          - button "Login as Admin" [ref=e46]
+        - paragraph [ref=e47]:
+          - text: Don't have an account?
+          - link "Sign up" [ref=e48] [cursor=pointer]:
+            - /url: /signup
+    - contentinfo [ref=e49]:
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]:
+            - link "Dualangka" [ref=e53] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e54]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e56]:
+            - generic [ref=e57]:
+              - heading "Product" [level=4] [ref=e58]
+              - list [ref=e59]:
+                - listitem [ref=e60]:
+                  - link "Explore" [ref=e61] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e62]:
+                  - link "Categories" [ref=e63] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e64]:
+                  - link "For Creators" [ref=e65] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e66]:
+                  - link "Pricing" [ref=e67] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e68]:
+              - heading "Company" [level=4] [ref=e69]
+              - list [ref=e70]:
+                - listitem [ref=e71]:
+                  - link "About" [ref=e72] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e73]:
+                  - link "Blog" [ref=e74] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e75]:
+                  - link "Careers" [ref=e76] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e77]:
+                  - link "Contact" [ref=e78] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e79]:
+              - heading "Legal" [level=4] [ref=e80]
+              - list [ref=e81]:
+                - listitem [ref=e82]:
+                  - link "Privacy Policy" [ref=e83] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e84]:
+                  - link "Terms of Service" [ref=e85] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e86]:
+                  - link "Cookie Policy" [ref=e87] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e88]:
+          - paragraph [ref=e89]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e90]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e91]:
+    - img [ref=e93]
+    - button "Open Tanstack query devtools" [ref=e141] [cursor=pointer]:
+      - img [ref=e142]
+  - button "Open Next.js Dev Tools" [ref=e195] [cursor=pointer]:
+    - img [ref=e196]
+  - alert [ref=e199]
+```

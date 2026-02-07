@@ -1,0 +1,30 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - img [ref=e5]
+    - heading "Something went wrong" [level=1] [ref=e7]
+    - paragraph [ref=e8]: We apologize for the inconvenience. An unexpected error has occurred.
+    - group [ref=e9]:
+      - generic "Error details (development only)" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]:
+      - button "Try Again" [ref=e12] [cursor=pointer]:
+        - img [ref=e13]
+        - text: Try Again
+      - button "Go Home" [ref=e18] [cursor=pointer]:
+        - img [ref=e19]
+        - text: Go Home
+  - generic [ref=e22]:
+    - img [ref=e24]
+    - button "Open Tanstack query devtools" [ref=e72] [cursor=pointer]:
+      - img [ref=e73]
+  - generic [ref=e125] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e126]:
+      - img [ref=e127]
+    - generic [ref=e130]:
+      - button "Open issues overlay" [ref=e131]:
+        - generic [ref=e132]:
+          - generic [ref=e133]: "0"
+          - generic [ref=e134]: "1"
+        - generic [ref=e135]: Issue
+      - button "Collapse issues badge" [ref=e136]:
+        - img [ref=e137]
+  - alert [ref=e139]

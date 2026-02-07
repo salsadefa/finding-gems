@@ -44,6 +44,13 @@ router.post('/refresh', refresh);
 router.get('/me', authenticate, getMe);
 
 /**
+ * @route   GET /api/v1/auth/profile
+ * @desc    Get current user profile (alias for /me)
+ * @access  Private
+ */
+router.get('/profile', authenticate, getMe);
+
+/**
  * @route   POST /api/v1/auth/forgot-password
  * @desc    Request password reset
  * @access  Public

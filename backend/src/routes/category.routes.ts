@@ -11,6 +11,7 @@ import {
   deleteCategory,
 } from '../controllers/category.controller';
 import { authenticate, authorize } from '../middleware/auth';
+import { cacheMiddleware } from '../middleware/cache';
 
 const router = Router();
 
@@ -18,15 +19,17 @@ const router = Router();
  * @route   GET /api/v1/categories
  * @desc    Get all categories
  * @access  Public
+ * @cache   5 minutes (rarely changes)
  */
-router.get('/', getCategories);
+router.get('/', cacheMiddleware(300000), getCategories);
 
 /**
  * @route   GET /api/v1/categories/:id
  * @desc    Get category by ID or slug
  * @access  Public
+ * @cache   5 minutes
  */
-router.get('/:id', getCategoryById);
+router.get('/:id', cacheMiddleware(300000), getCategoryById);
 
 /**
  * @route   POST /api/v1/categories

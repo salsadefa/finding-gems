@@ -1,0 +1,93 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - navigation [ref=e7]:
+          - link "Explore" [ref=e8] [cursor=pointer]:
+            - /url: /
+          - link "Productivity" [ref=e9] [cursor=pointer]:
+            - /url: /search?category=productivity
+          - link "Administration" [ref=e10] [cursor=pointer]:
+            - /url: /search?category=administration
+          - link "Education" [ref=e11] [cursor=pointer]:
+            - /url: /search?category=education
+          - link "AI Tools" [ref=e12] [cursor=pointer]:
+            - /url: /search?category=ai-tools
+        - generic [ref=e13]:
+          - link "Search" [ref=e14] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e15]
+          - 'button "User: Test Creator" [ref=e19]':
+            - 'generic "User: Test Creator" [ref=e20]': T
+            - img [ref=e21]
+    - main [ref=e23]:
+      - generic [ref=e25]:
+        - heading "404" [level=1] [ref=e26]
+        - heading "This page could not be found." [level=2] [ref=e28]
+    - contentinfo [ref=e29]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e32]:
+            - link "Dualangka" [ref=e33] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e34]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e36]:
+            - generic [ref=e37]:
+              - heading "Product" [level=4] [ref=e38]
+              - list [ref=e39]:
+                - listitem [ref=e40]:
+                  - link "Explore" [ref=e41] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e42]:
+                  - link "Categories" [ref=e43] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e44]:
+                  - link "For Creators" [ref=e45] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e46]:
+                  - link "Pricing" [ref=e47] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e48]:
+              - heading "Company" [level=4] [ref=e49]
+              - list [ref=e50]:
+                - listitem [ref=e51]:
+                  - link "About" [ref=e52] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e53]:
+                  - link "Blog" [ref=e54] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e55]:
+                  - link "Careers" [ref=e56] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e57]:
+                  - link "Contact" [ref=e58] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e59]:
+              - heading "Legal" [level=4] [ref=e60]
+              - list [ref=e61]:
+                - listitem [ref=e62]:
+                  - link "Privacy Policy" [ref=e63] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e64]:
+                  - link "Terms of Service" [ref=e65] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e66]:
+                  - link "Cookie Policy" [ref=e67] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e68]:
+          - paragraph [ref=e69]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e70]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e71]:
+    - img [ref=e73]
+    - button "Open Tanstack query devtools" [ref=e121] [cursor=pointer]:
+      - img [ref=e122]
+  - button "Open Next.js Dev Tools" [ref=e175] [cursor=pointer]:
+    - img [ref=e176]
+  - alert [ref=e179]
+```

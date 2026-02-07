@@ -1,0 +1,152 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - link "Dualangka Admin" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - text: Dualangka
+          - generic [ref=e7]: Admin
+        - navigation [ref=e8]:
+          - paragraph [ref=e9]: Main Menu
+          - link "Dashboard" [ref=e10] [cursor=pointer]:
+            - /url: /admin
+            - img [ref=e11]
+            - text: Dashboard
+          - link "Websites" [ref=e16] [cursor=pointer]:
+            - /url: /admin?tab=websites
+            - img [ref=e17]
+            - text: Websites
+          - link "Creators" [ref=e20] [cursor=pointer]:
+            - /url: /admin?tab=creators
+            - img [ref=e21]
+            - text: Creators
+          - link "Moderation" [ref=e26] [cursor=pointer]:
+            - /url: /admin?tab=reports
+            - img [ref=e27]
+            - text: Moderation
+          - link "Finance" [ref=e29] [cursor=pointer]:
+            - /url: /admin?tab=finance
+            - img [ref=e30]
+            - text: Finance
+          - link "Settings" [ref=e32] [cursor=pointer]:
+            - /url: /admin?tab=settings
+            - img [ref=e33]
+            - text: Settings
+        - generic [ref=e36]:
+          - generic [ref=e37]:
+            - generic [ref=e38]: A
+            - generic [ref=e39]:
+              - paragraph [ref=e40]: Admin User
+              - paragraph [ref=e41]: Administrator
+          - button "Sign Out" [ref=e42]:
+            - img [ref=e43]
+            - text: Sign Out
+      - generic [ref=e46]:
+        - generic [ref=e47]:
+          - generic [ref=e49]: Dashboard
+          - button [ref=e51]:
+            - img [ref=e52]
+        - main [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]:
+              - generic [ref=e59]:
+                - generic [ref=e60]:
+                  - generic [ref=e61]: Total Users
+                  - img [ref=e62]
+                - generic [ref=e66]:
+                  - generic [ref=e67]: "11"
+                  - generic [ref=e68]:
+                    - img [ref=e69]
+                    - text: "0"
+                  - text: vs last month
+              - generic [ref=e72]:
+                - generic [ref=e73]:
+                  - generic [ref=e74]: Total Creators
+                  - img [ref=e75]
+                - generic [ref=e79]:
+                  - generic [ref=e80]: "2"
+                  - generic [ref=e81]:
+                    - img [ref=e82]
+                    - text: +12%
+                  - text: vs last month
+              - generic [ref=e85]:
+                - generic [ref=e86]:
+                  - generic [ref=e87]: Active Websites
+                  - img [ref=e88]
+                - generic [ref=e92]:
+                  - generic [ref=e93]: "20"
+                  - generic [ref=e94]:
+                    - img [ref=e95]
+                    - text: +5%
+                  - text: vs last month
+              - generic [ref=e98]:
+                - generic [ref=e99]:
+                  - generic [ref=e100]: Total Revenue
+                  - img [ref=e101]
+                - generic [ref=e105]:
+                  - generic [ref=e106]: Rp0
+                  - generic [ref=e107]:
+                    - img [ref=e108]
+                    - text: +0.0%
+                  - text: vs last month
+            - generic [ref=e111]:
+              - generic [ref=e113]:
+                - heading "Revenue Growth" [level=3] [ref=e114]
+                - combobox [ref=e115]:
+                  - option "This Month" [selected]
+              - generic [ref=e117]:
+                - heading "User Growth" [level=3] [ref=e118]
+                - generic [ref=e119]:
+                  - generic [ref=e120]:
+                    - generic [ref=e121]: New Users (30d)
+                    - generic [ref=e122]: "0"
+                  - generic [ref=e125]:
+                    - generic [ref=e126]: Total Users
+                    - generic [ref=e127]: "4"
+            - generic [ref=e128]:
+              - generic [ref=e129]:
+                - heading "Pending Actions" [level=3] [ref=e130]
+                - generic [ref=e131]:
+                  - generic [ref=e132]: 1 Applications
+                  - generic [ref=e133]: 0 Refunds
+              - table [ref=e135]:
+                - rowgroup [ref=e136]:
+                  - row "Type Subject Status Action" [ref=e137]:
+                    - columnheader "Type" [ref=e138]
+                    - columnheader "Subject" [ref=e139]
+                    - columnheader "Status" [ref=e140]
+                    - columnheader "Action" [ref=e141]
+                - rowgroup [ref=e142]:
+                  - row "Application 1 creator applications pending Pending Review" [ref=e143]:
+                    - cell "Application" [ref=e144]:
+                      - generic [ref=e145]: Application
+                    - cell "1 creator applications pending" [ref=e146]
+                    - cell "Pending" [ref=e147]:
+                      - generic [ref=e148]:
+                        - img [ref=e149]
+                        - text: Pending
+                    - cell "Review" [ref=e152]:
+                      - link "Review" [ref=e153] [cursor=pointer]:
+                        - /url: /admin?tab=creators
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - generic [ref=e156]:
+                  - heading "Top Performing Websites" [level=3] [ref=e157]
+                  - generic [ref=e158]: By Revenue
+                - paragraph [ref=e160]: No website data available
+              - generic [ref=e161]:
+                - generic [ref=e162]:
+                  - heading "Top Creators" [level=3] [ref=e163]
+                  - generic [ref=e164]: By Earnings
+                - paragraph [ref=e166]: No creator data available
+  - generic [ref=e167]:
+    - img [ref=e169]
+    - button "Open Tanstack query devtools" [ref=e217] [cursor=pointer]:
+      - img [ref=e218]
+  - button "Open Next.js Dev Tools" [ref=e271] [cursor=pointer]:
+    - img [ref=e272]
+  - alert [ref=e275]
+```

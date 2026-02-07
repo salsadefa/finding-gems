@@ -38,13 +38,13 @@ exports.getDashboardOverview = (0, catchAsync_1.catchAsync)(async (req, res) => 
         supabase_1.supabase.from('orders')
             .select('total_amount, platform_fee')
             .eq('status', 'paid')
-            .gte('createdAt', startOfMonth),
+            .gte('created_at', startOfMonth),
         // Last month revenue
         supabase_1.supabase.from('orders')
             .select('total_amount, platform_fee')
             .eq('status', 'paid')
-            .gte('createdAt', startOfLastMonth)
-            .lte('createdAt', endOfLastMonth),
+            .gte('created_at', startOfLastMonth)
+            .lte('created_at', endOfLastMonth),
         // Pending payouts
         supabase_1.supabase.from('payouts').select('id, amount', { count: 'exact' }).eq('status', 'pending'),
         // Pending refunds
@@ -54,12 +54,12 @@ exports.getDashboardOverview = (0, catchAsync_1.catchAsync)(async (req, res) => 
         // Recent orders
         supabase_1.supabase.from('orders')
             .select(`
-        id, order_number, total_amount, status, createdAt,
+        id, order_number, total_amount, status, created_at,
         buyer:users!orders_buyer_id_fkey(id, name, email),
         website:websites(id, name)
       `)
             .eq('status', 'paid')
-            .order('createdAt', { ascending: false })
+            .order('created_at', { ascending: false })
             .limit(5),
     ]);
     // Calculate revenue
@@ -121,12 +121,12 @@ exports.getPaymentAnalytics = (0, catchAsync_1.catchAsync)(async (req, res) => {
     // Get orders for the period
     const { data: orders } = await supabase_1.supabase
         .from('orders')
-        .select('total_amount, platform_fee, status, createdAt')
-        .gte('createdAt', startDate.toISOString());
+        .select('total_amount, platform_fee, status, created_at')
+        .gte('created_at', startDate.toISOString());
     // Group by date
     const dailyData = {};
     orders?.forEach(order => {
-        const date = order.createdAt.split('T')[0];
+        const date = order.created_at.split('T')[0];
         if (!dailyData[date]) {
             dailyData[date] = { revenue: 0, orders: 0, fees: 0 };
         }
@@ -152,7 +152,7 @@ exports.getPaymentAnalytics = (0, catchAsync_1.catchAsync)(async (req, res) => {
     const { data: transactions } = await supabase_1.supabase
         .from('transactions')
         .select('payment_method, amount, status')
-        .gte('createdAt', startDate.toISOString())
+        .gte('created_at', startDate.toISOString())
         .eq('status', 'paid');
     const paymentMethods = {};
     transactions?.forEach(tx => {
@@ -200,12 +200,12 @@ exports.getUserAnalytics = (0, catchAsync_1.catchAsync)(async (req, res) => {
     // Get new users in period
     const { data: newUsers } = await supabase_1.supabase
         .from('users')
-        .select('createdAt, role')
-        .gte('createdAt', startDate.toISOString());
+        .select('created_at, role')
+        .gte('created_at', startDate.toISOString());
     // Group by date
     const dailySignups = {};
     newUsers?.forEach(u => {
-        const date = u.createdAt.split('T')[0];
+        const date = u.created_at.split('T')[0];
         dailySignups[date] = (dailySignups[date] || 0) + 1;
     });
     // Role breakdown

@@ -6,6 +6,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { morganStream } from './config/logger';
@@ -33,6 +34,23 @@ const app: Application = express();
 initSentry(app);
 
 // ============================================
+// Performance Middleware (BEST PRACTICE)
+// ============================================
+
+// Gzip compression - reduces payload size by ~70%
+// Best Practice: Enable compression for all responses
+app.use(compression({
+  level: 6, // Balanced compression (1-9, higher = more compression, slower)
+  threshold: 1024, // Only compress responses > 1KB
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  }
+}));
+
+// ============================================
 // Security Middleware
 // ============================================
 
@@ -50,8 +68,29 @@ app.use(helmet({
 }));
 
 // CORS - Cross-Origin Resource Sharing
+// SEC-007 Fix: Properly validate origins
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3000',
+  'http://localhost:3000',
+  'https://finding-gems.vercel.app',
+  'https://findinggems.id',
+];
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in whitelist
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Reject all other origins
+    return callback(new Error('Not allowed by CORS'), false);
+  },
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -77,17 +116,27 @@ const apiLimiter = rateLimit({
   },
 });
 
+// Environment-aware auth rate limiting
+// Relaxed in development for QA testing, strict in production
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
 const authLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute (reduced for testing)
-  max: 100, // 100 login attempts per window (increased for testing)
+  windowMs: isDevelopment ? 5 * 60 * 1000 : 15 * 60 * 1000, // 5 min (dev) / 15 min (prod)
+  max: isDevelopment ? 20 : 5, // 20 attempts (dev) / 5 attempts (prod)
   skipSuccessfulRequests: true,
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many login attempts, please try again later',
-    },
-    timestamp: new Date().toISOString(),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => {
+    res.status(429).json({
+      success: false,
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: isDevelopment 
+          ? 'Too many login attempts, please try again after 5 minutes'
+          : 'Too many login attempts, please try again after 15 minutes',
+      },
+      timestamp: new Date().toISOString(),
+    });
   },
 });
 
@@ -100,11 +149,36 @@ app.use('/api/v1/auth/register', authLimiter);
 // Body Parsing & Logging
 // ============================================
 
-// JSON body parsing with size limit
-app.use(express.json({ limit: '10mb' }));
+// JSON body parsing with size limit (1MB max)
+app.use(express.json({ 
+  limit: '1mb',
+  verify: (_req, _res, buf) => {
+    if (buf.length > 1024 * 1024) {
+      const err = new Error('Payload too large') as any;
+      err.status = 413;
+      err.type = 'entity.too.large';
+      throw err;
+    }
+  }
+}));
 
 // URL-encoded body parsing
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Handle payload too large errors
+app.use((err: any, _req: express.Request, res: express.Response, next: express.NextFunction) => {
+  if (err.type === 'entity.too.large' || err.status === 413) {
+    return res.status(413).json({
+      success: false,
+      error: {
+        code: 'PAYLOAD_TOO_LARGE',
+        message: 'Request body exceeds the maximum allowed size of 1MB',
+      },
+      timestamp: new Date().toISOString(),
+    });
+  }
+  next(err);
+});
 
 // HTTP request logging
 app.use(morgan('combined', { stream: morganStream }));

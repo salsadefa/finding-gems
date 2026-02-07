@@ -31,7 +31,7 @@ export const getMyBookmarks = catchAsync(async (req: Request, res: Response) => 
         creator:users(name, username)
       )
     `)
-    .eq('user_id', req.user.id)
+    .eq('userId', req.user.id)
     .order('createdAt', { ascending: false });
 
   if (error) throw error;
@@ -74,8 +74,8 @@ export const createBookmark = catchAsync(async (req: Request, res: Response) => 
   const { data: existingBookmark } = await supabase
     .from('bookmarks')
     .select('id')
-    .eq('website_id', websiteId)
-    .eq('user_id', req.user.id)
+    .eq('websiteId', websiteId)
+    .eq('userId', req.user.id)
     .single();
 
   if (existingBookmark) {
@@ -86,8 +86,8 @@ export const createBookmark = catchAsync(async (req: Request, res: Response) => 
   const { data: bookmark, error } = await supabase
     .from('bookmarks')
     .insert({
-      website_id: websiteId,
-      user_id: req.user.id,
+      websiteId: websiteId,
+      userId: req.user.id,
     })
     .select(`
       *,
@@ -102,7 +102,13 @@ export const createBookmark = catchAsync(async (req: Request, res: Response) => 
     `)
     .single();
 
-  if (error) throw error;
+  // Handle unique constraint violation (race condition / duplicate insert)
+  if (error) {
+    if (error.code === '23505') { // Unique violation
+      throw new ConflictError('Website already bookmarked');
+    }
+    throw error;
+  }
 
   res.status(201).json({
     success: true,
@@ -128,8 +134,8 @@ export const deleteBookmark = catchAsync(async (req: Request, res: Response) => 
   const { data: bookmark, error: findError } = await supabase
     .from('bookmarks')
     .select('id')
-    .eq('website_id', websiteId)
-    .eq('user_id', req.user.id)
+    .eq('websiteId', websiteId)
+    .eq('userId', req.user.id)
     .single();
 
   if (findError || !bookmark) {
@@ -140,8 +146,8 @@ export const deleteBookmark = catchAsync(async (req: Request, res: Response) => 
   const { error } = await supabase
     .from('bookmarks')
     .delete()
-    .eq('website_id', websiteId)
-    .eq('user_id', req.user.id);
+    .eq('websiteId', websiteId)
+    .eq('userId', req.user.id);
 
   if (error) throw error;
 
@@ -167,8 +173,8 @@ export const checkBookmark = catchAsync(async (req: Request, res: Response) => {
   const { data: bookmark } = await supabase
     .from('bookmarks')
     .select('id')
-    .eq('website_id', websiteId)
-    .eq('user_id', req.user.id)
+    .eq('websiteId', websiteId)
+    .eq('userId', req.user.id)
     .single();
 
   res.status(200).json({
