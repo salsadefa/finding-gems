@@ -10,6 +10,7 @@ import {
   NotFoundError,
   ForbiddenError,
 } from '../utils/errors';
+import { notifyNewReport } from '../services/notification.service';
 
 interface CreateReportData {
   websiteId: string;
@@ -90,6 +91,19 @@ export const createReport = catchAsync(async (req: Request, res: Response) => {
     .single();
 
   if (error) throw error;
+
+  // Trigger notification for admin
+  try {
+    await notifyNewReport(
+      report.id,
+      req.user.name || 'Unknown User',
+      website.name,
+      reason
+    );
+  } catch (notifyError) {
+    console.error('Failed to send report notification:', notifyError);
+    // Don't fail the request if notification fails
+  }
 
   res.status(201).json({
     success: true,

@@ -143,6 +143,88 @@ When starting a session, agents should identify themselves:
 
 ---
 
+## Rule #7: BUILD FOR REAL USERS, NOT FOR TESTING
+
+🚨 **DILARANG KERAS / FORBIDDEN / TABU / STOP:**
+
+Jangan pernah fix code hanya untuk melancarkan testing QA!
+
+### ❌ DILARANG:
+- Fix code supaya test QA lolos, tapi hasilnya tidak sesuai use case real user
+- Ubah behavior aplikasi hanya karena test script QA tidak compatible
+- Bypass validasi atau flow hanya supaya testing lebih mudah
+- Hardcode data atau workaround yang tidak akan ada di production
+
+### ✅ YANG HARUS DILAKUKAN:
+- **Selalu tanya:** "Apakah fix ini sesuai dengan yang real user butuhkan?"
+- **Real user first:** Build fitur sesuai production use case, bukan test convenience
+- **QA adapts to real flows:** Jika test gagal, QA harus review apakah test-nya yang salah
+- **Fix bugs yang NYATA:** Fix hanya masalah yang akan dialami real user juga
+
+### Contoh Kasus:
+
+**❌ SALAH:**
+```
+QA: "Test gagal karena API butuh field X"
+Developer: *Hapus field X dari API supaya test lolos*
+```
+
+**✅ BENAR:**
+```
+QA: "Test gagal karena API butuh field X"  
+Developer: "Field X memang REQUIRED untuk real user. QA, tolong update test untuk include field X"
+```
+
+**Prinsip:**
+> Jika ada konflik antara test convenience vs real user experience, **SELALU prioritaskan real user.**
+
+---
+
+## Rule #8: 🔐 NEVER SHARE SECRETS IN CHAT OR COMMIT THEM
+
+🚨 **CRITICAL SECURITY RULE** (After API Key Exposure Incident 2026-02-08)
+
+### ❌ DILARANG KERAS:
+- **JANGAN paste API keys, passwords, tokens** di chat (akan ter-log ke markdown)
+- **JANGAN commit** file `.env`, `.env.local`, `.env.production`
+- **JANGAN hardcode** secrets di source code
+- **JANGAN paste** secrets di markdown documentation
+
+### ✅ YANG HARUS DILAKUKAN:
+- **Gunakan environment variables** - set di platform (Render, Vercel, etc.)
+- **Gunakan placeholder** dalam docs: `xnd_production_xxxxx` atau `YOUR_API_KEY_HERE`
+- **Share secrets via secure channel** - DM, password manager, NOT in chat
+- **Add to .gitignore** semua file yang mungkin contain secrets
+
+### Jika User Paste Secret di Chat:
+```
+⚠️ WARNING: Tolong jangan paste API key/secret di chat!
+Ini akan ter-log dan bisa ter-commit ke repo.
+
+Silakan set langsung di:
+- Render Dashboard → Environment Variables
+- Vercel Dashboard → Settings → Environment Variables
+- Local .env file (yang sudah di .gitignore)
+```
+
+### Files yang WAJIB di .gitignore:
+```
+.env
+.env.local
+.env.production
+.env.*.local
+secrets.json
+**/secrets/**
+```
+
+### Incident Reference:
+- **Date:** 2026-02-08
+- **Issue:** Xendit API Key ter-expose via chat log yang ter-commit
+- **Root Cause:** User paste API key di chat → Agent save ke markdown → Markdown ter-commit
+- **Resolution:** Revoke key, regenerate, add this rule
+
+---
+
 ## 📋 Role-Specific Guidelines
 
 ### 🔧 Backend/DevOps Role
@@ -216,6 +298,11 @@ When starting a session, agents should identify themselves:
 4. Screenshot: mcp_next-devtools_browser_eval({ action: "screenshot" })
 5. Close: mcp_next-devtools_browser_eval({ action: "close" })
 ```
+
+**Server Responsibility (QA):**
+- Pastikan backend dan frontend dev server berjalan sebelum testing.
+- Jika perlu, restart server (stop proses lama, lalu start ulang).
+- Jika port konflik (EADDRINUSE), QA wajib hentikan proses lama sebelum start baru.
 
 **Jika MCP tidak bisa diakses:** STOP dan bilang "MCP [nama] tidak bisa diakses"
 

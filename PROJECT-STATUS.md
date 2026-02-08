@@ -1,6 +1,6 @@
 # 🚀 Finding Gems - Project Status
 
-**Last Updated:** 2026-02-08 01:53 WIB  
+**Last Updated:** 2026-02-08 21:42 WIB  
 **Status:** 🟢 **BACKEND LIVE** | 🟡 **FRONTEND READY** | ✅ **QA 86% COMPLETE**
 
 ---
@@ -13,7 +13,8 @@
 | **Frontend** | 🟡 **READY** | Build passes, needs Vercel deploy |
 | **Database** | 🟢 **LIVE** | Supabase connected |
 | **QA Testing** | ✅ **86%** | 63/73 tests passed |
-| **Payments** | 🟢 **INTEGRATED** | Xendit configured |
+| **Payments** | 🟢 **INTEGRATED** | Xendit - QRIS, VA, E-Wallet |
+| **Custom Payment UI** | 🟢 **BE READY** | VA ✅, E-Wallet ✅ (DANA fix applied) |
 
 ---
 
@@ -166,6 +167,10 @@
 - [x] Payment callbacks
 - [x] Creator payouts
 - [x] Refund processing
+- [x] **Custom Payment UI (2026-02-08):**
+  - [x] QRIS: Custom QR code display (no redirect)
+  - [x] Virtual Account: Custom VA number display (BCA ✅ tested)
+  - [x] E-Wallet: Redirect to DANA, OVO, ShopeePay (DANA ✅ fixed)
 
 ---
 

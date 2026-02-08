@@ -374,6 +374,130 @@ export const usePaymentStatus = (transactionId: string, enabled = true) => {
 };
 
 // ============================================
+// QRIS & Virtual Account Payment Hooks
+// ============================================
+
+export interface QRISPaymentResponse {
+  transaction: Transaction;
+  payment_details: {
+    type: 'qris';
+    qr_string: string;
+    amount: number;
+    formatted_amount: string;
+    expires_at: string;
+    instructions: string[];
+  };
+}
+
+export interface VAPaymentResponse {
+  transaction: Transaction;
+  payment_details: {
+    type: 'virtual_account';
+    bank_code: string;
+    bank_name: string;
+    virtual_account_number: string;
+    customer_name: string;
+    amount: number;
+    formatted_amount: string;
+    expires_at: string;
+    instructions: string[];
+  };
+}
+
+export interface VABank {
+  code: string;
+  name: string;
+}
+
+export interface EWalletPaymentResponse {
+  transaction: Transaction;
+  payment_details: {
+    type: 'ewallet';
+    ewallet_code: 'OVO' | 'DANA' | 'SHOPEEPAY' | 'LINKAJA' | 'GOPAY';
+    ewallet_name: string;
+    checkout_url?: string;
+    mobile_deeplink_url?: string;
+    desktop_web_url?: string;
+    mobile_web_url?: string;
+    expires_at: string;
+    instructions: string[];
+  };
+}
+
+export interface EWalletOption {
+  code: 'OVO' | 'DANA' | 'SHOPEEPAY' | 'LINKAJA' | 'GOPAY';
+  name: string;
+  requiresMobileNumber: boolean;
+}
+
+export const useCreateQRISPayment = () => {
+  return useMutation({
+    mutationFn: async (data: { order_id: string }) => {
+      const response = await api.post<{
+        success: boolean;
+        data: QRISPaymentResponse;
+        message: string;
+      }>('/payments/qris', data);
+      return response.data;
+    },
+  });
+};
+
+export const useCreateVAPayment = () => {
+  return useMutation({
+    mutationFn: async (data: { order_id: string; bank_code: string }) => {
+      const response = await api.post<{
+        success: boolean;
+        data: VAPaymentResponse;
+        message: string;
+      }>('/payments/virtual-account', data);
+      return response.data;
+    },
+  });
+};
+
+export const useVABanks = () => {
+  return useQuery({
+    queryKey: ['payments', 'va-banks'],
+    queryFn: async () => {
+      const response = await api.get<{
+        success: boolean;
+        data: { banks: VABank[] };
+      }>('/payments/virtual-account/banks');
+      return response.data.banks;
+    },
+    staleTime: 24 * 60 * 60 * 1000, // Cache for 24 hours
+  });
+};
+
+export const useCreateEWalletPayment = () => {
+  return useMutation({
+    mutationFn: async (data: { order_id: string; ewallet_code: EWalletOption['code']; mobile_number?: string }) => {
+      const response = await api.post<{
+        success: boolean;
+        data: EWalletPaymentResponse;
+        message: string;
+      }>('/payments/ewallet', data);
+      return response.data;
+    },
+  });
+};
+
+export const useEWalletOptions = () => {
+  return useQuery({
+    queryKey: ['payments', 'ewallet-options'],
+    queryFn: async () => {
+      const response = await api.get<{
+        success: boolean;
+        data: { options?: EWalletOption[]; ewallets?: EWalletOption[] };
+      }>('/payments/ewallet/options');
+      return response.data.options || response.data.ewallets || [];
+    },
+    staleTime: 24 * 60 * 60 * 1000, // Cache for 24 hours
+  });
+};
+
+// ============================================
 // Creator Sales Hooks
 // ============================================
 

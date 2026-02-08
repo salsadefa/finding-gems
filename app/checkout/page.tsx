@@ -11,10 +11,17 @@ import {
   useWebsitePricing,
   useCreateOrder,
   useInitiatePayment,
+  useCreateQRISPayment,
+  useCreateVAPayment,
+  useCreateEWalletPayment,
   formatPrice
 } from '@/lib/api/billing';
 import Button from '@/components/Button';
 import { CheckoutSkeleton } from '@/components/Skeleton';
+import QRISPaymentDisplay from '@/components/payment/QRISPaymentDisplay';
+import VAPaymentDisplay from '@/components/payment/VAPaymentDisplay';
+import EWalletPaymentDisplay from '@/components/payment/EWalletPaymentDisplay';
+import { BankSelector, EWalletSelector, type EWalletOption } from '@/components/payment/PaymentMethodSelector';
 import {
   ArrowLeft,
   Check,
@@ -29,7 +36,7 @@ import {
 } from 'lucide-react';
 import { fadeInUp, staggerContainer, scaleIn } from '@/lib/animations';
 
-type PaymentMethod = 'bank_transfer' | 'ewallet' | 'qris';
+type PaymentMethod = 'bank_transfer' | 'qris' | 'virtual_account' | 'ewallet';
 
 interface PaymentMethodOption {
   id: PaymentMethod;
@@ -40,22 +47,28 @@ interface PaymentMethodOption {
 
 const paymentMethods: PaymentMethodOption[] = [
   {
-    id: 'bank_transfer',
-    name: 'Bank Transfer',
+    id: 'qris',
+    name: 'QRIS',
+    description: 'Scan dengan semua e-wallet & m-banking',
+    icon: <QrCode className="w-6 h-6" />,
+  },
+  {
+    id: 'virtual_account',
+    name: 'Virtual Account',
     description: 'Transfer via BCA, Mandiri, BNI, BRI',
     icon: <Building2 className="w-6 h-6" />,
   },
   {
     id: 'ewallet',
     name: 'E-Wallet',
-    description: 'GoPay, OVO, DANA, ShopeePay',
+    description: 'OVO, DANA, ShopeePay, LinkAja, GoPay',
     icon: <Wallet className="w-6 h-6" />,
   },
   {
-    id: 'qris',
-    name: 'QRIS',
-    description: 'Scan dengan semua e-wallet & m-banking',
-    icon: <QrCode className="w-6 h-6" />,
+    id: 'bank_transfer',
+    name: 'Bank Transfer Manual',
+    description: 'Transfer manual dengan konfirmasi',
+    icon: <CreditCard className="w-6 h-6" />,
   },
 ];
 
@@ -83,10 +96,19 @@ function CheckoutContent() {
   
   const createOrderMutation = useCreateOrder();
   const initiatePaymentMutation = useInitiatePayment();
+  const createQRISMutation = useCreateQRISPayment();
+  const createVAMutation = useCreateVAPayment();
+  const createEWalletMutation = useCreateEWalletPayment();
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('bank_transfer');
-  const [step, setStep] = useState<'review' | 'payment' | 'instructions'>('review');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('qris');
+  const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  const [selectedEWallet, setSelectedEWallet] = useState<EWalletOption | null>(null);
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [step, setStep] = useState<'review' | 'select_bank' | 'select_ewallet' | 'payment' | 'instructions'>('review');
   const [paymentInstructions, setPaymentInstructions] = useState<any>(null);
+  const [qrisData, setQrisData] = useState<any>(null);
+  const [vaData, setVaData] = useState<any>(null);
+  const [ewalletData, setEwalletData] = useState<any>(null);
   const [orderContext, setOrderContext] = useState<{ orderId: string; amount: number; transactionId: string } | null>(null);
 
   // Redirect if not authenticated
@@ -104,43 +126,126 @@ function CheckoutContent() {
     if (!websiteId || !selectedTier) return;
 
     try {
-      // Create order
+      // Create order first
       const orderResult = await createOrderMutation.mutateAsync({
         website_id: websiteId,
         pricing_tier_id: selectedTier.id,
       });
 
-      // Initiate payment
-      const paymentResult = await initiatePaymentMutation.mutateAsync({
-        order_id: orderResult.order.id,
-        payment_method: selectedPaymentMethod,
-      });
-
-      const instructions = paymentResult.payment_instructions;
-      const transaction = paymentResult.transaction;
+      const orderId = orderResult.order.id;
+      const amount = orderResult.order.total_amount || totalAmount;
 
       // Store order context for display
       setOrderContext({
-        orderId: orderResult.order.id,
-        amount: orderResult.order.total_amount || totalAmount,
-        transactionId: transaction?.transaction_id || '',
+        orderId,
+        amount,
+        transactionId: '',
       });
 
-      // If Xendit returns a checkout_url, redirect to it
-      if (instructions?.type === 'xendit' && instructions?.checkout_url) {
-        showToast('Redirecting to payment gateway...', 'success');
-        // Redirect to Xendit checkout page (external URL needs to use window)
-        // eslint-disable-next-line react-hooks/immutability
-        setTimeout(() => { window.location.href = instructions.checkout_url as string; }, 100);
-        return;
-      }
+      // Handle different payment methods
+      if (selectedPaymentMethod === 'qris') {
+        // QRIS: Create payment and show QR code
+        const qrisResult = await createQRISMutation.mutateAsync({ order_id: orderId });
+        setOrderContext(prev => prev ? { ...prev, transactionId: qrisResult.transaction.transaction_id } : prev);
+        setQrisData(qrisResult.payment_details);
+        setStep('payment');
+        showToast('QR Code berhasil dibuat!', 'success');
+      } else if (selectedPaymentMethod === 'virtual_account') {
+        // VA: Go to bank selection step
+        setStep('select_bank');
+      } else if (selectedPaymentMethod === 'ewallet') {
+        // E-Wallet: Go to e-wallet selection step
+        setStep('select_ewallet');
+      } else {
+        // Bank Transfer (Manual): Use existing Xendit flow
+        const paymentResult = await initiatePaymentMutation.mutateAsync({
+          order_id: orderId,
+          payment_method: selectedPaymentMethod,
+        });
 
-      // Otherwise show manual payment instructions
-      setPaymentInstructions(instructions);
-      setStep('instructions');
-      showToast('Order created! Please complete payment.', 'success');
+        const instructions = paymentResult.payment_instructions;
+        const transaction = paymentResult.transaction;
+
+        setOrderContext(prev => prev ? { ...prev, transactionId: transaction?.transaction_id || '' } : prev);
+
+        // If Xendit returns a checkout_url, redirect to it
+        if (instructions?.type === 'xendit' && instructions?.checkout_url) {
+          showToast('Redirecting to payment gateway...', 'success');
+          setTimeout(() => { window.location.href = instructions.checkout_url as string; }, 100);
+          return;
+        }
+
+        // Otherwise show manual payment instructions
+        setPaymentInstructions(instructions);
+        setStep('instructions');
+        showToast('Order created! Please complete payment.', 'success');
+      }
     } catch (error: any) {
       showToast(error.response?.data?.error?.message || 'Failed to create order', 'error');
+    }
+  };
+
+  // Handle VA bank selection confirmation
+  const handleVABankConfirm = async () => {
+    if (!orderContext?.orderId || !selectedBank) {
+      showToast('Please select a bank first', 'error');
+      return;
+    }
+
+    try {
+      const vaResult = await createVAMutation.mutateAsync({
+        order_id: orderContext.orderId,
+        bank_code: selectedBank,
+      });
+
+      setOrderContext(prev => prev ? { ...prev, transactionId: vaResult.transaction.transaction_id } : prev);
+      setVaData(vaResult.payment_details);
+      setStep('payment');
+      showToast('Virtual Account berhasil dibuat!', 'success');
+    } catch (error: any) {
+      showToast(error.response?.data?.error?.message || 'Failed to create Virtual Account', 'error');
+    }
+  };
+
+  // Handle E-Wallet selection confirmation
+  const handleEWalletConfirm = async () => {
+    if (!orderContext?.orderId || !selectedEWallet) {
+      showToast('Please select an e-wallet first', 'error');
+      return;
+    }
+
+    if (selectedEWallet.requiresMobileNumber && !mobileNumber) {
+      showToast(`Please enter your ${selectedEWallet.name} mobile number`, 'error');
+      return;
+    }
+
+    try {
+      const ewalletResult = await createEWalletMutation.mutateAsync({
+        order_id: orderContext.orderId,
+        ewallet_code: selectedEWallet.code,
+        mobile_number: selectedEWallet.requiresMobileNumber ? mobileNumber : undefined,
+      });
+
+      setOrderContext(prev => prev ? { ...prev, transactionId: ewalletResult.transaction.transaction_id } : prev);
+      setEwalletData(ewalletResult.payment_details);
+      setStep('payment');
+      showToast('E-Wallet payment initiated!', 'success');
+    } catch (error: any) {
+      showToast(error.response?.data?.error?.message || 'Failed to create E-Wallet payment', 'error');
+    }
+  };
+
+  // Handle refresh for expired QRIS
+  const handleRefreshQRIS = async () => {
+    if (!orderContext?.orderId) return;
+    
+    try {
+      const qrisResult = await createQRISMutation.mutateAsync({ order_id: orderContext.orderId });
+      setOrderContext(prev => prev ? { ...prev, transactionId: qrisResult.transaction.transaction_id } : prev);
+      setQrisData(qrisResult.payment_details);
+      showToast('QR Code baru berhasil dibuat!', 'success');
+    } catch (error: any) {
+      showToast(error.response?.data?.error?.message || 'Failed to refresh QR Code', 'error');
     }
   };
 
@@ -525,6 +630,312 @@ function CheckoutContent() {
                       </Link>
                     </motion.div>
                   </motion.div>
+                </motion.div>
+              )}
+
+              {/* Select Bank Step - for Virtual Account */}
+              {step === 'select_bank' && (
+                <motion.div
+                  key="select_bank"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setStep('review')}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </motion.button>
+                    <h2 className="text-lg font-semibold">Pilih Bank</h2>
+                  </div>
+
+                  <BankSelector
+                    selected={selectedBank}
+                    onSelect={setSelectedBank}
+                  />
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-6 pt-6 border-t"
+                  >
+                    <Button
+                      onClick={handleVABankConfirm}
+                      disabled={!selectedBank || createVAMutation.isPending}
+                      className="w-full flex items-center justify-center gap-2"
+                    >
+                      {createVAMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Lanjut ke Pembayaran'
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* Select E-Wallet Step */}
+              {step === 'select_ewallet' && (
+                <motion.div
+                  key="select_ewallet"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setStep('review')}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </motion.button>
+                    <h2 className="text-lg font-semibold">Pilih E-Wallet</h2>
+                  </div>
+
+                  <EWalletSelector
+                    selected={selectedEWallet}
+                    onSelect={(ewallet) => {
+                      setSelectedEWallet(ewallet);
+                      if (!ewallet.requiresMobileNumber) {
+                        setMobileNumber('');
+                      }
+                    }}
+                  />
+
+                  {selectedEWallet?.requiresMobileNumber && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4"
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor HP {selectedEWallet.name}
+                      </label>
+                      <input
+                        type="tel"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value)}
+                        placeholder="Contoh: 081234567890"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Nomor HP terdaftar di {selectedEWallet.name}
+                      </p>
+                    </motion.div>
+                  )}
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-6 pt-6 border-t"
+                  >
+                    <Button
+                      onClick={handleEWalletConfirm}
+                      disabled={!selectedEWallet || createEWalletMutation.isPending || (selectedEWallet?.requiresMobileNumber && !mobileNumber)}
+                      className="w-full flex items-center justify-center gap-2"
+                    >
+                      {createEWalletMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Lanjut ke Pembayaran'
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* Payment Display Step - QRIS */}
+              {step === 'payment' && qrisData && (
+                <motion.div
+                  key="payment_qris"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setStep('review')}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </motion.button>
+                    <h2 className="text-lg font-semibold">Pembayaran QRIS</h2>
+                  </div>
+
+                  <QRISPaymentDisplay
+                    qrString={qrisData.qr_string}
+                    amount={qrisData.formatted_amount}
+                    expiresAt={qrisData.expires_at}
+                    instructions={qrisData.instructions}
+                    transactionId={orderContext?.transactionId || ''}
+                    orderId={orderContext?.orderId || ''}
+                    onRefresh={handleRefreshQRIS}
+                  />
+                </motion.div>
+              )}
+
+              {/* Payment Display Step - Virtual Account */}
+              {step === 'payment' && vaData && (
+                <motion.div
+                  key="payment_va"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setStep('select_bank')}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </motion.button>
+                    <h2 className="text-lg font-semibold">Pembayaran Virtual Account</h2>
+                  </div>
+
+                  <VAPaymentDisplay
+                    bankCode={vaData.bank_code}
+                    bankName={vaData.bank_name}
+                    vaNumber={vaData.virtual_account_number}
+                    customerName={vaData.customer_name}
+                    amount={vaData.formatted_amount}
+                    expiresAt={vaData.expires_at}
+                    instructions={vaData.instructions}
+                    transactionId={orderContext?.transactionId || ''}
+                    orderId={orderContext?.orderId || ''}
+                  />
+                </motion.div>
+              )}
+
+              {/* Select E-Wallet Step */}
+              {step === 'select_ewallet' && (
+                <motion.div
+                  key="select_ewallet"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setStep('review')}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </motion.button>
+                    <h2 className="text-lg font-semibold">Pilih E-Wallet</h2>
+                  </div>
+
+                  <EWalletSelector
+                    selected={selectedEWallet}
+                    onSelect={setSelectedEWallet}
+                  />
+
+                  {selectedEWallet?.requiresMobileNumber && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4"
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nomor HP {selectedEWallet.name}
+                      </label>
+                      <input
+                        type="tel"
+                        value={mobileNumber}
+                        onChange={(e) => setMobileNumber(e.target.value)}
+                        placeholder="+6281234567890"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </motion.div>
+                  )}
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-6 pt-6 border-t"
+                  >
+                    <Button
+                      onClick={handleEWalletConfirm}
+                      disabled={!selectedEWallet || createEWalletMutation.isPending || (selectedEWallet?.requiresMobileNumber && !mobileNumber)}
+                      className="w-full flex items-center justify-center gap-2"
+                    >
+                      {createEWalletMutation.isPending ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Lanjut ke Pembayaran'
+                      )}
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+
+              {/* Payment Display Step - E-Wallet */}
+              {step === 'payment' && ewalletData && (
+                <motion.div
+                  key="payment_ewallet"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white rounded-xl p-6 shadow-sm"
+                >
+                  <div className="flex items-center gap-4 mb-6">
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setStep('select_ewallet')}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </motion.button>
+                    <h2 className="text-lg font-semibold">Pembayaran {ewalletData.ewallet_name}</h2>
+                  </div>
+
+                  <EWalletPaymentDisplay
+                    ewalletCode={ewalletData.ewallet_code}
+                    ewalletName={ewalletData.ewallet_name}
+                    amount={formatPrice(totalAmount)}
+                    checkoutUrl={ewalletData.checkout_url}
+                    mobileDeeplinkUrl={ewalletData.mobile_deeplink_url}
+                    expiresAt={ewalletData.expires_at}
+                    instructions={ewalletData.instructions}
+                    transactionId={orderContext?.transactionId || ''}
+                    orderId={orderContext?.orderId || ''}
+                    onPaymentSuccess={() => router.push(`/checkout/success?order_id=${orderContext?.orderId}`)}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>

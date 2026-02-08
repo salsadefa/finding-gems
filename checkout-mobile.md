@@ -1,0 +1,149 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "Dualangka" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e6]: Dualangka
+        - generic [ref=e13]:
+          - link "Search" [ref=e14] [cursor=pointer]:
+            - /url: /search
+            - img [ref=e15]
+          - 'button "User: QA Creator" [ref=e19]':
+            - 'generic "User: QA Creator" [ref=e20]': Q
+            - img [ref=e21]
+          - button [ref=e188]:
+            - img [ref=e189]
+    - main [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e192]:
+          - button [ref=e193]:
+            - img [ref=e194]
+          - heading "Checkout" [level=1] [ref=e196]
+        - main [ref=e197]:
+          - generic [ref=e198]:
+            - generic [ref=e200]:
+              - generic [ref=e201]:
+                - heading "Order Summary" [level=2] [ref=e202]
+                - generic [ref=e203]:
+                  - img "QA Test Website 1770457564" [ref=e205]
+                  - generic [ref=e206]:
+                    - heading "QA Test Website 1770457564" [level=3] [ref=e207]
+                    - paragraph [ref=e208]: Basic Access
+                    - paragraph [ref=e209]: Full access to the website
+                    - paragraph [ref=e210]:
+                      - img [ref=e211]
+                      - text: Lifetime access
+                  - paragraph [ref=e214]: Rp 50.000
+                - generic [ref=e215]:
+                  - paragraph [ref=e216]: "Included:"
+                  - list [ref=e217]:
+                    - listitem [ref=e218]:
+                      - img [ref=e219]
+                      - text: Full access
+                    - listitem [ref=e221]:
+                      - img [ref=e222]
+                      - text: Updates
+                    - listitem [ref=e224]:
+                      - img [ref=e225]
+                      - text: Support
+              - generic [ref=e227]:
+                - heading "Payment Method" [level=2] [ref=e228]
+                - generic [ref=e229]:
+                  - generic [ref=e230] [cursor=pointer]:
+                    - radio "Bank Transfer Transfer via BCA, Mandiri, BNI, BRI" [checked] [ref=e231]
+                    - img [ref=e233]
+                    - generic [ref=e237]:
+                      - paragraph [ref=e238]: Bank Transfer
+                      - paragraph [ref=e239]: Transfer via BCA, Mandiri, BNI, BRI
+                    - img [ref=e241]
+                  - generic [ref=e243] [cursor=pointer]:
+                    - radio "E-Wallet GoPay, OVO, DANA, ShopeePay" [ref=e244]
+                    - img [ref=e246]
+                    - generic [ref=e249]:
+                      - paragraph [ref=e250]: E-Wallet
+                      - paragraph [ref=e251]: GoPay, OVO, DANA, ShopeePay
+                  - generic [ref=e252] [cursor=pointer]:
+                    - radio "QRIS Scan dengan semua e-wallet & m-banking" [ref=e253]
+                    - img [ref=e255]
+                    - generic [ref=e261]:
+                      - paragraph [ref=e262]: QRIS
+                      - paragraph [ref=e263]: Scan dengan semua e-wallet & m-banking
+            - generic [ref=e265]:
+              - heading "Order Total" [level=3] [ref=e266]
+              - generic [ref=e267]:
+                - generic [ref=e268]:
+                  - generic [ref=e269]: Subtotal
+                  - generic [ref=e270]: Rp 50.000
+                - generic [ref=e271]:
+                  - generic [ref=e272]: Platform Fee
+                  - generic [ref=e273]: Rp 1.000
+                - generic [ref=e274]:
+                  - generic [ref=e275]: Total
+                  - generic [ref=e276]: Rp 51.000
+              - button "Proceed to Payment" [ref=e278] [cursor=pointer]:
+                - img [ref=e279]
+                - text: Proceed to Payment
+              - generic [ref=e281]:
+                - img [ref=e282]
+                - paragraph [ref=e284]: Your payment information is secure and encrypted. We never store your card details.
+    - contentinfo [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - link "Dualangka" [ref=e41] [cursor=pointer]:
+              - /url: /
+            - paragraph [ref=e42]: Discover hidden gem websites built by independent creators and AI-enabled developers.
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - heading "Product" [level=4] [ref=e46]
+              - list [ref=e47]:
+                - listitem [ref=e48]:
+                  - link "Explore" [ref=e49] [cursor=pointer]:
+                    - /url: /
+                - listitem [ref=e50]:
+                  - link "Categories" [ref=e51] [cursor=pointer]:
+                    - /url: /search
+                - listitem [ref=e52]:
+                  - link "For Creators" [ref=e53] [cursor=pointer]:
+                    - /url: /creator
+                - listitem [ref=e54]:
+                  - link "Pricing" [ref=e55] [cursor=pointer]:
+                    - /url: /pricing
+            - generic [ref=e56]:
+              - heading "Company" [level=4] [ref=e57]
+              - list [ref=e58]:
+                - listitem [ref=e59]:
+                  - link "About" [ref=e60] [cursor=pointer]:
+                    - /url: /about
+                - listitem [ref=e61]:
+                  - link "Blog" [ref=e62] [cursor=pointer]:
+                    - /url: /blog
+                - listitem [ref=e63]:
+                  - link "Careers" [ref=e64] [cursor=pointer]:
+                    - /url: /careers
+                - listitem [ref=e65]:
+                  - link "Contact" [ref=e66] [cursor=pointer]:
+                    - /url: /contact
+            - generic [ref=e67]:
+              - heading "Legal" [level=4] [ref=e68]
+              - list [ref=e69]:
+                - listitem [ref=e70]:
+                  - link "Privacy Policy" [ref=e71] [cursor=pointer]:
+                    - /url: /privacy
+                - listitem [ref=e72]:
+                  - link "Terms of Service" [ref=e73] [cursor=pointer]:
+                    - /url: /terms
+                - listitem [ref=e74]:
+                  - link "Cookie Policy" [ref=e75] [cursor=pointer]:
+                    - /url: /cookies
+        - generic [ref=e76]:
+          - paragraph [ref=e77]: © 2026 Dualangka. All rights reserved.
+          - paragraph [ref=e78]: "Platform fee: Rp1.000 per transaction • No listing fees"
+  - generic [ref=e79]:
+    - img [ref=e81]
+    - button "Open Tanstack query devtools" [ref=e129] [cursor=pointer]:
+      - img [ref=e130]
+  - button "Open Next.js Dev Tools" [ref=e183] [cursor=pointer]:
+    - img [ref=e184]
+  - alert [ref=e187]

@@ -1,0 +1,87 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - link "DL Dualangka Creator" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: DL
+          - text: Dualangka Creator
+        - navigation [ref=e8]:
+          - link "Overview" [ref=e9] [cursor=pointer]:
+            - /url: /creator
+            - img [ref=e10]
+            - text: Overview
+          - link "My Listings" [ref=e15] [cursor=pointer]:
+            - /url: /creator/listings
+            - img [ref=e16]
+            - text: My Listings
+          - link "Analytics" [ref=e17] [cursor=pointer]:
+            - /url: /creator/analytics
+            - img [ref=e18]
+            - text: Analytics
+          - link "Settings" [ref=e19] [cursor=pointer]:
+            - /url: /creator/settings
+            - img [ref=e20]
+            - text: Settings
+        - generic [ref=e24]:
+          - generic [ref=e26]: Q
+          - generic [ref=e27]:
+            - paragraph [ref=e28]: QA Creator
+            - paragraph [ref=e29]: qa-creator@test.com
+          - button "Log out" [ref=e30]:
+            - img [ref=e31]
+      - main [ref=e34]:
+        - heading "Settings" [level=1] [ref=e36]
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - heading "Creator Settings" [level=1] [ref=e40]
+            - paragraph [ref=e41]: Manage your public profile information
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - generic [ref=e44]:
+                - img [ref=e46]
+                - generic [ref=e49]:
+                  - heading "Bio" [level=2] [ref=e50]
+                  - paragraph [ref=e51]: Tell your story and showcase your expertise
+              - generic [ref=e52]:
+                - textbox "Tell us about yourself, your background, and what you create..." [ref=e53]
+                - generic [ref=e55]: 0/1000 characters
+            - generic [ref=e56]:
+              - generic [ref=e57]:
+                - img [ref=e59]
+                - generic [ref=e62]:
+                  - heading "Professional Background" [level=2] [ref=e63]
+                  - paragraph [ref=e64]: Your professional title or background
+              - textbox "e.g., Full Stack Developer, UI/UX Designer" [ref=e65]
+            - generic [ref=e66]:
+              - generic [ref=e67]:
+                - img [ref=e69]
+                - generic [ref=e73]:
+                  - heading "Expertise" [level=2] [ref=e74]
+                  - paragraph [ref=e75]: Add tags to showcase your skills (max 10)
+              - generic [ref=e76]:
+                - generic [ref=e77]:
+                  - textbox "e.g., React, Node.js, Design" [ref=e78]
+                  - button "Add" [disabled] [ref=e79]:
+                    - img [ref=e80]
+                    - text: Add
+                - generic [ref=e81]: Press Enter to add a tag • 0/10 tags
+            - generic [ref=e82]:
+              - generic [ref=e83]:
+                - img [ref=e85]
+                - generic [ref=e88]:
+                  - heading "Portfolio URL" [level=2] [ref=e89]
+                  - paragraph [ref=e90]: Link to your portfolio or personal website
+              - textbox "https://your-portfolio.com" [ref=e92]
+            - generic [ref=e93]:
+              - button "Cancel" [ref=e94]
+              - button "Save Changes" [ref=e95] [cursor=pointer]:
+                - img [ref=e96]
+                - text: Save Changes
+  - generic [ref=e100]:
+    - img [ref=e102]
+    - button "Open Tanstack query devtools" [ref=e150] [cursor=pointer]:
+      - img [ref=e151]
+  - button "Open Next.js Dev Tools" [ref=e204] [cursor=pointer]:
+    - img [ref=e205]
+  - alert [ref=e208]

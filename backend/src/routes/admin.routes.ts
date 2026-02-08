@@ -25,6 +25,13 @@ import {
   handleCreatorApplication,
   getCreatorApplicationStats,
 } from '../controllers/creator-application-admin.controller';
+import {
+  getAdminNotifications,
+  getUnreadCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  cleanupNotifications,
+} from '../controllers/notification.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
@@ -61,4 +68,12 @@ router.patch('/creator-applications/:id', handleCreatorApplication);
 router.get('/reports', getReports);
 router.patch('/reports/:id', handleReport);
 
+// Notification management
+router.get('/notifications', getAdminNotifications);
+router.get('/notifications/count', getUnreadCount);
+router.post('/notifications/read-all', markAllNotificationsAsRead);
+router.patch('/notifications/:id/read', markNotificationAsRead);
+router.delete('/notifications/cleanup', cleanupNotifications);
+
 export default router;
+

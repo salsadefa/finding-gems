@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { catchAsync } from '../utils/catchAsync';
 import { ForbiddenError, NotFoundError, BadRequestError } from '../utils/errors';
+import { notifyNewCreatorApplication } from '../services/notification.service';
 
 // Types
 interface CreateApplicationBody {
@@ -137,6 +138,18 @@ export const createApplication = catchAsync(async (req: Request, res: Response) 
     .single();
 
   if (error) throw error;
+
+  // Trigger notification for admin
+  try {
+    await notifyNewCreatorApplication(
+      application.id,
+      req.user.name || 'Unknown User',
+      req.user.email
+    );
+  } catch (notifyError) {
+    console.error('Failed to send notification:', notifyError);
+    // Don't fail the request if notification fails
+  }
 
   res.status(201).json({
     success: true,

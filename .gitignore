@@ -39,3 +39,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Chat logs / conversation files (may contain secrets)
+Fixing*.md
+**/Chat*.md
+**/Conversation*.md
+
+# Secrets
+secrets.json
+**/secrets/
+*.secret
+*.key
+
+# Logs that may contain sensitive data
+/tmp/*.log
+*.log.json

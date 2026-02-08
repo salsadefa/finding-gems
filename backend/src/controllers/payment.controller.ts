@@ -9,10 +9,13 @@ import { catchAsync } from '../utils/catchAsync';
 import { 
   xenditService, 
   VABankCode,
+  EWalletCode,
   QRISPaymentResponse,
-  VAPaymentResponse 
+  VAPaymentResponse,
+  EWalletPaymentResponse 
 } from '../services/xendit.service';
 import { sendPaymentSuccessEmail, sendNewSaleEmail, sendInvoiceEmail } from '../services/email.service';
+import { notifyNewOrder } from '../services/notification.service';
 import crypto from 'crypto';
 
 // ============================================
@@ -477,6 +480,192 @@ export const getAvailableVABanks = catchAsync(async (_req: Request, res: Respons
   });
 });
 
+// ============================================
+// DIRECT PAYMENT - E-Wallet (Custom UI)
+// ============================================
+
+/**
+ * Create E-Wallet payment with redirect URLs for custom display
+ * POST /api/v1/payments/ewallet
+ * 
+ * This endpoint returns redirect URLs (deeplink/web) that can be used
+ * to redirect users to their e-wallet app instead of Xendit checkout
+ */
+export const createEWalletPayment = catchAsync(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
+  }
+
+  const { order_id, ewallet_code, mobile_number } = req.body;
+
+  if (!order_id) {
+    return res.status(400).json({ success: false, error: { message: 'order_id is required' } });
+  }
+
+  if (!ewallet_code) {
+    return res.status(400).json({ success: false, error: { message: 'ewallet_code is required' } });
+  }
+
+  // Validate e-wallet code
+  const validEWalletCodes: EWalletCode[] = ['OVO', 'DANA', 'SHOPEEPAY', 'LINKAJA', 'GOPAY'];
+  if (!validEWalletCodes.includes(ewallet_code)) {
+    return res.status(400).json({ 
+      success: false, 
+      error: { 
+        message: `Invalid ewallet_code. Valid options: ${validEWalletCodes.join(', ')}` 
+      } 
+    });
+  }
+
+  // OVO requires mobile number
+  if (ewallet_code === 'OVO' && !mobile_number) {
+    return res.status(400).json({ 
+      success: false, 
+      error: { message: 'mobile_number is required for OVO payments' } 
+    });
+  }
+
+  // Get order
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      buyer:users!orders_buyer_id_fkey(id, name, email),
+      websites!inner(id, name)
+    `)
+    .eq('id', order_id)
+    .single();
+
+  if (orderError || !order) {
+    return res.status(404).json({ success: false, error: { message: 'Order not found' } });
+  }
+
+  if (order.buyer_id !== user.id) {
+    return res.status(403).json({ success: false, error: { message: 'Not authorized' } });
+  }
+
+  if (order.status !== 'pending') {
+    return res.status(400).json({ success: false, error: { message: `Order is ${order.status}, cannot initiate payment` } });
+  }
+
+  // Check if order expired
+  if (order.expires_at && new Date(order.expires_at) < new Date()) {
+    await supabase.from('orders').update({ status: 'expired' }).eq('id', order_id);
+    return res.status(400).json({ success: false, error: { message: 'Order has expired' } });
+  }
+
+  // Check Xendit availability
+  if (!xenditService.isAvailable()) {
+    return res.status(503).json({ 
+      success: false, 
+      error: { message: 'Payment service not available. Please try again later.' } 
+    });
+  }
+
+  // Generate transaction ID
+  const transactionId = `TXN-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+  try {
+    // Create E-Wallet payment via Payment Request API
+    const ewalletResponse: EWalletPaymentResponse = await xenditService.createEWalletPayment({
+      orderId: order_id,
+      amount: order.total_amount,
+      currency: order.currency,
+      customerName: order.buyer?.name || user.name,
+      customerEmail: order.buyer?.email || user.email,
+      ewalletCode: ewallet_code,
+      mobileNumber: mobile_number,
+      description: `E-Wallet Payment for ${order.item_name}`,
+    });
+
+    // Create transaction record
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        order_id: order_id,
+        transaction_id: transactionId,
+        payment_method: 'ewallet',
+        payment_provider: 'xendit',
+        gateway_transaction_id: ewalletResponse.paymentRequestId,
+        amount: order.total_amount,
+        currency: order.currency,
+        status: 'pending',
+        expired_at: ewalletResponse.expiresAt,
+        metadata: {
+          payment_type: 'ewallet_direct',
+          ewallet_code: ewalletResponse.ewalletCode,
+          ewallet_name: ewalletResponse.ewalletName,
+          checkout_url: ewalletResponse.checkoutUrl,
+          mobile_deeplink_url: ewalletResponse.mobileDeeplinkUrl,
+          xendit_reference_id: ewalletResponse.referenceId
+        }
+      })
+      .select()
+      .single();
+
+    if (txError) {
+      console.error('[E-Wallet] Failed to create transaction:', txError);
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Failed to create transaction', details: txError.message }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transaction,
+        payment_details: {
+          type: 'ewallet',
+          ewallet_code: ewalletResponse.ewalletCode,
+          ewallet_name: ewalletResponse.ewalletName,
+          amount: order.total_amount,
+          formatted_amount: new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+          }).format(order.total_amount),
+          // Redirect URLs for the frontend to use
+          checkout_url: ewalletResponse.checkoutUrl,
+          mobile_deeplink_url: ewalletResponse.mobileDeeplinkUrl,
+          desktop_web_url: ewalletResponse.desktopWebUrl,
+          mobile_web_url: ewalletResponse.mobileWebUrl,
+          expires_at: ewalletResponse.expiresAt,
+          instructions: [
+            `Klik tombol "Bayar dengan ${ewalletResponse.ewalletName}" untuk membuka aplikasi`,
+            'Konfirmasi pembayaran di aplikasi e-wallet Anda',
+            'Setelah pembayaran berhasil, Anda akan diarahkan kembali ke sini',
+            'Jika aplikasi tidak terbuka otomatis, pastikan aplikasi sudah terinstall'
+          ]
+        }
+      },
+      message: `E-Wallet payment created. Redirect to ${ewalletResponse.ewalletName} to pay.`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('[E-Wallet] Payment creation failed:', error);
+    return res.status(500).json({
+      success: false,
+      error: { message: 'Failed to create E-Wallet payment', details: error.message }
+    });
+  }
+});
+
+/**
+ * Get available E-Wallets
+ * GET /api/v1/payments/ewallet/options
+ */
+export const getAvailableEWallets = catchAsync(async (_req: Request, res: Response) => {
+  const ewallets = xenditService.getAvailableEWallets();
+  
+  res.status(200).json({
+    success: true,
+    data: { ewallets },
+    timestamp: new Date().toISOString()
+  });
+});
+
 /**
  * Get payment status
  * GET /api/v1/payments/:transactionId/status
@@ -932,6 +1121,20 @@ async function grantAccessAndCreateInvoice(orderId: string) {
       creatorEarning,
       orderNumber: order.order_number
     }).catch(err => console.error('Failed to send sale notification email:', err));
+  }
+
+  // Notify admin of new sale
+  try {
+    await notifyNewOrder(
+      orderId,
+      order.order_number,
+      order.total_amount,
+      order.buyer?.name || 'Unknown',
+      order.item_name || 'Website'
+    );
+  } catch (notifyError) {
+    console.error('Failed to send order notification:', notifyError);
+    // Don't fail if notification fails
   }
 
   console.log(`Access granted and invoice created for order ${orderId}`);

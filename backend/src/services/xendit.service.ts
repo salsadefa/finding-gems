@@ -63,9 +63,26 @@ export interface XenditWebhookPayload {
 // ============================================
 
 /**
- * Supported Virtual Account bank codes
+ * Supported Virtual Account bank codes (user-facing, without country prefix)
  */
 export type VABankCode = 'BCA' | 'BNI' | 'BRI' | 'MANDIRI' | 'PERMATA' | 'BSI' | 'BJB' | 'SAHABAT_SAMPOERNA' | 'CIMB';
+
+/**
+ * Xendit Payment Request API uses bank codes WITHOUT country prefix for Virtual Account
+ * Per Xendit Node SDK docs: channelCode should be "BNI" not "ID_BNI"
+ * Country is specified separately in the PaymentRequestParameters.country field
+ */
+const VA_CHANNEL_CODES: Record<VABankCode, VirtualAccountChannelCode> = {
+  BCA: 'BCA' as VirtualAccountChannelCode,
+  BNI: 'BNI' as VirtualAccountChannelCode,
+  BRI: 'BRI' as VirtualAccountChannelCode,
+  MANDIRI: 'MANDIRI' as VirtualAccountChannelCode,
+  PERMATA: 'PERMATA' as VirtualAccountChannelCode,
+  BSI: 'BSI' as VirtualAccountChannelCode,
+  BJB: 'BJB' as VirtualAccountChannelCode,
+  SAHABAT_SAMPOERNA: 'SAHABAT_SAMPOERNA' as VirtualAccountChannelCode,
+  CIMB: 'CIMB' as VirtualAccountChannelCode,
+};
 
 /**
  * Common params for direct payment requests (QRIS/VA)
@@ -125,7 +142,67 @@ export interface VAPaymentResponse {
   created: string;
 }
 
-// Configuration
+/**
+ * Supported E-Wallet codes (user-facing)
+ */
+export type EWalletCode = 'OVO' | 'DANA' | 'SHOPEEPAY' | 'LINKAJA' | 'GOPAY';
+
+/**
+ * E-Wallet channel codes for Xendit Payment Request API
+ * Per Xendit Node SDK: channelCode should be "OVO" not "ID_OVO"
+ * Country is specified separately in the PaymentRequestParameters.country field
+ */
+const EWALLET_CHANNEL_CODES: Record<EWalletCode, string> = {
+  OVO: 'OVO',
+  DANA: 'DANA',
+  SHOPEEPAY: 'SHOPEEPAY',
+  LINKAJA: 'LINKAJA',
+  GOPAY: 'GOPAY',
+};
+
+/**
+ * E-Wallet display names
+ */
+const EWALLET_NAMES: Record<EWalletCode, string> = {
+  OVO: 'OVO',
+  DANA: 'DANA',
+  SHOPEEPAY: 'ShopeePay',
+  LINKAJA: 'LinkAja',
+  GOPAY: 'GoPay',
+};
+
+/**
+ * E-Wallet-specific params
+ */
+export interface EWalletPaymentParams extends DirectPaymentParams {
+  ewalletCode: EWalletCode;
+  mobileNumber?: string; // Required for OVO push notification
+  successRedirectUrl?: string;
+  failureRedirectUrl?: string;
+}
+
+/**
+ * E-Wallet payment response with redirect URLs for custom display
+ */
+export interface EWalletPaymentResponse {
+  paymentRequestId: string;
+  referenceId: string;
+  status: string;
+  amount: number;
+  currency: string;
+  ewalletCode: string;
+  ewalletName: string;
+  // Redirect URLs for wallet apps
+  checkoutUrl?: string;         // Web checkout URL (fallback)
+  mobileDeeplinkUrl?: string;   // Deeplink for mobile apps
+  desktopWebUrl?: string;       // Desktop web checkout
+  mobileWebUrl?: string;        // Mobile web checkout
+  // OVO specific
+  requiresMobileNumber: boolean; // true for OVO
+  expiresAt: string;
+  created: string;
+}
+
 const XENDIT_API_KEY = process.env.XENDIT_API_KEY || '';
 const XENDIT_WEBHOOK_TOKEN = process.env.XENDIT_WEBHOOK_TOKEN || '';
 const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:3000';
@@ -397,9 +474,10 @@ class XenditService {
     const expiryDate = expiresAt || new Date(Date.now() + DEFAULT_QRIS_EXPIRY_MINUTES * 60 * 1000);
 
     try {
-      const paymentRequestData: PaymentRequestParameters = {
+      const paymentRequestData = {
+        country: 'ID', // Required: ISO 3166-1 alpha-2 country code
         amount,
-        currency: currency.toUpperCase() as any,
+        currency: currency.toUpperCase(),
         referenceId: orderId,
         description: description || `QRIS Payment for Order ${orderId}`,
         paymentMethod: {
@@ -413,7 +491,7 @@ class XenditService {
           orderId,
           customerName,
         },
-      };
+      } as unknown as PaymentRequestParameters;
 
       const response = await this.client.PaymentRequest.createPaymentRequest({
         data: paymentRequestData,
@@ -441,6 +519,13 @@ class XenditService {
       };
     } catch (error: any) {
       console.error('[Xendit] Failed to create QRIS payment:', error);
+      console.error('[Xendit] QRIS Error details:', JSON.stringify({
+        message: error.message,
+        errorCode: error.errorCode,
+        rawResponse: error.rawResponse,
+        status: error.status,
+        name: error.name,
+      }, null, 2));
       throw new Error(`Failed to create QRIS payment: ${error.message || 'Unknown error'}`);
     }
   }
@@ -471,20 +556,23 @@ class XenditService {
     const expiryDate = expiresAt || new Date(Date.now() + DEFAULT_VA_EXPIRY_HOURS * 60 * 60 * 1000);
 
     try {
-      const paymentRequestData: PaymentRequestParameters = {
+      // Map user-facing bank code to Xendit channel code (no prefix needed, country is separate)
+      const xenditChannelCode = VA_CHANNEL_CODES[bankCode];
+      
+      const paymentRequestData = {
+        country: 'ID', // Required: ISO 3166-1 alpha-2 country code
         amount,
-        currency: currency.toUpperCase() as any,
+        currency: currency.toUpperCase(),
         referenceId: orderId,
         description: description || `Virtual Account Payment for Order ${orderId}`,
         paymentMethod: {
           type: 'VIRTUAL_ACCOUNT',
           reusability: 'ONE_TIME_USE',
           virtualAccount: {
-            channelCode: bankCode as VirtualAccountChannelCode,
+            channelCode: xenditChannelCode,
             channelProperties: {
               customerName,
-              expiresAt: expiryDate,
-              suggestedAmount: amount,
+              expiresAt: expiryDate, // Xendit SDK expects Date object
             },
           },
         },
@@ -493,7 +581,7 @@ class XenditService {
           customerName,
           bankCode,
         },
-      };
+      } as unknown as PaymentRequestParameters;
 
       const response = await this.client.PaymentRequest.createPaymentRequest({
         data: paymentRequestData,
@@ -525,7 +613,28 @@ class XenditService {
       };
     } catch (error: any) {
       console.error('[Xendit] Failed to create VA payment:', error);
-      throw new Error(`Failed to create Virtual Account payment: ${error.message || 'Unknown error'}`);
+      console.error('[Xendit] VA Error full object:', error);
+      console.error('[Xendit] VA Error keys:', Object.keys(error || {}));
+      try {
+        console.error('[Xendit] VA Error details:', JSON.stringify({
+          message: error?.message,
+          errorCode: error?.errorCode,
+          rawResponse: error?.rawResponse,
+          status: error?.status,
+          name: error?.name,
+          code: error?.code,
+          requestPayload: {
+            country: 'ID',
+            amount: params.amount,
+            currency: params.currency || 'IDR',
+            bankCode: params.bankCode,
+            channelCode: VA_CHANNEL_CODES[params.bankCode],
+          },
+        }, null, 2));
+      } catch (logError) {
+        console.error('[Xendit] Could not stringify error:', logError);
+      }
+      throw new Error(`Failed to create Virtual Account payment: ${error?.message || 'Unknown error'}`);
     }
   }
 
@@ -566,6 +675,161 @@ class XenditService {
     return Object.entries(BANK_NAMES).map(([code, name]) => ({
       code: code as VABankCode,
       name,
+    }));
+  }
+
+  /**
+   * Create E-Wallet payment with redirect URLs for custom UI display
+   * Returns deeplink/checkout URLs that redirect user to their e-wallet app
+   */
+  async createEWalletPayment(params: EWalletPaymentParams): Promise<EWalletPaymentResponse> {
+    this.initialize();
+
+    if (!this.client) {
+      throw new Error('Xendit is not configured. Please set XENDIT_API_KEY.');
+    }
+
+    const {
+      orderId,
+      amount,
+      currency = 'IDR',
+      customerName,
+      customerEmail,
+      ewalletCode,
+      mobileNumber,
+      successRedirectUrl,
+      failureRedirectUrl,
+      description,
+    } = params;
+
+    // Map user-facing e-wallet code to Xendit channel code
+    const xenditChannelCode = EWALLET_CHANNEL_CODES[ewalletCode];
+    const ewalletName = EWALLET_NAMES[ewalletCode];
+
+    // OVO requires mobile number for push notification
+    if (ewalletCode === 'OVO' && !mobileNumber) {
+      throw new Error('Mobile number is required for OVO payments');
+    }
+
+    try {
+      // Build channel properties based on e-wallet type
+      // Per Xendit SDK: successReturnUrl and failureReturnUrl (NOT successRedirectUrl/failureRedirectUrl)
+      const successUrl = successRedirectUrl || `${APP_BASE_URL}/checkout/success?order=${orderId}`;
+      const failureUrl = failureRedirectUrl || `${APP_BASE_URL}/checkout/failed?order=${orderId}`;
+
+      // OVO needs mobile number
+      const ewalletChannelProperties: any = {
+        successReturnUrl: successUrl,
+        failureReturnUrl: failureUrl,
+      };
+      
+      if (ewalletCode === 'OVO' && mobileNumber) {
+        ewalletChannelProperties.mobileNumber = mobileNumber;
+      }
+
+      const paymentRequestData = {
+        country: 'ID', // Required: ISO 3166-1 alpha-2 country code
+        amount,
+        currency: currency.toUpperCase(),
+        referenceId: orderId,
+        description: description || `E-Wallet Payment (${ewalletName}) for Order ${orderId}`,
+        paymentMethod: {
+          type: 'EWALLET',
+          reusability: 'ONE_TIME_USE',
+          ewallet: {
+            channelCode: xenditChannelCode,
+            channelProperties: ewalletChannelProperties,
+          },
+        },
+        metadata: {
+          orderId,
+          customerName,
+          customerEmail,
+          ewalletCode,
+        },
+      } as unknown as PaymentRequestParameters;
+
+      const response = await this.client.PaymentRequest.createPaymentRequest({
+        data: paymentRequestData,
+      });
+
+      console.log('[Xendit] E-Wallet payment created:', response.id, 'Wallet:', ewalletCode);
+
+      // Extract redirect URLs from response actions
+      const actions = response.actions || [];
+      let checkoutUrl: string | undefined;
+      let mobileDeeplinkUrl: string | undefined;
+      let desktopWebUrl: string | undefined;
+      let mobileWebUrl: string | undefined;
+
+      for (const action of actions) {
+        const urlType = action.urlType as string;
+        const url = action.url || undefined;
+        
+        if (urlType === 'WEB' || urlType === 'DESKTOP_WEB' || urlType === 'API') {
+          desktopWebUrl = url;
+          if (!checkoutUrl) checkoutUrl = url;
+        }
+        if (urlType === 'MOBILE_WEB') {
+          mobileWebUrl = url;
+        }
+        if (urlType === 'MOBILE' || urlType === 'DEEPLINK') {
+          mobileDeeplinkUrl = url;
+        }
+      }
+
+      // Fallback: check if there's a single action with URL
+      if (!checkoutUrl && actions.length > 0 && actions[0].url) {
+        checkoutUrl = actions[0].url || undefined;
+      }
+
+      // Calculate expiry (e-wallets usually have short expiry, ~5-15 minutes)
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+      return {
+        paymentRequestId: response.id,
+        referenceId: response.referenceId,
+        status: response.status,
+        amount: response.amount || amount,
+        currency: response.currency,
+        ewalletCode,
+        ewalletName,
+        checkoutUrl,
+        mobileDeeplinkUrl,
+        desktopWebUrl,
+        mobileWebUrl,
+        requiresMobileNumber: ewalletCode === 'OVO',
+        expiresAt,
+        created: response.created,
+      };
+    } catch (error: any) {
+      console.error('[Xendit] Failed to create E-Wallet payment:', error);
+      console.error('[Xendit] E-Wallet Error details:', JSON.stringify({
+        message: error.message,
+        errorCode: error.errorCode,
+        rawResponse: error.rawResponse,
+        status: error.status,
+        name: error.name,
+        requestPayload: {
+          country: 'ID',
+          amount: params.amount,
+          currency: params.currency || 'IDR',
+          ewalletCode: params.ewalletCode,
+          channelCode: EWALLET_CHANNEL_CODES[params.ewalletCode],
+        },
+      }, null, 2));
+      throw new Error(`Failed to create E-Wallet payment: ${error.message || 'Unknown error'}`);
+    }
+  }
+
+  /**
+   * Get available E-Wallet options
+   */
+  getAvailableEWallets(): Array<{ code: EWalletCode; name: string; requiresMobileNumber: boolean }> {
+    return Object.entries(EWALLET_NAMES).map(([code, name]) => ({
+      code: code as EWalletCode,
+      name,
+      requiresMobileNumber: code === 'OVO',
     }));
   }
 }

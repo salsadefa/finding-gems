@@ -1,13 +1,26 @@
 # 📊 QA Testing Master Tracker - Finding Gems
 
-**Last Updated:** 2026-02-08 13:19 WIB  
-**Status:** 🟢 **PRODUCTION LIVE & TESTED** | ✅ **QA PASSING**
+**Last Updated:** 2026-02-08 21:42 WIB  
+**Status:** 🟢 **PRODUCTION LIVE & TESTED** | ✅ **QA PASSING** | 🆕 **Custom Payment UI Testing**
 
 > **Backend URL:** https://finding-gems-backend.onrender.com  
 > **Frontend URL:** https://finding-gems.vercel.app  
 > **Deploy Commit:** `c53225e` | **Deploy ID:** `dep-d63oglhr0fns738bj0d0`
 
 ---
+
+## 🆕 Custom Payment UI Test Results (2026-02-08 21:36 WIB)
+
+| Test ID | Test | Status | Notes |
+|---------|------|--------|-------|
+| PAY-QRIS-001 | Create QRIS Payment | ✅ PASS | Returns QR string |
+| PAY-VA-004 | Create VA BCA | ✅ PASS | Returns VA number `381659999090819` |
+| PAY-EW-002 | Create DANA E-Wallet | 🔄 PENDING | Fix applied, awaiting retest |
+
+**Fixes Applied:**
+- VA: Removed `suggestedAmount` (BCA tidak support)
+- E-Wallet: Fixed field names `successReturnUrl`/`failureReturnUrl`
+
 
 ## 🚀 Production QA Results (2026-02-08)
 

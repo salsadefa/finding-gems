@@ -12,7 +12,9 @@ import {
   confirmPayment,
   createQRISPayment,
   createVAPayment,
-  getAvailableVABanks
+  getAvailableVABanks,
+  createEWalletPayment,
+  getAvailableEWallets
 } from '../controllers/payment.controller';
 
 const router = Router();
@@ -36,6 +38,12 @@ router.post('/virtual-account', authenticate, createVAPayment);
 
 // Get available VA banks
 router.get('/virtual-account/banks', getAvailableVABanks);
+
+// E-Wallet payment (returns redirect URLs for custom display)
+router.post('/ewallet', authenticate, createEWalletPayment);
+
+// Get available E-Wallets
+router.get('/ewallet/options', getAvailableEWallets);
 
 // ============================================
 // STATUS & WEBHOOKS

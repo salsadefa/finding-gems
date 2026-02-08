@@ -6,6 +6,7 @@ import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { catchAsync } from '../utils/catchAsync';
 import { sendRefundStatusEmail } from '../services/email.service';
+import { notifyRefundRequest } from '../services/notification.service';
 
 // ============================================
 // BUYER/CREATOR REFUND REQUESTS
@@ -115,6 +116,20 @@ export const requestRefund = catchAsync(async (req: Request, res: Response) => {
     .from('orders')
     .update({ refund_status: 'requested', updated_at: new Date().toISOString() })
     .eq('id', order_id);
+
+  // Notify admin of refund request
+  try {
+    await notifyRefundRequest(
+      refund.id,
+      order.order_number,
+      order.total_amount,
+      user.name || 'Unknown User',
+      reason
+    );
+  } catch (notifyError) {
+    console.error('Failed to send refund notification:', notifyError);
+    // Don't fail if notification fails
+  }
 
   res.status(201).json({
     success: true,
