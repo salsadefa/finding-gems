@@ -26,6 +26,30 @@
 - Buyer: `qa-buyer@test.com` / `QATest123!`
 - Creator: `qa-creator@test.com` / `QATest123!`
 
+### 🖥️ UI Playwright Tests (13:33 WIB)
+
+| Flow | Status | Details |
+|------|--------|---------|
+| Buyer Login | ✅ Pass | Redirect to /dashboard |
+| Buyer Bookmarks | ✅ Pass | "Saved Tools" tab works |
+| Buyer Orders | ✅ Pass | /dashboard/purchases shows history |
+| Buyer My Access | ✅ Pass | Empty state + "Browse Products" CTA |
+| Admin Login | ✅ Pass | Redirect to /admin |
+| Admin Users | ✅ Pass | /admin?tab=users works |
+| Admin Websites | ✅ Pass | /admin?tab=websites works |
+| Admin Creators | ✅ Pass | /admin?tab=creators shows applications |
+| Admin Refunds | ✅ Pass | /admin/refunds shows management page |
+| Creator Login | ✅ Pass | Redirect to /creator |
+| Creator Listings | ✅ Pass | /creator/listings loads |
+| Creator Earnings | ✅ Pass | Balance Rp0, payout disabled (expected) |
+
+**Route Notes:**
+- ✅ `/dashboard/purchases` = Orders (not /dashboard/orders)
+- ✅ `/admin?tab=users` = Users (not /admin/users)
+
+**Bug Found:**
+- ⚠️ `RpNaN` displayed for some website prices in admin list (pricing data issue)
+
 ---
 
 ## 📈 Final Progress Summary
