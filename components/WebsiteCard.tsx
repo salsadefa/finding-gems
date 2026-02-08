@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useState } from 'react';
 import { Website } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { useBookmarks } from '@/lib/store';
@@ -16,9 +17,39 @@ interface WebsiteCardProps {
 export default function WebsiteCard({ website, showCreator = true }: WebsiteCardProps) {
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(website.id);
+  const [imageError, setImageError] = useState(false);
 
-  // Removed lowestPrice calculation
+  const isValidImageSrc = (src?: string) => {
+    if (!src) return false;
+    const trimmed = src.trim();
+    if (!trimmed) return false;
+    if (trimmed.startsWith('/')) return true;
+    try {
+      const url = new URL(trimmed);
+      return [
+        'ui-avatars.com',
+        'images.unsplash.com',
+        'via.placeholder.com',
+        'picsum.photos',
+      ].includes(url.hostname);
+    } catch {
+      return false;
+    }
+  };
 
+  const hasValidThumbnail = isValidImageSrc(website.thumbnail) && !imageError;
+
+  // Handle image error
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    e.currentTarget.style.display = 'none';
+    const parent = e.currentTarget.parentElement;
+    if (parent) {
+      const fallback = document.createElement('div');
+      fallback.className = 'w-12 h-12 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xl font-medium';
+      fallback.textContent = website.name.charAt(0);
+      parent.appendChild(fallback);
+    }
+  };
 
   return (
     <motion.div
@@ -30,13 +61,14 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
         <div className="card h-full flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden transition-colors hover:border-brand-blue/50 shadow-sm hover:shadow-lg">
           {/* Thumbnail */}
           <div className="relative aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
-            {website.thumbnail ? (
+            {hasValidThumbnail ? (
               <Image
                 src={website.thumbnail}
                 alt={`${website.name} thumbnail`}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
+                onError={() => setImageError(true)}
               />
             ) : (
               <div className="w-12 h-12 rounded-full bg-gray-200 text-gray-400 flex items-center justify-center text-xl font-medium">
@@ -62,7 +94,7 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
               </span>
               <div className="flex items-center gap-1 text-amber-400 text-sm font-medium">
                 <span>★</span>
-                <span className="text-gray-700">{website.rating.toFixed(1)}</span>
+                <span className="text-gray-700">{(website.rating ?? 0).toFixed(1)}</span>
               </div>
             </div>
 

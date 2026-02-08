@@ -35,30 +35,27 @@ export const getCreators = catchAsync(async (req: Request, res: Response) => {
       id, name, username, avatar, role, createdAt,
       creator_profiles(
         bio,
-        professional_background,
+        professionalBackground,
         expertise,
-        portfolio_url,
-        is_verified,
-        total_websites,
-        rating,
-        review_count,
-        social_links
+        portfolioUrl,
+        isVerified,
+        websiteCount,
+        totalSales,
+        totalEarnings
       )
     `, { count: 'exact' })
     .eq('role', 'creator')
-    .eq('is_active', true);
+    .eq('isActive', true);
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,username.ilike.%${search}%`);
   }
 
-  // Sort options
-  const sortColumn = sortBy === 'rating' ? 'creator_profiles.rating' :
-                     sortBy === 'websites' ? 'creator_profiles.total_websites' :
-                     sortBy === 'newest' ? 'createdAt' : 'name';
+  // Sort by main table columns only (Supabase can't sort by nested relations)
+  const sortColumn = sortBy === 'newest' ? 'createdAt' : 'name';
 
   const { data: creators, error, count } = await query
-    .order(sortColumn as string, { ascending: sortOrder === 'asc' })
+    .order(sortColumn, { ascending: sortOrder === 'asc' })
     .range(skip, skip + take - 1);
 
   if (error) throw error;
@@ -100,19 +97,17 @@ export const getCreatorProfile = catchAsync(async (req: Request, res: Response) 
       id, name, username, avatar, role, createdAt,
       creator_profiles(
         bio,
-        professional_background,
+        professionalBackground,
         expertise,
-        portfolio_url,
-        is_verified,
-        verified_at,
-        total_websites,
-        rating,
-        review_count,
-        social_links
+        portfolioUrl,
+        isVerified,
+        websiteCount,
+        totalSales,
+        totalEarnings
       )
     `)
     .eq('role', 'creator')
-    .eq('is_active', true);
+    .eq('isActive', true);
 
   if (isUuid) {
     query = query.eq('id', idOrUsername);
@@ -165,7 +160,7 @@ export const getMyCreatorProfile = catchAsync(async (req: Request, res: Response
   const { data: profile, error } = await supabase
     .from('creator_profiles')
     .select('*')
-    .eq('user_id', req.user.id)
+    .eq('userId', req.user.id)
     .single();
 
   if (error || !profile) {
@@ -206,7 +201,6 @@ export const updateMyCreatorProfile = catchAsync(async (req: Request, res: Respo
     professionalBackground,
     expertise,
     portfolioUrl,
-    socialLinks,
   } = req.body as CreatorProfileData;
 
   // Build update data
@@ -220,7 +214,7 @@ export const updateMyCreatorProfile = catchAsync(async (req: Request, res: Respo
   }
 
   if (professionalBackground !== undefined) {
-    updateData.professional_background = professionalBackground.trim();
+    updateData.professionalBackground = professionalBackground.trim();
   }
 
   if (expertise !== undefined) {
@@ -234,12 +228,10 @@ export const updateMyCreatorProfile = catchAsync(async (req: Request, res: Respo
     if (portfolioUrl && !/^https?:\/\/.+/.test(portfolioUrl)) {
       throw new ValidationError('Portfolio URL must be a valid URL');
     }
-    updateData.portfolio_url = portfolioUrl;
+    updateData.portfolioUrl = portfolioUrl;
   }
 
-  if (socialLinks !== undefined) {
-    updateData.social_links = socialLinks;
-  }
+  // Note: socialLinks not in current schema, skip for now
 
   if (Object.keys(updateData).length === 0) {
     throw new ValidationError('No valid fields to update');
@@ -249,7 +241,7 @@ export const updateMyCreatorProfile = catchAsync(async (req: Request, res: Respo
   const { data: existingProfile } = await supabase
     .from('creator_profiles')
     .select('id')
-    .eq('user_id', req.user.id)
+    .eq('userId', req.user.id)
     .single();
 
   let profile;
@@ -270,7 +262,7 @@ export const updateMyCreatorProfile = catchAsync(async (req: Request, res: Respo
     const { data, error } = await supabase
       .from('creator_profiles')
       .insert({
-        user_id: req.user.id,
+        userId: req.user.id,
         ...updateData,
       })
       .select()

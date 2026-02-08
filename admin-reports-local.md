@@ -1,0 +1,45 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e7]: Dashboard
+        - button [ref=e9]:
+          - img [ref=e10]
+      - main [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e17]:
+            - heading "Moderation Queue" [level=2] [ref=e18]
+            - paragraph [ref=e19]: Review submissions and user reports
+          - generic [ref=e20]:
+            - button "Pending" [ref=e21]
+            - button "Resolved" [ref=e22]
+            - button "Dismissed" [ref=e23]
+          - generic [ref=e24]:
+            - generic [ref=e26]:
+              - generic [ref=e27]:
+                - heading "User Reports" [level=3] [ref=e28]:
+                  - img [ref=e29]
+                  - text: User Reports
+                - generic [ref=e31]: 0 Total
+              - generic [ref=e32]:
+                - img [ref=e33]
+                - paragraph [ref=e36]: No reports found
+            - generic [ref=e38]:
+              - heading "Review Guidelines" [level=4] [ref=e39]
+              - list [ref=e40]:
+                - listitem [ref=e41]:
+                  - generic [ref=e42]: •
+                  - text: Ensure the website actually works and loads within 5 seconds.
+                - listitem [ref=e43]:
+                  - generic [ref=e44]: •
+                  - text: Check for high quality UI/UX design.
+                - listitem [ref=e45]:
+                  - generic [ref=e46]: •
+                  - text: Verify no offensive or illegal content.
+  - generic [ref=e47]:
+    - img [ref=e49]
+    - button "Open Tanstack query devtools" [ref=e97] [cursor=pointer]:
+      - img [ref=e98]
+  - button "Open Next.js Dev Tools" [ref=e151] [cursor=pointer]:
+    - img [ref=e152]
+  - alert [ref=e155]

@@ -1,21 +1,16 @@
 'use client';
 
-import { use } from 'react';
+import { useParams } from 'next/navigation';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { mockUsers, mockCreatorProfiles, mockWebsites } from '@/lib/mockData';
+import { useCreatorProfile } from '@/lib/api/users';
 import WebsiteCard from '@/components/WebsiteCard';
 import { ProfileSkeleton } from '@/components/Skeleton';
-import { ShieldCheck, Instagram, Linkedin, Globe, MapPin } from 'lucide-react';
+import { ShieldCheck, Instagram, Linkedin, Globe, MapPin, AlertCircle } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
-
-interface PageProps {
-    params: Promise<{
-        username: string;
-    }>;
-}
 
 // Custom TikTok Icon since it's not in Lucide
 const TikTokIcon = ({ size = 20, className = "" }: { size?: number, className?: string }) => (
@@ -45,22 +40,71 @@ const XIcon = ({ size = 20, className = "" }: { size?: number, className?: strin
     </svg>
 );
 
-export default function CreatorProfilePage({ params }: PageProps) {
-    const { username } = use(params);
+export default function CreatorProfilePage() {
+    const params = useParams();
+    const username = params.username as string;
+    const [avatarError, setAvatarError] = useState(false);
 
-    const user = mockUsers.find(u => u.username === username);
+    const { data, isLoading, error } = useCreatorProfile(username);
 
-    if (!user || user.role !== 'creator') {
-        notFound();
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-white">
+                <div className="max-w-5xl mx-auto px-6 py-12 md:py-16">
+                    <ProfileSkeleton />
+                </div>
+            </div>
+        );
     }
 
-    const profile = mockCreatorProfiles.find(p => p.userId === user.id);
-    const creatorWebsites = mockWebsites.filter(w => w.creatorId === user.id);
-    const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2);
-
-    if (!profile) {
-        notFound(); // Should ideally gracefully handle missing profile for valid user
+    // Error or not found
+    if (error || !data?.creator) {
+        return (
+            <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">Creator not found</h1>
+                <p className="text-gray-500 mb-6">The creator profile you&apos;re looking for doesn&apos;t exist.</p>
+                <Link 
+                    href="/search" 
+                    className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                    Browse Creators
+                </Link>
+            </div>
+        );
     }
+
+    const { creator, websites } = data;
+    const profile = creator.creator_profiles;
+    
+    // Get initials for avatar fallback
+    const initials = creator.name
+        .split(' ')
+        .map(n => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase();
+
+    const avatarSrc = creator.avatar ?? '';
+
+    const isValidImageSrc = (src?: string) => {
+        if (!src) return false;
+        const trimmed = src.trim();
+        if (!trimmed) return false;
+        if (trimmed.startsWith('/')) return true;
+        try {
+            const url = new URL(trimmed);
+            return [
+                'ui-avatars.com',
+                'images.unsplash.com',
+                'via.placeholder.com',
+                'picsum.photos',
+            ].includes(url.hostname);
+        } catch {
+            return false;
+        }
+    };
 
     return (
         <motion.div 
@@ -88,19 +132,20 @@ export default function CreatorProfilePage({ params }: PageProps) {
                             whileHover={{ boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
                             className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-gray-100 flex items-center justify-center"
                         >
-                            {user.avatar ? (
+                            {isValidImageSrc(avatarSrc) && !avatarError ? (
                                 <Image
-                                    src={user.avatar}
-                                    alt={user.name}
+                                    src={avatarSrc}
+                                    alt={creator.name}
                                     fill
                                     className="object-cover"
+                                    onError={() => setAvatarError(true)}
                                 />
                             ) : (
                                 <span className="text-4xl font-bold text-gray-400">{initials}</span>
                             )}
                         </motion.div>
                         
-                        {profile.isVerified && (
+                        {profile?.isVerified && (
                             <motion.div 
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
@@ -117,11 +162,13 @@ export default function CreatorProfilePage({ params }: PageProps) {
                     {/* Name & Role */}
                     <motion.div variants={fadeInUp} className="space-y-2 mb-6">
                         <h1 className="text-3xl font-bold text-gray-900 flex items-center justify-center gap-2">
-                            {user.name}
+                            {creator.name}
                         </h1>
                         <p className="text-gray-500 text-lg font-medium">
-                            {profile.role || profile.professionalBackground}
-                            {profile.institution && <span className="text-gray-400"> {profile.institution}</span>}
+                            {profile?.professionalBackground || 'Creator'}
+                            {profile?.expertise && profile.expertise.length > 0 && (
+                                <span className="text-gray-400"> · {profile.expertise.slice(0, 3).join(', ')}</span>
+                            )}
                         </p>
                     </motion.div>
 
@@ -131,8 +178,31 @@ export default function CreatorProfilePage({ params }: PageProps) {
                         className="max-w-2xl mx-auto mb-8"
                     >
                         <p className="text-gray-600 leading-relaxed text-center">
-                            {profile.bio}
+                            {profile?.bio || 'No bio available'}
                         </p>
+                    </motion.div>
+
+                    {/* Stats */}
+                    <motion.div 
+                        variants={fadeInUp}
+                        className="flex items-center justify-center gap-8 mb-8"
+                    >
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-900">{websites.length}</div>
+                            <div className="text-sm text-gray-500">Websites</div>
+                        </div>
+                        <div className="w-px h-10 bg-gray-200"></div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-900">⭐ {profile?.rating?.toFixed(1) || '0.0'}</div>
+                            <div className="text-sm text-gray-500">{profile?.reviewCount || 0} Reviews</div>
+                        </div>
+                        <div className="w-px h-10 bg-gray-200"></div>
+                        <div className="text-center">
+                            <div className="text-2xl font-bold text-gray-900">
+                                {new Date(creator.createdAt).getFullYear()}
+                            </div>
+                            <div className="text-sm text-gray-500">Joined</div>
+                        </div>
                     </motion.div>
 
                     {/* SECTION B: SOCIAL CONNECT */}
@@ -142,85 +212,8 @@ export default function CreatorProfilePage({ params }: PageProps) {
                         animate="visible"
                         className="flex flex-wrap items-center justify-center gap-4"
                     >
-                        {profile.socialLinks?.linkedin && (
-                            <motion.a
-                                variants={fadeInUp}
-                                whileHover={{ scale: 1.1, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={profile.socialLinks.linkedin}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group p-3 rounded-full border border-gray-200 text-gray-600 hover:text-[#0077b5] hover:border-[#0077b5] hover:bg-blue-50 transition-all flex items-center gap-2"
-                                title="LinkedIn Profile"
-                            >
-                                <Linkedin size={20} />
-                                <span className="text-sm font-medium hidden group-hover:inline-block">LinkedIn</span>
-                            </motion.a>
-                        )}
-
-                        {profile.socialLinks?.x && (
-                            <motion.a
-                                variants={fadeInUp}
-                                whileHover={{ scale: 1.1, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={profile.socialLinks.x}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group p-3 rounded-full border border-gray-200 text-gray-600 hover:text-black hover:border-black hover:bg-gray-50 transition-all flex items-center gap-2"
-                                title="X (Twitter) Profile"
-                            >
-                                <XIcon size={18} />
-                                <span className="text-sm font-medium hidden group-hover:inline-block">X</span>
-                            </motion.a>
-                        )}
-
-                        {profile.socialLinks?.instagram && (
-                            <motion.a
-                                variants={fadeInUp}
-                                whileHover={{ scale: 1.1, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={profile.socialLinks.instagram}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group p-3 rounded-full border border-gray-200 text-gray-600 hover:text-[#E1306C] hover:border-[#E1306C] hover:bg-pink-50 transition-all flex items-center gap-2"
-                                title="Instagram Profile"
-                            >
-                                <Instagram size={20} />
-                                <span className="text-sm font-medium hidden group-hover:inline-block">Instagram</span>
-                            </motion.a>
-                        )}
-
-                        {profile.socialLinks?.tiktok && (
-                            <motion.a
-                                variants={fadeInUp}
-                                whileHover={{ scale: 1.1, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={profile.socialLinks.tiktok}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group p-3 rounded-full border border-gray-200 text-gray-600 hover:text-black hover:border-black hover:bg-gray-50 transition-all flex items-center gap-2"
-                                title="TikTok Profile"
-                            >
-                                <TikTokIcon size={18} />
-                                <span className="text-sm font-medium hidden group-hover:inline-block">TikTok</span>
-                            </motion.a>
-                        )}
-
-                        {profile.socialLinks?.website && (
-                            <motion.a
-                                variants={fadeInUp}
-                                whileHover={{ scale: 1.1, y: -2 }}
-                                whileTap={{ scale: 0.95 }}
-                                href={profile.socialLinks.website}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group p-3 rounded-full border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-600 hover:bg-blue-50 transition-all flex items-center gap-2"
-                                title="Personal Website"
-                            >
-                                <Globe size={20} />
-                                <span className="text-sm font-medium hidden group-hover:inline-block">Website</span>
-                            </motion.a>
-                        )}
+                        {/* Note: Social links tidak ada di API response saat ini */}
+                        {/* Bisa ditambahkan nanti kalau backend support */}
                     </motion.div>
 
                 </motion.div>
@@ -241,21 +234,21 @@ export default function CreatorProfilePage({ params }: PageProps) {
                 >
                     <motion.div variants={fadeInUp} className="flex items-center justify-between mb-8">
                         <h2 className="text-2xl font-bold text-gray-900">
-                            More from {user.name.split(' ')[0]}
+                            More from {creator.name.split(' ')[0]}
                         </h2>
                         <span className="text-sm text-gray-500 font-medium">
-                            {creatorWebsites.length} {creatorWebsites.length === 1 ? 'App' : 'Apps'}
+                            {websites.length} {websites.length === 1 ? 'App' : 'Apps'}
                         </span>
                     </motion.div>
 
-                    {creatorWebsites.length > 0 ? (
+                    {websites.length > 0 ? (
                         <motion.div 
                             variants={staggerContainer}
                             initial="hidden"
                             animate="visible"
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
                         >
-                            {creatorWebsites.map((website, index) => (
+                            {websites.map((website, index) => (
                                 <motion.div
                                     key={website.id}
                                     variants={fadeInUp}

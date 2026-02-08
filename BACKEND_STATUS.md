@@ -2,6 +2,11 @@
 
 ## 📋 Summary
 
+**Status:** 🟢 **DEPLOYED & LIVE**  
+**URL:** https://finding-gems-backend.onrender.com  
+**Last Deploy:** 2026-02-08 01:49 WIB  
+**Commit:** `c53225e`
+
 This document tracks the backend implementation progress for the Finding Gems project.
 
 ---

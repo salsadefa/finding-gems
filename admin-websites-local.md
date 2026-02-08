@@ -1,0 +1,304 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e7]: Dashboard
+        - button [ref=e9]:
+          - img [ref=e10]
+      - main [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - generic [ref=e17]:
+              - heading "Website Management" [level=2] [ref=e18]
+              - paragraph [ref=e19]: Manage all websites listed on the platform
+            - generic [ref=e21]:
+              - img [ref=e22]
+              - textbox "Search websites..." [ref=e25]
+          - generic [ref=e26]:
+            - generic [ref=e27]:
+              - generic [ref=e28]: Total Websites
+              - generic [ref=e29]: "31"
+            - generic [ref=e30]:
+              - generic [ref=e31]: Active
+              - generic [ref=e32]: "3"
+            - generic [ref=e33]:
+              - generic [ref=e34]: Pending
+              - generic [ref=e35]: "8"
+            - generic [ref=e36]:
+              - generic [ref=e37]: Avg Rating
+              - generic [ref=e38]: "0.0"
+          - generic [ref=e39]:
+            - button "All" [ref=e40]
+            - button "Active" [ref=e41]
+            - button "Pending" [ref=e42]
+            - button "Suspended" [ref=e43]
+            - button "Rejected" [ref=e44]
+          - generic [ref=e45]:
+            - table [ref=e47]:
+              - rowgroup [ref=e48]:
+                - row "Website Creator Category Price Status Actions" [ref=e49]:
+                  - columnheader "Website" [ref=e50]
+                  - columnheader "Creator" [ref=e51]
+                  - columnheader "Category" [ref=e52]
+                  - columnheader "Price" [ref=e53]
+                  - columnheader "Status" [ref=e54]
+                  - columnheader "Actions" [ref=e55]
+              - rowgroup [ref=e56]:
+                - row "Q QA Test Website 1770457564 Website for QA payment testing... Test Creator AI Tools Rp - Active" [ref=e57]:
+                  - cell "Q QA Test Website 1770457564 Website for QA payment testing..." [ref=e58]:
+                    - generic [ref=e59]:
+                      - generic [ref=e60]: Q
+                      - generic [ref=e61]:
+                        - generic [ref=e62]: QA Test Website 1770457564
+                        - generic [ref=e63]: Website for QA payment testing...
+                  - cell "Test Creator" [ref=e64]:
+                    - generic [ref=e65]: Test Creator
+                  - cell "AI Tools" [ref=e66]:
+                    - generic [ref=e67]: AI Tools
+                  - cell "Rp -" [ref=e68]:
+                    - generic [ref=e69]: Rp -
+                  - cell "Active" [ref=e70]:
+                    - generic [ref=e71]:
+                      - img [ref=e72]
+                      - text: Active
+                  - cell [ref=e75]:
+                    - link "View" [ref=e77] [cursor=pointer]:
+                      - /url: /website/qa-test-website-1770457564
+                      - img [ref=e78]
+                - row "F Free Website Test Testing zero price... Test Creator AI Tools Rp - Pending" [ref=e81]:
+                  - cell "F Free Website Test Testing zero price..." [ref=e82]:
+                    - generic [ref=e83]:
+                      - generic [ref=e84]: F
+                      - generic [ref=e85]:
+                        - generic [ref=e86]: Free Website Test
+                        - generic [ref=e87]: Testing zero price...
+                  - cell "Test Creator" [ref=e88]:
+                    - generic [ref=e89]: Test Creator
+                  - cell "AI Tools" [ref=e90]:
+                    - generic [ref=e91]: AI Tools
+                  - cell "Rp -" [ref=e92]:
+                    - generic [ref=e93]: Rp -
+                  - cell "Pending" [ref=e94]:
+                    - generic [ref=e95]:
+                      - img [ref=e96]
+                      - text: Pending
+                  - cell [ref=e99]:
+                    - generic [ref=e100]:
+                      - link "View" [ref=e101] [cursor=pointer]:
+                        - /url: /website/free-website-test
+                        - img [ref=e102]
+                      - button "Approve" [ref=e105]:
+                        - img [ref=e106]
+                      - button "Reject" [ref=e109]:
+                        - img [ref=e110]
+                - row "U Updated Test Website Full description for the UI test listing. This is a longer d... Test Creator AI Tools Rp - Active" [ref=e114]:
+                  - cell "U Updated Test Website Full description for the UI test listing. This is a longer d..." [ref=e115]:
+                    - generic [ref=e116]:
+                      - generic [ref=e117]: U
+                      - generic [ref=e118]:
+                        - generic [ref=e119]: Updated Test Website
+                        - generic [ref=e120]: Full description for the UI test listing. This is a longer d...
+                  - cell "Test Creator" [ref=e121]:
+                    - generic [ref=e122]: Test Creator
+                  - cell "AI Tools" [ref=e123]:
+                    - generic [ref=e124]: AI Tools
+                  - cell "Rp -" [ref=e125]:
+                    - generic [ref=e126]: Rp -
+                  - cell "Active" [ref=e127]:
+                    - generic [ref=e128]:
+                      - img [ref=e129]
+                      - text: Active
+                  - cell [ref=e132]:
+                    - link "View" [ref=e134] [cursor=pointer]:
+                      - /url: /website/updated-test-website
+                      - img [ref=e135]
+                - row "U UI Test Listing afjvd6 Full description for the UI test listing. This is a longer d... Test Creator AI Tools Rp - Active" [ref=e138]:
+                  - cell "U UI Test Listing afjvd6 Full description for the UI test listing. This is a longer d..." [ref=e139]:
+                    - generic [ref=e140]:
+                      - generic [ref=e141]: U
+                      - generic [ref=e142]:
+                        - generic [ref=e143]: UI Test Listing afjvd6
+                        - generic [ref=e144]: Full description for the UI test listing. This is a longer d...
+                  - cell "Test Creator" [ref=e145]:
+                    - generic [ref=e146]: Test Creator
+                  - cell "AI Tools" [ref=e147]:
+                    - generic [ref=e148]: AI Tools
+                  - cell "Rp -" [ref=e149]:
+                    - generic [ref=e150]: Rp -
+                  - cell "Active" [ref=e151]:
+                    - generic [ref=e152]:
+                      - img [ref=e153]
+                      - text: Active
+                  - cell [ref=e156]:
+                    - link "View" [ref=e158] [cursor=pointer]:
+                      - /url: /website/ui-test-listing-afjvd6
+                      - img [ref=e159]
+                - row "U UI Test Listing phk79l Full description for the UI test listing. This is a longer d... Test Creator AI Tools Rp - Pending" [ref=e162]:
+                  - cell "U UI Test Listing phk79l Full description for the UI test listing. This is a longer d..." [ref=e163]:
+                    - generic [ref=e164]:
+                      - generic [ref=e165]: U
+                      - generic [ref=e166]:
+                        - generic [ref=e167]: UI Test Listing phk79l
+                        - generic [ref=e168]: Full description for the UI test listing. This is a longer d...
+                  - cell "Test Creator" [ref=e169]:
+                    - generic [ref=e170]: Test Creator
+                  - cell "AI Tools" [ref=e171]:
+                    - generic [ref=e172]: AI Tools
+                  - cell "Rp -" [ref=e173]:
+                    - generic [ref=e174]: Rp -
+                  - cell "Pending" [ref=e175]:
+                    - generic [ref=e176]:
+                      - img [ref=e177]
+                      - text: Pending
+                  - cell [ref=e180]:
+                    - generic [ref=e181]:
+                      - link "View" [ref=e182] [cursor=pointer]:
+                        - /url: /website/ui-test-listing-phk79l
+                        - img [ref=e183]
+                      - button "Approve" [ref=e186]:
+                        - img [ref=e187]
+                      - button "Reject" [ref=e190]:
+                        - img [ref=e191]
+                - row "E E2E Test Pending Website This is a test website that is pending approval for E2E test... Jane Creator Productivity Rp - Pending" [ref=e195]:
+                  - cell "E E2E Test Pending Website This is a test website that is pending approval for E2E test..." [ref=e196]:
+                    - generic [ref=e197]:
+                      - generic [ref=e198]: E
+                      - generic [ref=e199]:
+                        - generic [ref=e200]: E2E Test Pending Website
+                        - generic [ref=e201]: This is a test website that is pending approval for E2E test...
+                  - cell "Jane Creator" [ref=e202]:
+                    - generic [ref=e203]: Jane Creator
+                  - cell "Productivity" [ref=e204]:
+                    - generic [ref=e205]: Productivity
+                  - cell "Rp -" [ref=e206]:
+                    - generic [ref=e207]: Rp -
+                  - cell "Pending" [ref=e208]:
+                    - generic [ref=e209]:
+                      - img [ref=e210]
+                      - text: Pending
+                  - cell [ref=e213]:
+                    - generic [ref=e214]:
+                      - link "View" [ref=e215] [cursor=pointer]:
+                        - /url: /website/e2e-test-pending-website
+                        - img [ref=e216]
+                      - button "Approve" [ref=e219]:
+                        - img [ref=e220]
+                      - button "Reject" [ref=e223]:
+                        - img [ref=e224]
+                - row "Q QA Creator Site QA creator site description... Test Creator AI Tools Rp - Pending" [ref=e228]:
+                  - cell "Q QA Creator Site QA creator site description..." [ref=e229]:
+                    - generic [ref=e230]:
+                      - generic [ref=e231]: Q
+                      - generic [ref=e232]:
+                        - generic [ref=e233]: QA Creator Site
+                        - generic [ref=e234]: QA creator site description...
+                  - cell "Test Creator" [ref=e235]:
+                    - generic [ref=e236]: Test Creator
+                  - cell "AI Tools" [ref=e237]:
+                    - generic [ref=e238]: AI Tools
+                  - cell "Rp -" [ref=e239]:
+                    - generic [ref=e240]: Rp -
+                  - cell "Pending" [ref=e241]:
+                    - generic [ref=e242]:
+                      - img [ref=e243]
+                      - text: Pending
+                  - cell [ref=e246]:
+                    - generic [ref=e247]:
+                      - link "View" [ref=e248] [cursor=pointer]:
+                        - /url: /website/qa-creator-site-1
+                        - img [ref=e249]
+                      - button "Approve" [ref=e252]:
+                        - img [ref=e253]
+                      - button "Reject" [ref=e256]:
+                        - img [ref=e257]
+                - row "Q QA Creator Site QA creator site description... Test Creator AI Tools Rp - Pending" [ref=e261]:
+                  - cell "Q QA Creator Site QA creator site description..." [ref=e262]:
+                    - generic [ref=e263]:
+                      - generic [ref=e264]: Q
+                      - generic [ref=e265]:
+                        - generic [ref=e266]: QA Creator Site
+                        - generic [ref=e267]: QA creator site description...
+                  - cell "Test Creator" [ref=e268]:
+                    - generic [ref=e269]: Test Creator
+                  - cell "AI Tools" [ref=e270]:
+                    - generic [ref=e271]: AI Tools
+                  - cell "Rp -" [ref=e272]:
+                    - generic [ref=e273]: Rp -
+                  - cell "Pending" [ref=e274]:
+                    - generic [ref=e275]:
+                      - img [ref=e276]
+                      - text: Pending
+                  - cell [ref=e279]:
+                    - generic [ref=e280]:
+                      - link "View" [ref=e281] [cursor=pointer]:
+                        - /url: /website/qa-creator-site
+                        - img [ref=e282]
+                      - button "Approve" [ref=e285]:
+                        - img [ref=e286]
+                      - button "Reject" [ref=e289]:
+                        - img [ref=e290]
+                - row "Q QA Retest Site a50559 QA retest description... Test Creator AI Tools Rp - Pending" [ref=e294]:
+                  - cell "Q QA Retest Site a50559 QA retest description..." [ref=e295]:
+                    - generic [ref=e296]:
+                      - generic [ref=e297]: Q
+                      - generic [ref=e298]:
+                        - generic [ref=e299]: QA Retest Site a50559
+                        - generic [ref=e300]: QA retest description...
+                  - cell "Test Creator" [ref=e301]:
+                    - generic [ref=e302]: Test Creator
+                  - cell "AI Tools" [ref=e303]:
+                    - generic [ref=e304]: AI Tools
+                  - cell "Rp -" [ref=e305]:
+                    - generic [ref=e306]: Rp -
+                  - cell "Pending" [ref=e307]:
+                    - generic [ref=e308]:
+                      - img [ref=e309]
+                      - text: Pending
+                  - cell [ref=e312]:
+                    - generic [ref=e313]:
+                      - link "View" [ref=e314] [cursor=pointer]:
+                        - /url: /website/qa-retest-site-a50559
+                        - img [ref=e315]
+                      - button "Approve" [ref=e318]:
+                        - img [ref=e319]
+                      - button "Reject" [ref=e322]:
+                        - img [ref=e323]
+                - row "Q QA Retest Site 26193f QA retest description... Test Creator AI Tools Rp - Pending" [ref=e327]:
+                  - cell "Q QA Retest Site 26193f QA retest description..." [ref=e328]:
+                    - generic [ref=e329]:
+                      - generic [ref=e330]: Q
+                      - generic [ref=e331]:
+                        - generic [ref=e332]: QA Retest Site 26193f
+                        - generic [ref=e333]: QA retest description...
+                  - cell "Test Creator" [ref=e334]:
+                    - generic [ref=e335]: Test Creator
+                  - cell "AI Tools" [ref=e336]:
+                    - generic [ref=e337]: AI Tools
+                  - cell "Rp -" [ref=e338]:
+                    - generic [ref=e339]: Rp -
+                  - cell "Pending" [ref=e340]:
+                    - generic [ref=e341]:
+                      - img [ref=e342]
+                      - text: Pending
+                  - cell [ref=e345]:
+                    - generic [ref=e346]:
+                      - link "View" [ref=e347] [cursor=pointer]:
+                        - /url: /website/qa-retest-site-26193f
+                        - img [ref=e348]
+                      - button "Approve" [ref=e351]:
+                        - img [ref=e352]
+                      - button "Reject" [ref=e355]:
+                        - img [ref=e356]
+            - generic [ref=e360]:
+              - generic [ref=e361]: Showing 1 to 10 of 31 results
+              - generic [ref=e362]:
+                - button "Previous" [disabled] [ref=e363]
+                - generic [ref=e364]: Page 1 of 4
+                - button "Next" [ref=e365]
+  - generic [ref=e366]:
+    - img [ref=e368]
+    - button "Open Tanstack query devtools" [ref=e416] [cursor=pointer]:
+      - img [ref=e417]
+  - button "Open Next.js Dev Tools" [ref=e470] [cursor=pointer]:
+    - img [ref=e471]
+  - alert [ref=e474]

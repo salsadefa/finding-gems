@@ -3,30 +3,61 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth, useToast } from '@/lib/store';
-import { mockCreatorApplications, mockCreatorProfiles, mockUsers } from '@/lib/mockData';
+import { 
+  useCreatorApplicationsAdmin, 
+  useCreatorApplicationStats,
+  useHandleCreatorApplication,
+  useAdminUsers 
+} from '@/lib/api/admin';
 import { formatDate } from '@/lib/utils';
 import Button from '@/components/Button';
 
 export default function AdminCreatorsPage() {
     const { user, isAuthenticated } = useAuth();
     const { showToast } = useToast();
-    const [applications, setApplications] = useState(mockCreatorApplications);
+    
+    // Fetch pending applications
+    const { data: applicationsData, isLoading: appsLoading } = useCreatorApplicationsAdmin({ 
+        status: 'pending',
+        limit: 50 
+    });
+    
+    // Fetch application stats
+    const { data: statsData } = useCreatorApplicationStats();
+    
+    // Fetch verified creators (users with role 'creator')
+    const { data: creatorsData, isLoading: creatorsLoading } = useAdminUsers({ 
+        role: 'creator',
+        limit: 100 
+    });
+    
+    const handleApplicationMutation = useHandleCreatorApplication();
 
     if (!isAuthenticated || user?.role !== 'admin') {
         return <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}><h1>Admin Access Required</h1></div>;
     }
 
-    const handleApprove = (id: string) => {
-        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: 'approved' as const } : a));
-        showToast('Creator approved!', 'success');
+    const handleApprove = async (id: string) => {
+        try {
+            await handleApplicationMutation.mutateAsync({ id, status: 'approved' });
+            showToast('Creator approved!', 'success');
+        } catch (error) {
+            showToast('Failed to approve application', 'error');
+        }
     };
 
-    const handleReject = (id: string) => {
-        setApplications(prev => prev.map(a => a.id === id ? { ...a, status: 'rejected' as const } : a));
-        showToast('Application rejected', 'info');
+    const handleReject = async (id: string) => {
+        try {
+            await handleApplicationMutation.mutateAsync({ id, status: 'rejected', rejectionReason: 'Does not meet requirements' });
+            showToast('Application rejected', 'info');
+        } catch (error) {
+            showToast('Failed to reject application', 'error');
+        }
     };
 
-    const verifiedCreators = mockUsers.filter(u => u.role === 'creator');
+    const applications = applicationsData?.applications || [];
+    const verifiedCreators = creatorsData?.users || [];
+    const stats = statsData || { pending: 0, approved: 0, rejected: 0, total: 0 };
 
     return (
         <div className="creators-page">
@@ -36,24 +67,26 @@ export default function AdminCreatorsPage() {
                 <p className="subtitle">Verify creator applications and manage existing creators</p>
 
                 <section className="section">
-                    <h2>Pending Applications ({applications.filter(a => a.status === 'pending').length})</h2>
-                    {applications.filter(a => a.status === 'pending').length > 0 ? (
+                    <h2>Pending Applications ({stats?.pending || 0})</h2>
+                    {appsLoading ? (
+                        <p className="empty">Loading applications...</p>
+                    ) : applications.length > 0 ? (
                         <div className="applications-list">
-                            {applications.filter(a => a.status === 'pending').map(app => (
+                            {applications.map(app => (
                                 <div key={app.id} className="application-card">
                                     <div className="app-header">
-                                        <div className="avatar">{app.user.name.charAt(0)}</div>
+                                        <div className="avatar">{app.user?.name?.charAt(0) || '?'}</div>
                                         <div>
-                                            <strong>{app.user.name}</strong>
-                                            <span>{app.user.email}</span>
+                                            <strong>{app.user?.name || 'Unknown'}</strong>
+                                            <span>{app.user?.email || 'No email'}</span>
                                         </div>
                                         <span className="app-date">Applied {formatDate(app.createdAt)}</span>
                                     </div>
                                     <div className="app-details">
-                                        <div className="detail"><label>Background</label><span>{app.professionalBackground}</span></div>
-                                        <div className="detail"><label>Expertise</label><span>{app.expertise.join(', ')}</span></div>
-                                        <div className="detail"><label>Motivation</label><p>{app.motivation}</p></div>
-                                        {app.portfolioUrl && <div className="detail"><label>Portfolio</label><a href={app.portfolioUrl} target="_blank">{app.portfolioUrl}</a></div>}
+                                        <div className="detail"><label>Background</label><span>{app.professionalBackground || 'Not specified'}</span></div>
+                                        <div className="detail"><label>Expertise</label><span>{app.expertise?.join(', ') || 'Not specified'}</span></div>
+                                        <div className="detail"><label>Motivation</label><p>{app.motivation || 'Not provided'}</p></div>
+                                        {app.portfolioUrl && <div className="detail"><label>Portfolio</label><a href={app.portfolioUrl} target="_blank" rel="noopener noreferrer">{app.portfolioUrl}</a></div>}
                                     </div>
                                     <div className="app-actions">
                                         <Button onClick={() => handleApprove(app.id)}>Approve</Button>
@@ -69,31 +102,32 @@ export default function AdminCreatorsPage() {
 
                 <section className="section">
                     <h2>Verified Creators ({verifiedCreators.length})</h2>
-                    <div className="creators-table">
-                        <div className="table-header">
-                            <span>Creator</span>
-                            <span>Background</span>
-                            <span>Websites</span>
-                            <span>Rating</span>
-                        </div>
-                        {mockCreatorProfiles.map(profile => {
-                            const creator = mockUsers.find(u => u.id === profile.userId);
-                            return (
-                                <div key={profile.userId} className="table-row">
+                    {creatorsLoading ? (
+                        <p className="empty">Loading creators...</p>
+                    ) : (
+                        <div className="creators-table">
+                            <div className="table-header">
+                                <span>Creator</span>
+                                <span>Email</span>
+                                <span>Joined</span>
+                                <span>Status</span>
+                            </div>
+                            {verifiedCreators.map(creator => (
+                                <div key={creator.id} className="table-row">
                                     <span className="creator-cell">
-                                        <div className="avatar">{creator?.name.charAt(0)}</div>
+                                        <div className="avatar">{creator.name?.charAt(0) || '?'}</div>
                                         <div>
-                                            <strong>{creator?.name}</strong>
-                                            <small>{creator?.email}</small>
+                                            <strong>{creator.name}</strong>
+                                            <small>@{creator.username}</small>
                                         </div>
                                     </span>
-                                    <span>{profile.professionalBackground}</span>
-                                    <span>{profile.totalWebsites}</span>
-                                    <span>⭐ {profile.rating}</span>
+                                    <span>{creator.email}</span>
+                                    <span>{formatDate(creator.createdAt)}</span>
+                                    <span>{creator.isEmailVerified ? '✅ Verified' : '⏳ Unverified'}</span>
                                 </div>
-                            );
-                        })}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </section>
             </div>
 
@@ -116,7 +150,7 @@ export default function AdminCreatorsPage() {
         .app-actions { display: flex; gap: 12px; }
         .empty { color: var(--gray-500); padding: 32px; text-align: center; background: var(--gray-50); border-radius: 12px; }
         .creators-table { background: var(--gray-50); border-radius: 16px; overflow: hidden; }
-        .table-header, .table-row { display: grid; grid-template-columns: 2fr 1.5fr 0.8fr 0.8fr; gap: 16px; padding: 16px 24px; align-items: center; }
+        .table-header, .table-row { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr; gap: 16px; padding: 16px 24px; align-items: center; }
         .table-header { background: var(--gray-100); font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--gray-500); }
         .table-row { border-bottom: 1px solid var(--gray-200); font-size: 14px; } .table-row:last-child { border-bottom: none; }
         .creator-cell { display: flex; align-items: center; gap: 12px; } .creator-cell strong { display: block; } .creator-cell small { color: var(--gray-500); font-size: 12px; }

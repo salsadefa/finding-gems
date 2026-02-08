@@ -1,0 +1,155 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - link "DL Dualangka Creator" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: DL
+          - text: Dualangka Creator
+        - navigation [ref=e8]:
+          - link "Overview" [ref=e9] [cursor=pointer]:
+            - /url: /creator
+            - img [ref=e10]
+            - text: Overview
+          - link "My Listings" [ref=e15] [cursor=pointer]:
+            - /url: /creator/listings
+            - img [ref=e16]
+            - text: My Listings
+          - link "Analytics" [ref=e17] [cursor=pointer]:
+            - /url: /creator/analytics
+            - img [ref=e18]
+            - text: Analytics
+          - link "Settings" [ref=e19] [cursor=pointer]:
+            - /url: /creator/settings
+            - img [ref=e20]
+            - text: Settings
+        - generic [ref=e24]:
+          - generic [ref=e26]: T
+          - generic [ref=e27]:
+            - paragraph [ref=e28]: Test Creator
+            - paragraph [ref=e29]: creator@example.com
+          - button "Log out" [ref=e30]:
+            - img [ref=e31]
+      - main [ref=e34]:
+        - heading "Dashboard" [level=1] [ref=e36]
+        - generic [ref=e38]:
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - link [ref=e43] [cursor=pointer]:
+                - /url: /creator
+                - img [ref=e44]
+              - generic [ref=e46]:
+                - img "CodeMentor Live" [ref=e48]
+                - generic [ref=e49]:
+                  - heading "CodeMentor Live Analytics" [level=1] [ref=e50]
+                  - paragraph [ref=e51]: Live on Directory
+            - generic [ref=e53]:
+              - button "Last 30 Days" [ref=e55]:
+                - img [ref=e56]
+                - text: Last 30 Days
+              - button "Export Data" [ref=e58]:
+                - img [ref=e59]
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - generic [ref=e64]:
+                - generic [ref=e65]:
+                  - generic [ref=e66]:
+                    - paragraph [ref=e67]: Total Views
+                    - heading "1" [level=3] [ref=e68]
+                  - img [ref=e70]
+                - generic [ref=e74]: All time views
+              - generic [ref=e75]:
+                - generic [ref=e76]:
+                  - generic [ref=e77]:
+                    - paragraph [ref=e78]: Unique Visitors
+                    - heading "1" [level=3] [ref=e79]
+                  - img [ref=e81]
+                - generic [ref=e85]: Estimated unique
+              - generic [ref=e86]:
+                - generic [ref=e87]:
+                  - generic [ref=e88]:
+                    - paragraph [ref=e89]: Outbound Clicks
+                    - heading "0" [level=3] [ref=e90]
+                  - img [ref=e92]
+                - generic [ref=e97]: Click-throughs to your site
+              - generic [ref=e98]:
+                - generic [ref=e99]:
+                  - generic [ref=e100]:
+                    - paragraph [ref=e101]:
+                      - text: Click-Through Rate
+                      - img [ref=e102]
+                    - heading "0.0%" [level=3] [ref=e104]
+                  - img [ref=e106]
+                - generic [ref=e109]: Clicks ÷ Views
+            - generic [ref=e110]:
+              - generic [ref=e111]:
+                - generic [ref=e112]:
+                  - heading "Traffic Analysis" [level=3] [ref=e113]
+                  - paragraph [ref=e114]: Views vs Outbound Clicks trend
+                - generic [ref=e115]:
+                  - generic [ref=e116]: Views
+                  - generic [ref=e118]: Clicks
+              - generic [ref=e120]:
+                - generic [ref=e121]:
+                  - generic: "Day 1: 0 views"
+                  - generic [ref=e124]: "1"
+                - generic [ref=e125]:
+                  - generic: "Day 2: 0 views"
+                  - generic [ref=e128]: "2"
+                - generic [ref=e129]:
+                  - generic: "Day 3: 0 views"
+                  - generic [ref=e132]: "3"
+                - generic [ref=e133]:
+                  - generic: "Day 4: 0 views"
+                  - generic [ref=e136]: "4"
+                - generic [ref=e137]:
+                  - generic: "Day 5: 0 views"
+                  - generic [ref=e140]: "5"
+                - generic [ref=e141]:
+                  - generic: "Day 6: 0 views"
+                  - generic [ref=e144]: "6"
+                - generic [ref=e145]:
+                  - generic: "Day 7: 0 views"
+                  - generic [ref=e148]: "7"
+                - generic [ref=e149]:
+                  - generic: "Day 8: 0 views"
+                  - generic [ref=e152]: "8"
+                - generic [ref=e153]:
+                  - generic: "Day 9: 0 views"
+                  - generic [ref=e156]: "9"
+                - generic [ref=e157]:
+                  - generic: "Day 10: 0 views"
+                  - generic [ref=e160]: "10"
+                - generic [ref=e161]:
+                  - generic: "Day 11: 0 views"
+                  - generic [ref=e164]: "11"
+                - generic [ref=e165]:
+                  - generic: "Day 12: 0 views"
+                  - generic [ref=e168]: "12"
+                - generic [ref=e169]:
+                  - generic: "Day 13: 0 views"
+                  - generic [ref=e172]: "13"
+                - generic [ref=e173]:
+                  - generic: "Day 14: 0 views"
+                  - generic [ref=e176]: "14"
+            - generic [ref=e177]:
+              - generic [ref=e178]:
+                - heading "Quick Stats" [level=3] [ref=e179]
+                - generic [ref=e180]:
+                  - generic [ref=e181]:
+                    - generic [ref=e182]: Rating
+                    - generic [ref=e183]: ⭐ 0.0 (0 reviews)
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: Listed Since
+                    - generic [ref=e186]: 05/02/2026
+              - generic [ref=e189]:
+                - heading "Boost your reach" [level=3] [ref=e190]
+                - paragraph [ref=e191]: Get more visibility for your listing by being featured in our weekly newsletter.
+                - button "Promote Listing" [ref=e192]
+  - generic [ref=e193]:
+    - img [ref=e195]
+    - button "Open Tanstack query devtools" [ref=e243] [cursor=pointer]:
+      - img [ref=e244]
+  - button "Open Next.js Dev Tools" [ref=e297] [cursor=pointer]:
+    - img [ref=e298]
+  - alert [ref=e301]

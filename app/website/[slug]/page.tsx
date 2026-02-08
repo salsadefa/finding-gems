@@ -4,7 +4,7 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useWebsite } from '@/lib/api/websites';
+import { useWebsiteBySlug } from '@/lib/api/websites';
 import { useWebsiteReviews } from '@/lib/api/reviews';
 import { useWebsitePricing, useCheckAccess, formatPrice } from '@/lib/api/billing';
 import { useAuth, useBookmarks, useToast } from '@/lib/store';
@@ -43,13 +43,13 @@ export default function WebsiteDetailPage({ params }: PageProps) {
   const { showToast } = useToast();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  const { data: website, isLoading: isLoadingWebsite, error: websiteError } = useWebsite(slug);
+  const { data: website, isLoading: isLoadingWebsite, error: websiteError } = useWebsiteBySlug(slug);
   const { data: websiteReviews = [], isLoading: isLoadingReviews } = useWebsiteReviews(website?.id || '', {
     sortBy: 'newest',
     limit: 10,
   });
 
-  const { data: pricingTiers } = useWebsitePricing(website?.id || '');
+  const { data: pricingTiers, isLoading: isLoadingPricing } = useWebsitePricing(website?.id || '');
   const { data: accessStatus } = useCheckAccess(website?.id || '');
 
   if (isLoadingWebsite) {
@@ -153,14 +153,36 @@ export default function WebsiteDetailPage({ params }: PageProps) {
 
             {/* Actions */}
             <div className="flex items-center gap-3">
-              <a
-                href={website.externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 transition-all shadow-sm"
-              >
-                Visit Website <ExternalLink size={18} />
-              </a>
+              {accessStatus?.has_access ? (
+                <a
+                  href={website.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 transition-all shadow-sm"
+                >
+                  Access Product <ExternalLink size={18} />
+                </a>
+              ) : isLoadingPricing ? (
+                <button disabled className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-gray-300 text-gray-500 font-semibold rounded-full cursor-not-allowed">
+                  Loading... <ShoppingCart size={18} />
+                </button>
+              ) : pricingTiers && pricingTiers.length > 0 ? (
+                <Link 
+                  href={`/checkout?website=${website.id}&tier=${pricingTiers[0].id}`}
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-slate-900 text-white font-semibold rounded-full hover:bg-slate-800 transition-all shadow-sm"
+                >
+                  Get Access - {formatPrice(pricingTiers[0].price)} <ShoppingCart size={18} />
+                </Link>
+              ) : (
+                <a
+                  href={website.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 transition-all shadow-sm"
+                >
+                  Visit Website <ExternalLink size={18} />
+                </a>
+              )}
               <button
                 onClick={handleBookmark}
                 className={`p-3 rounded-full border transition-all ${bookmarked ? 'bg-red-50 border-red-200 text-red-500' : 'border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50'}`}

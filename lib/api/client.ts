@@ -90,3 +90,24 @@ export const api = {
     return response.data;
   },
 };
+
+// ============================================
+// Public API Client (No Auth Required)
+// ============================================
+
+// Create public axios instance without auth interceptors
+export const publicApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
+// Public API methods - for endpoints that don't require authentication
+export const publicApi = {
+  get: async <T>(url: string, params?: object): Promise<T> => {
+    const response = await publicApiClient.get(url, { params });
+    return response.data;
+  },
+};

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth, useToast } from '@/lib/store';
-import { useWebsite } from '@/lib/api/websites';
+import { useWebsite, useWebsiteBySlug } from '@/lib/api/websites';
 import {
   useWebsitePricing,
   useCreateOrder,
@@ -65,11 +65,21 @@ function CheckoutContent() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
 
-  const websiteId = searchParams.get('website');
+  // Support multiple param formats: ?website=uuid, ?websiteId=uuid, ?slug=slug
+  const websiteId = searchParams.get('website') || searchParams.get('websiteId');
+  const slug = searchParams.get('slug');
   const tierId = searchParams.get('tier');
 
-  const { data: website, isLoading: websiteLoading } = useWebsite(websiteId || '');
-  const { data: pricingTiers, isLoading: pricingLoading } = useWebsitePricing(websiteId || '');
+  // Use appropriate hook based on param type
+  const { data: websiteById, isLoading: websiteByIdLoading } = useWebsite(websiteId || '');
+  const { data: websiteBySlug, isLoading: websiteBySlugLoading } = useWebsiteBySlug(slug || '');
+  
+  // Determine which website data to use
+  const website = websiteById || websiteBySlug;
+  const websiteLoading = websiteByIdLoading || websiteBySlugLoading;
+  const finalWebsiteId = website?.id || websiteId || '';
+  
+  const { data: pricingTiers, isLoading: pricingLoading } = useWebsitePricing(finalWebsiteId);
   
   const createOrderMutation = useCreateOrder();
   const initiatePaymentMutation = useInitiatePayment();
@@ -77,13 +87,15 @@ function CheckoutContent() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('bank_transfer');
   const [step, setStep] = useState<'review' | 'payment' | 'instructions'>('review');
   const [paymentInstructions, setPaymentInstructions] = useState<any>(null);
+  const [orderContext, setOrderContext] = useState<{ orderId: string; amount: number; transactionId: string } | null>(null);
 
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      router.push(`/login?redirect=/checkout?website=${websiteId}`);
+      const redirectParam = slug ? `slug=${slug}` : `website=${finalWebsiteId}`;
+      router.push(`/login?redirect=/checkout?${redirectParam}`);
     }
-  }, [authLoading, isAuthenticated, router, websiteId]);
+  }, [authLoading, isAuthenticated, router, finalWebsiteId, slug]);
 
   // Get selected tier or default
   const selectedTier = pricingTiers?.find((t: { id: string }) => t.id === tierId) || pricingTiers?.[0];
@@ -104,7 +116,27 @@ function CheckoutContent() {
         payment_method: selectedPaymentMethod,
       });
 
-      setPaymentInstructions(paymentResult.payment_instructions);
+      const instructions = paymentResult.payment_instructions;
+      const transaction = paymentResult.transaction;
+
+      // Store order context for display
+      setOrderContext({
+        orderId: orderResult.order.id,
+        amount: orderResult.order.total_amount || totalAmount,
+        transactionId: transaction?.transaction_id || '',
+      });
+
+      // If Xendit returns a checkout_url, redirect to it
+      if (instructions?.type === 'xendit' && instructions?.checkout_url) {
+        showToast('Redirecting to payment gateway...', 'success');
+        // Redirect to Xendit checkout page (external URL needs to use window)
+        // eslint-disable-next-line react-hooks/immutability
+        setTimeout(() => { window.location.href = instructions.checkout_url as string; }, 100);
+        return;
+      }
+
+      // Otherwise show manual payment instructions
+      setPaymentInstructions(instructions);
       setStep('instructions');
       showToast('Order created! Please complete payment.', 'success');
     } catch (error: any) {
@@ -363,7 +395,7 @@ function CheckoutContent() {
                       transition={{ delay: 0.2 }}
                       className="text-3xl font-bold text-gray-900"
                     >
-                      {paymentInstructions.formatted_amount}
+                      {paymentInstructions.formatted_amount || formatPrice(orderContext?.amount || totalAmount)}
                     </motion.p>
                   </motion.div>
 
@@ -451,6 +483,7 @@ function CheckoutContent() {
                   </motion.div>
 
                   {/* Reference ID */}
+                  {(paymentInstructions.transaction_id || orderContext?.transactionId) && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -458,12 +491,13 @@ function CheckoutContent() {
                     className="mt-6 p-4 bg-yellow-50 rounded-lg"
                   >
                     <p className="text-sm text-yellow-800">
-                      <strong>Reference ID:</strong> {paymentInstructions.transaction_id}
+                      <strong>Reference ID:</strong> {paymentInstructions.transaction_id || orderContext?.transactionId}
                     </p>
                     <p className="text-xs text-yellow-700 mt-1">
                       Include this reference in your payment notes
                     </p>
                   </motion.div>
+                  )}
 
                   <motion.div 
                     variants={staggerContainer}

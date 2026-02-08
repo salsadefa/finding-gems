@@ -3,7 +3,11 @@
 // ============================================
 
 // Format price in IDR
-export function formatPrice(price: number): string {
+export function formatPrice(price: number | null | undefined): string {
+    // Handle null, undefined, or NaN
+    if (price === null || price === undefined || isNaN(price)) {
+        return 'Rp -';
+    }
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',

@@ -3,7 +3,7 @@
 // ============================================
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { api } from './client';
+import { api, publicApi } from './client';
 
 // ============================================
 // Types
@@ -102,16 +102,20 @@ export interface UserAccess {
 }
 
 export interface PaymentInstructions {
-  transaction_id: string;
+  transaction_id?: string;
   amount: number;
-  formatted_amount: string;
-  expires_in: string;
+  formatted_amount?: string;
+  expires_in?: string;
+  expires_at?: string;
   type: string;
   bank_name?: string;
   account_number?: string;
   account_name?: string;
   qr_url?: string;
-  instructions: string[];
+  instructions?: string[];
+  // Xendit-specific fields
+  checkout_url?: string;
+  invoice_id?: string;
 }
 
 // ============================================
@@ -140,7 +144,8 @@ export const useWebsitePricing = (websiteId: string) => {
   return useQuery({
     queryKey: billingKeys.pricing(websiteId),
     queryFn: async () => {
-      const response = await api.get<{
+      // Use publicApi for guest access - pricing should be public
+      const response = await publicApi.get<{
         success: boolean;
         data: { tiers: PricingTier[] };
       }>(`/billing/websites/${websiteId}/pricing`);
@@ -148,6 +153,7 @@ export const useWebsitePricing = (websiteId: string) => {
     },
     enabled: !!websiteId,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 };
 

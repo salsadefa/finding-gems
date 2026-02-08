@@ -93,6 +93,22 @@ export const useWebsite = (id: string) => {
   });
 };
 
+// Get website by slug
+export const useWebsiteBySlug = (slug: string) => {
+  return useQuery({
+    queryKey: [...websiteKeys.all, 'slug', slug],
+    queryFn: async () => {
+      const response = await api.get<{ success: boolean; data: { website: unknown } }>(
+        `/websites/${slug}`
+      );
+      // Normalize snake_case API response to camelCase
+      return normalizeKeys<Website>(response.data.website);
+    },
+    enabled: !!slug,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
 // Get my websites (for creators)
 export const useMyWebsites = () => {
   return useQuery({

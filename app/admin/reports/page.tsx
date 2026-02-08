@@ -3,27 +3,39 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth, useToast } from '@/lib/store';
-import { mockReports } from '@/lib/mockData';
+import { useReports, useHandleReport } from '@/lib/api/admin';
 import { formatDate } from '@/lib/utils';
 import Button from '@/components/Button';
 
 export default function AdminReportsPage() {
     const { user, isAuthenticated } = useAuth();
     const { showToast } = useToast();
-    const [reports, setReports] = useState(mockReports);
+    const [page, setPage] = useState(1);
+    const { data: reportsData, isLoading, error } = useReports({ page, limit: 20 });
+    const handleReportMutation = useHandleReport();
+
+    const reports = reportsData?.reports || [];
 
     if (!isAuthenticated || user?.role !== 'admin') {
         return <div className="container" style={{ padding: '80px 0', textAlign: 'center' }}><h1>Admin Access Required</h1></div>;
     }
 
-    const handleResolve = (id: string) => {
-        setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'resolved' as const } : r));
-        showToast('Report resolved', 'success');
+    const handleResolve = async (id: string) => {
+        try {
+            await handleReportMutation.mutateAsync({ id, status: 'resolved' });
+            showToast('Report resolved', 'success');
+        } catch (error) {
+            showToast('Failed to resolve report', 'error');
+        }
     };
 
-    const handleDismiss = (id: string) => {
-        setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'dismissed' as const } : r));
-        showToast('Report dismissed', 'info');
+    const handleDismiss = async (id: string) => {
+        try {
+            await handleReportMutation.mutateAsync({ id, status: 'dismissed' });
+            showToast('Report dismissed', 'info');
+        } catch (error) {
+            showToast('Failed to dismiss report', 'error');
+        }
     };
 
     return (
@@ -34,31 +46,39 @@ export default function AdminReportsPage() {
                 <p className="subtitle">Review reported listings and take action</p>
 
                 <div className="reports-list">
-                    {reports.map(report => (
-                        <div key={report.id} className={`report-card status-${report.status}`}>
-                            <div className="report-header">
-                                <div className="website-info">
-                                    <div className="thumb">{report.website.name.charAt(0)}</div>
-                                    <div>
-                                        <strong>{report.website.name}</strong>
-                                        <Link href={`/website/${report.website.slug}`}>View Website →</Link>
+                    {isLoading ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0' }}>Loading reports...</div>
+                    ) : error ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0', color: 'red' }}>Failed to load reports</div>
+                    ) : reports.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0' }}>No reports found</div>
+                    ) : (
+                        reports.map(report => (
+                            <div key={report.id} className={`report-card status-${report.status}`}>
+                                <div className="report-header">
+                                    <div className="website-info">
+                                        <div className="thumb">{report.reportedWebsite?.name?.charAt(0) || '?'}</div>
+                                        <div>
+                                            <strong>{report.reportedWebsite?.name || 'Unknown Website'}</strong>
+                                            <Link href={`/website/${report.reportedWebsite?.slug || '#'}`}>View Website →</Link>
+                                        </div>
                                     </div>
+                                    <span className={`status-badge ${report.status}`}>{report.status}</span>
                                 </div>
-                                <span className={`status-badge ${report.status}`}>{report.status}</span>
-                            </div>
-                            <div className="report-body">
-                                <div className="detail"><label>Reason</label><span>{report.reason}</span></div>
-                                <div className="detail"><label>Description</label><p>{report.description}</p></div>
-                                <div className="detail"><label>Reported by</label><span>{report.reporter.name} on {formatDate(report.createdAt)}</span></div>
-                            </div>
-                            {report.status === 'pending' && (
-                                <div className="report-actions">
-                                    <Button onClick={() => handleResolve(report.id)}>Mark Resolved</Button>
-                                    <Button variant="ghost" onClick={() => handleDismiss(report.id)}>Dismiss</Button>
+                                <div className="report-body">
+                                    <div className="detail"><label>Reason</label><span>{report.reason}</span></div>
+                                    <div className="detail"><label>Description</label><p>{report.description || 'No description'}</p></div>
+                                    <div className="detail"><label>Reported by</label><span>{report.reporter?.name || 'Unknown'} on {formatDate(report.createdAt)}</span></div>
                                 </div>
-                            )}
-                        </div>
-                    ))}
+                                {report.status === 'pending' && (
+                                    <div className="report-actions">
+                                        <Button onClick={() => handleResolve(report.id)}>Mark Resolved</Button>
+                                        <Button variant="ghost" onClick={() => handleDismiss(report.id)}>Dismiss</Button>
+                                    </div>
+                                )}
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
 

@@ -1,0 +1,66 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - complementary [ref=e4]:
+        - link "DL Dualangka Creator" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]: DL
+          - text: Dualangka Creator
+        - navigation [ref=e8]:
+          - link "Overview" [ref=e9] [cursor=pointer]:
+            - /url: /creator
+            - img [ref=e10]
+            - text: Overview
+          - link "My Listings" [ref=e15] [cursor=pointer]:
+            - /url: /creator/listings
+            - img [ref=e16]
+            - text: My Listings
+          - link "Analytics" [ref=e17] [cursor=pointer]:
+            - /url: /creator/analytics
+            - img [ref=e18]
+            - text: Analytics
+          - link "Settings" [ref=e19] [cursor=pointer]:
+            - /url: /creator/settings
+            - img [ref=e20]
+            - text: Settings
+        - generic [ref=e24]:
+          - generic [ref=e26]: Q
+          - generic [ref=e27]:
+            - paragraph [ref=e28]: QA Creator
+            - paragraph [ref=e29]: qa-creator@test.com
+          - button "Log out" [ref=e30]:
+            - img [ref=e31]
+      - main [ref=e34]:
+        - heading "Analytics" [level=1] [ref=e36]
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - heading "Analytics" [level=1] [ref=e40]
+            - paragraph [ref=e41]: Track your website performance and engagement
+          - generic [ref=e42]:
+            - generic [ref=e43]:
+              - combobox [ref=e44] [cursor=pointer]:
+                - option "All Products (0)" [selected]
+              - generic:
+                - generic: ∑
+              - generic:
+                - img
+            - generic [ref=e45]:
+              - combobox [ref=e46] [cursor=pointer]:
+                - option "Last 7 Days"
+                - option "Last 30 Days" [selected]
+                - option "Year to Date"
+              - generic:
+                - img
+          - generic [ref=e47]:
+            - img [ref=e49]
+            - heading "No websites yet" [level=3] [ref=e52]
+            - paragraph [ref=e53]: Create your first website listing to start tracking analytics.
+            - link "Create Website" [ref=e54] [cursor=pointer]:
+              - /url: /creator/listings/new
+  - generic [ref=e55]:
+    - img [ref=e57]
+    - button "Open Tanstack query devtools" [ref=e105] [cursor=pointer]:
+      - img [ref=e106]
+  - button "Open Next.js Dev Tools" [ref=e159] [cursor=pointer]:
+    - img [ref=e160]
+  - alert [ref=e163]

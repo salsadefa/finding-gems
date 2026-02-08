@@ -12,22 +12,36 @@ import {
     Globe,
     Info,
     MousePointer2,
-    TrendingUp
+    TrendingUp,
+    Loader2,
+    AlertCircle
 } from 'lucide-react';
-import { mockWebsites } from '@/lib/mockData';
+import { useWebsiteAnalytics } from '@/lib/api/analytics';
 import { useState } from 'react';
 
 export default function ListingAnalyticsPage() {
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
-
-    const website = mockWebsites.find(w => w.id === id);
     const [dateRange, setDateRange] = useState('Last 30 Days');
 
-    if (!website) {
+    const { data, isLoading, error } = useWebsiteAnalytics(id);
+    const website = data?.website;
+    const analytics = data?.analytics;
+
+    if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-4" />
+                <p className="text-gray-500">Loading analytics...</p>
+            </div>
+        );
+    }
+
+    if (error || !website) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+                <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Listing not found</h2>
                 <p className="text-gray-500 mb-6">The listing you are looking for does not exist or has been removed.</p>
                 <Link href="/creator">
@@ -38,15 +52,6 @@ export default function ListingAnalyticsPage() {
             </div>
         );
     }
-
-    // Mock Analytics Data
-    const analytics = {
-        totalViews: 12543,
-        uniqueVisitors: 8932,
-        outboundClicks: 3421,
-        ctr: '27.2%',
-        history: [45, 52, 38, 65, 48, 59, 62, 75, 84, 91, 78, 88, 95] // Simple trend data
-    };
 
     return (
         <div className="min-h-screen bg-gray-50/50 pb-20">
@@ -115,17 +120,14 @@ export default function ListingAnalyticsPage() {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">Total Views</p>
-                                <h3 className="text-3xl font-bold text-gray-900">{analytics.totalViews.toLocaleString()}</h3>
+                                <h3 className="text-3xl font-bold text-gray-900">{analytics?.totalViews?.toLocaleString() || '0'}</h3>
                             </div>
                             <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
                                 <Eye size={24} />
                             </div>
                         </div>
                         <div className="flex items-center text-sm">
-                            <span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <TrendingUp size={14} /> +12%
-                            </span>
-                            <span className="text-gray-400 ml-2">vs previous period</span>
+                            <span className="text-gray-400">All time views</span>
                         </div>
                     </div>
 
@@ -134,17 +136,14 @@ export default function ListingAnalyticsPage() {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-sm font-medium text-gray-500 mb-1">Unique Visitors</p>
-                                <h3 className="text-3xl font-bold text-gray-900">{analytics.uniqueVisitors.toLocaleString()}</h3>
+                                <h3 className="text-3xl font-bold text-gray-900">{analytics?.uniqueVisitors?.toLocaleString() || '0'}</h3>
                             </div>
                             <div className="p-3 bg-purple-50 text-purple-600 rounded-xl">
                                 <Globe size={24} />
                             </div>
                         </div>
                         <div className="flex items-center text-sm">
-                            <span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <TrendingUp size={14} /> +8%
-                            </span>
-                            <span className="text-gray-400 ml-2">vs previous period</span>
+                            <span className="text-gray-400">Estimated unique</span>
                         </div>
                     </div>
 
@@ -153,17 +152,14 @@ export default function ListingAnalyticsPage() {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <p className="text-sm font-bold text-blue-600 uppercase tracking-wide mb-1">Outbound Clicks</p>
-                                <h3 className="text-3xl font-bold text-gray-900">{analytics.outboundClicks.toLocaleString()}</h3>
+                                <h3 className="text-3xl font-bold text-gray-900">{analytics?.outboundClicks?.toLocaleString() || '0'}</h3>
                             </div>
                             <div className="p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20">
                                 <ExternalLink size={24} />
                             </div>
                         </div>
                         <div className="flex items-center text-sm">
-                            <span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <TrendingUp size={14} /> +24%
-                            </span>
-                            <span className="text-gray-400 ml-2">high intent traffic</span>
+                            <span className="text-gray-400">Click-throughs to your site</span>
                         </div>
                     </div>
 
@@ -174,27 +170,24 @@ export default function ListingAnalyticsPage() {
                                 <p className="text-sm font-medium text-gray-500 mb-1 flex items-center gap-1">
                                     Click-Through Rate <Info size={12} className="text-gray-300" />
                                 </p>
-                                <h3 className="text-3xl font-bold text-gray-900">{analytics.ctr}</h3>
+                                <h3 className="text-3xl font-bold text-gray-900">{analytics?.ctr || '0.0%'}</h3>
                             </div>
                             <div className="p-3 bg-teal-50 text-teal-600 rounded-xl">
                                 <MousePointer2 size={24} />
                             </div>
                         </div>
                         <div className="flex items-center text-sm">
-                            <span className="text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <TrendingUp size={14} /> +2.5%
-                            </span>
-                            <span className="text-gray-400 ml-2">conversion rate</span>
+                            <span className="text-gray-400">Clicks ÷ Views</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Main Visual: Traffic Analysis (Mock Chart) */}
+                {/* Main Visual: Traffic Analysis */}
                 <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
                     <div className="flex items-center justify-between mb-8">
                         <div>
                             <h3 className="text-lg font-bold text-gray-900">Traffic Analysis</h3>
-                            <p className="text-sm text-gray-500">Views vs Outbound Clicks over {dateRange.toLowerCase()}</p>
+                            <p className="text-sm text-gray-500">Views vs Outbound Clicks trend</p>
                         </div>
                         <div className="flex items-center gap-4 text-xs font-bold">
                             <div className="flex items-center gap-2">
@@ -206,14 +199,13 @@ export default function ListingAnalyticsPage() {
                         </div>
                     </div>
 
-                    {/* Custom CSS Bar Chart for Mock */}
+                    {/* Custom CSS Bar Chart */}
                     <div className="h-64 flex items-end justify-between gap-2 sm:gap-4 px-2">
-                        {analytics.history.map((val, i) => (
+                        {(analytics?.history || []).map((val, i) => (
                             <div key={i} className="flex-1 flex flex-col justify-end group relative h-full">
                                 {/* Tooltip */}
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap pointer-events-none">
-                                    {(val * 3.4).toFixed(0)} Views<br />
-                                    {(val * 1.2).toFixed(0)} Clicks
+                                    Day {i + 1}: {Math.round((analytics?.totalViews || 0) * (val / 100))} views
                                 </div>
 
                                 {/* Bars */}
@@ -228,30 +220,19 @@ export default function ListingAnalyticsPage() {
                     </div>
                 </div>
 
-                {/* Bottom Section: Sources */}
+                {/* Bottom Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden">
-                        <h3 className="text-lg font-bold text-gray-900 mb-6">Traffic Sources</h3>
+                        <h3 className="text-lg font-bold text-gray-900 mb-6">Quick Stats</h3>
                         <div className="space-y-4">
-                            {[
-                                { name: 'Direct', count: '45%', color: 'blue' },
-                                { name: 'Google Search', count: '32%', color: 'green' },
-                                { name: 'Social Media', count: '15%', color: 'purple' },
-                                { name: 'Other', count: '8%', color: 'gray' }
-                            ].map((source, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-3 h-3 rounded-full bg-${source.color}-500`}></div>
-                                        <span className="text-sm font-medium text-gray-700">{source.name}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3 w-1/2">
-                                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                                            <div className={`h-full bg-${source.color}-500 rounded-full`} style={{ width: source.count }}></div>
-                                        </div>
-                                        <span className="text-xs font-bold text-gray-900 w-8 text-right">{source.count}</span>
-                                    </div>
-                                </div>
-                            ))}
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <span className="text-sm font-medium text-gray-700">Rating</span>
+                                <span className="text-sm font-bold text-gray-900">⭐ {website.rating?.toFixed(1) || '0.0'} ({website.reviewCount || 0} reviews)</span>
+                            </div>
+                            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                                <span className="text-sm font-medium text-gray-700">Listed Since</span>
+                                <span className="text-sm font-bold text-gray-900">{new Date(website.createdAt).toLocaleDateString()}</span>
+                            </div>
                         </div>
                     </div>
 

@@ -105,6 +105,44 @@ When starting a session, agents should identify themselves:
 
 ---
 
+## Rule #5: NO BRIEF DOC SPAM
+
+**JANGAN buat dokumen brief baru!** Sampaikan brief langsung via prompt.
+
+### ❌ DON'T:
+- Buat file `FE-FIX-BRIEF.md`, `QA-TEST-BRIEF.md`, dll
+- Spam dokumen untuk setiap task kecil
+
+### ✅ DO:
+- Sampaikan brief langsung di prompt/chat
+- Buat dokumen HANYA jika task besar dan kompleks yang perlu referensi ulang
+
+---
+
+## Rule #6: UPDATE PROGRESS SETELAH TASK COMPLETE
+
+**Setiap task yang GENUINE COMPLETE, langsung:**
+
+1. **Update status** di progress tracking
+2. **Kasih next to-do** berdasarkan:
+   - Best practices
+   - Backlog yang belum selesai
+   - Dependencies yang perlu di-unblock
+
+### Progress Format:
+```
+## ✅ COMPLETED
+- [Task ID]: [Brief description] - DONE by [Role]
+
+## 🔄 IN PROGRESS  
+- [Task ID]: [Status] - [Blocker if any]
+
+## ⏳ BACKLOG
+- [Task ID]: [Description] - Waiting for [dependency]
+```
+
+---
+
 ## 📋 Role-Specific Guidelines
 
 ### 🔧 Backend/DevOps Role
