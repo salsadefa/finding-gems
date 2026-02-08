@@ -9,7 +9,10 @@ import {
   getPaymentStatus,
   handlePaymentWebhook,
   handleXenditWebhook,
-  confirmPayment
+  confirmPayment,
+  createQRISPayment,
+  createVAPayment,
+  getAvailableVABanks
 } from '../controllers/payment.controller';
 
 const router = Router();
@@ -18,8 +21,25 @@ const router = Router();
 // PAYMENT ROUTES
 // ============================================
 
-// Initiate payment for an order
+// Initiate payment for an order (redirects to Xendit checkout)
 router.post('/initiate', authenticate, initiatePayment);
+
+// ============================================
+// DIRECT PAYMENT - Custom UI (no redirect)
+// ============================================
+
+// QRIS payment (returns QR string for custom display)
+router.post('/qris', authenticate, createQRISPayment);
+
+// Virtual Account payment (returns VA number for custom display)
+router.post('/virtual-account', authenticate, createVAPayment);
+
+// Get available VA banks
+router.get('/virtual-account/banks', getAvailableVABanks);
+
+// ============================================
+// STATUS & WEBHOOKS
+// ============================================
 
 // Get payment status
 router.get('/:transactionId/status', getPaymentStatus);
@@ -32,4 +52,3 @@ router.post('/webhook/xendit', handleXenditWebhook);
 router.post('/:transactionId/confirm', authenticate, confirmPayment);
 
 export default router;
-

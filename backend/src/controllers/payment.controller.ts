@@ -6,7 +6,12 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/supabase';
 import { catchAsync } from '../utils/catchAsync';
-import { xenditService } from '../services/xendit.service';
+import { 
+  xenditService, 
+  VABankCode,
+  QRISPaymentResponse,
+  VAPaymentResponse 
+} from '../services/xendit.service';
 import { sendPaymentSuccessEmail, sendNewSaleEmail, sendInvoiceEmail } from '../services/email.service';
 import crypto from 'crypto';
 
@@ -155,6 +160,319 @@ export const initiatePayment = catchAsync(async (req: Request, res: Response) =>
     message: xenditResponse 
       ? 'Payment initiated. Redirecting to checkout...'
       : 'Payment initiated. Please complete payment within 24 hours.',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ============================================
+// DIRECT PAYMENT - QRIS (Custom UI)
+// ============================================
+
+/**
+ * Create QRIS payment with QR code for custom display
+ * POST /api/v1/payments/qris
+ * 
+ * This endpoint returns a QR string that can be displayed
+ * directly in the frontend instead of redirecting to Xendit checkout
+ */
+export const createQRISPayment = catchAsync(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
+  }
+
+  const { order_id } = req.body;
+
+  if (!order_id) {
+    return res.status(400).json({ success: false, error: { message: 'order_id is required' } });
+  }
+
+  // Get order
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      buyer:users!orders_buyer_id_fkey(id, name, email),
+      websites!inner(id, name)
+    `)
+    .eq('id', order_id)
+    .single();
+
+  if (orderError || !order) {
+    return res.status(404).json({ success: false, error: { message: 'Order not found' } });
+  }
+
+  if (order.buyer_id !== user.id) {
+    return res.status(403).json({ success: false, error: { message: 'Not authorized' } });
+  }
+
+  if (order.status !== 'pending') {
+    return res.status(400).json({ success: false, error: { message: `Order is ${order.status}, cannot initiate payment` } });
+  }
+
+  // Check if order expired
+  if (order.expires_at && new Date(order.expires_at) < new Date()) {
+    await supabase.from('orders').update({ status: 'expired' }).eq('id', order_id);
+    return res.status(400).json({ success: false, error: { message: 'Order has expired' } });
+  }
+
+  // Check Xendit availability
+  if (!xenditService.isAvailable()) {
+    return res.status(503).json({ 
+      success: false, 
+      error: { message: 'Payment service not available. Please try again later.' } 
+    });
+  }
+
+  // Generate transaction ID
+  const transactionId = `TXN-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+  try {
+    // Create QRIS payment via Payment Request API
+    const qrisResponse: QRISPaymentResponse = await xenditService.createQRISPayment({
+      orderId: order_id,
+      amount: order.total_amount,
+      currency: order.currency,
+      customerName: order.buyer?.name || user.name,
+      customerEmail: order.buyer?.email || user.email,
+      description: `QRIS Payment for ${order.item_name}`,
+    });
+
+    // Create transaction record
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        order_id: order_id,
+        transaction_id: transactionId,
+        payment_method: 'qris',
+        payment_provider: 'xendit',
+        gateway_transaction_id: qrisResponse.paymentRequestId,
+        amount: order.total_amount,
+        currency: order.currency,
+        status: 'pending',
+        expired_at: qrisResponse.expiresAt,
+        metadata: {
+          payment_type: 'qris_direct',
+          qr_string: qrisResponse.qrString, // Store for later reference
+          xendit_reference_id: qrisResponse.referenceId
+        }
+      })
+      .select()
+      .single();
+
+    if (txError) {
+      console.error('[QRIS] Failed to create transaction:', txError);
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Failed to create transaction', details: txError.message }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transaction,
+        payment_details: {
+          type: 'qris',
+          qr_string: qrisResponse.qrString,
+          amount: order.total_amount,
+          formatted_amount: new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+          }).format(order.total_amount),
+          expires_at: qrisResponse.expiresAt,
+          instructions: [
+            'Buka aplikasi mobile banking atau e-wallet Anda',
+            'Pilih menu Scan / Pay dengan QRIS',
+            'Scan QR code yang ditampilkan',
+            'Konfirmasi nominal pembayaran',
+            'Selesaikan pembayaran'
+          ]
+        }
+      },
+      message: 'QRIS payment created. Scan QR code to pay.',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('[QRIS] Payment creation failed:', error);
+    return res.status(500).json({
+      success: false,
+      error: { message: 'Failed to create QRIS payment', details: error.message }
+    });
+  }
+});
+
+// ============================================
+// DIRECT PAYMENT - Virtual Account (Custom UI)
+// ============================================
+
+/**
+ * Create Virtual Account payment for custom display
+ * POST /api/v1/payments/virtual-account
+ * 
+ * This endpoint returns VA number and bank details that can be displayed
+ * directly in the frontend instead of redirecting to Xendit checkout
+ */
+export const createVAPayment = catchAsync(async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ success: false, error: { message: 'Unauthorized' } });
+  }
+
+  const { order_id, bank_code } = req.body;
+
+  if (!order_id) {
+    return res.status(400).json({ success: false, error: { message: 'order_id is required' } });
+  }
+
+  if (!bank_code) {
+    return res.status(400).json({ success: false, error: { message: 'bank_code is required' } });
+  }
+
+  // Validate bank code
+  const validBankCodes: VABankCode[] = ['BCA', 'BNI', 'BRI', 'MANDIRI', 'PERMATA', 'BSI', 'BJB', 'SAHABAT_SAMPOERNA', 'CIMB'];
+  if (!validBankCodes.includes(bank_code)) {
+    return res.status(400).json({ 
+      success: false, 
+      error: { 
+        message: `Invalid bank_code. Valid options: ${validBankCodes.join(', ')}` 
+      } 
+    });
+  }
+
+  // Get order
+  const { data: order, error: orderError } = await supabase
+    .from('orders')
+    .select(`
+      *,
+      buyer:users!orders_buyer_id_fkey(id, name, email),
+      websites!inner(id, name)
+    `)
+    .eq('id', order_id)
+    .single();
+
+  if (orderError || !order) {
+    return res.status(404).json({ success: false, error: { message: 'Order not found' } });
+  }
+
+  if (order.buyer_id !== user.id) {
+    return res.status(403).json({ success: false, error: { message: 'Not authorized' } });
+  }
+
+  if (order.status !== 'pending') {
+    return res.status(400).json({ success: false, error: { message: `Order is ${order.status}, cannot initiate payment` } });
+  }
+
+  // Check if order expired
+  if (order.expires_at && new Date(order.expires_at) < new Date()) {
+    await supabase.from('orders').update({ status: 'expired' }).eq('id', order_id);
+    return res.status(400).json({ success: false, error: { message: 'Order has expired' } });
+  }
+
+  // Check Xendit availability
+  if (!xenditService.isAvailable()) {
+    return res.status(503).json({ 
+      success: false, 
+      error: { message: 'Payment service not available. Please try again later.' } 
+    });
+  }
+
+  // Generate transaction ID
+  const transactionId = `TXN-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
+
+  try {
+    // Create Virtual Account payment via Payment Request API
+    const vaResponse: VAPaymentResponse = await xenditService.createVAPayment({
+      orderId: order_id,
+      amount: order.total_amount,
+      currency: order.currency,
+      customerName: order.buyer?.name || user.name,
+      customerEmail: order.buyer?.email || user.email,
+      bankCode: bank_code,
+      description: `VA Payment for ${order.item_name}`,
+    });
+
+    // Create transaction record
+    const { data: transaction, error: txError } = await supabase
+      .from('transactions')
+      .insert({
+        order_id: order_id,
+        transaction_id: transactionId,
+        payment_method: 'virtual_account',
+        payment_provider: 'xendit',
+        gateway_transaction_id: vaResponse.paymentRequestId,
+        amount: order.total_amount,
+        currency: order.currency,
+        status: 'pending',
+        expired_at: vaResponse.expiresAt,
+        metadata: {
+          payment_type: 'virtual_account_direct',
+          bank_code: vaResponse.bankCode,
+          bank_name: vaResponse.bankName,
+          virtual_account_number: vaResponse.virtualAccountNumber,
+          xendit_reference_id: vaResponse.referenceId
+        }
+      })
+      .select()
+      .single();
+
+    if (txError) {
+      console.error('[VA] Failed to create transaction:', txError);
+      return res.status(500).json({
+        success: false,
+        error: { message: 'Failed to create transaction', details: txError.message }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transaction,
+        payment_details: {
+          type: 'virtual_account',
+          bank_code: vaResponse.bankCode,
+          bank_name: vaResponse.bankName,
+          virtual_account_number: vaResponse.virtualAccountNumber,
+          customer_name: vaResponse.customerName,
+          amount: order.total_amount,
+          formatted_amount: new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+          }).format(order.total_amount),
+          expires_at: vaResponse.expiresAt,
+          instructions: [
+            `Buka aplikasi mobile banking ${vaResponse.bankName} Anda`,
+            'Pilih menu Transfer ke Virtual Account',
+            `Masukkan nomor VA: ${vaResponse.virtualAccountNumber}`,
+            'Konfirmasi nama penerima dan nominal',
+            'Selesaikan pembayaran dengan PIN/password Anda'
+          ]
+        }
+      },
+      message: 'Virtual Account created. Complete payment via bank transfer.',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error('[VA] Payment creation failed:', error);
+    return res.status(500).json({
+      success: false,
+      error: { message: 'Failed to create Virtual Account payment', details: error.message }
+    });
+  }
+});
+
+/**
+ * Get available Virtual Account banks
+ * GET /api/v1/payments/virtual-account/banks
+ */
+export const getAvailableVABanks = catchAsync(async (_req: Request, res: Response) => {
+  const banks = xenditService.getAvailableVABanks();
+  
+  res.status(200).json({
+    success: true,
+    data: { banks },
     timestamp: new Date().toISOString()
   });
 });
