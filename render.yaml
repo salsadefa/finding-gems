@@ -47,19 +47,32 @@ services:
       - key: XENDIT_WEBHOOK_TOKEN
         sync: false
       
-      # SMTP Email (optional - set manually if needed)
+      # Email (optional)
+      # Recommended on Render: Resend HTTP API (set manually)
+      - key: EMAIL_PROVIDER
+        value: smtp
+      - key: RESEND_API_KEY
+        sync: false
+
+      # Resend SMTP (STARTTLS - set manually if needed)
       - key: SMTP_HOST
         value: smtp.resend.com
       - key: SMTP_PORT
-        value: 465
+        value: 587
       - key: SMTP_SECURE
-        value: true
+        value: false
       - key: SMTP_USER
         value: resend
       - key: SMTP_PASS
         sync: false
       - key: SMTP_TLS_REJECT_UNAUTHORIZED
         value: true
+      - key: SMTP_CONNECTION_TIMEOUT_MS
+        value: 10000
+      - key: SMTP_GREETING_TIMEOUT_MS
+        value: 10000
+      - key: SMTP_SOCKET_TIMEOUT_MS
+        value: 20000
       - key: EMAIL_FROM
         value: contact@dualangka.com
       - key: EMAIL_FROM_NAME

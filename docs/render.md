@@ -10,10 +10,14 @@ These are required to enable email verification OTP and request-response email n
 
 Resend SMTP:
 - `SMTP_HOST=smtp.resend.com`
-- `SMTP_PORT=465`
-- `SMTP_SECURE=true`
+- `SMTP_PORT=587`
+- `SMTP_SECURE=false`
 - `SMTP_USER=resend`
 - `SMTP_PASS=<RESEND_API_KEY>`
+
+If SMTP is timing out on Render, switch to Resend HTTP API:
+- `EMAIL_PROVIDER=resend_http`
+- `RESEND_API_KEY=<RESEND_API_KEY>`
 
 Sender:
 - `EMAIL_FROM=contact@dualangka.com`

@@ -3,23 +3,39 @@
 // ============================================
 
 import nodemailer from 'nodemailer';
+import { randomUUID } from 'crypto';
 
 // ============================================
 // CONFIG
 // ============================================
 
+const EMAIL_PROVIDER = process.env.EMAIL_PROVIDER || 'smtp';
+
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
+const SMTP_TLS_REJECT_UNAUTHORIZED = process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false';
+
+// Keep these relatively small so requests fail fast on PaaS.
+const SMTP_CONNECTION_TIMEOUT_MS = parseInt(process.env.SMTP_CONNECTION_TIMEOUT_MS || '10000', 10);
+const SMTP_GREETING_TIMEOUT_MS = parseInt(process.env.SMTP_GREETING_TIMEOUT_MS || '10000', 10);
+const SMTP_SOCKET_TIMEOUT_MS = parseInt(process.env.SMTP_SOCKET_TIMEOUT_MS || '20000', 10);
+
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: SMTP_SECURE,
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
   tls: {
-    rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
+    rejectUnauthorized: SMTP_TLS_REJECT_UNAUTHORIZED,
     minVersion: 'TLSv1.2',
   },
+  connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
+  greetingTimeout: SMTP_GREETING_TIMEOUT_MS,
+  socketTimeout: SMTP_SOCKET_TIMEOUT_MS,
 });
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@findinggems.id';
@@ -37,14 +53,118 @@ interface EmailOptions {
   text?: string;
 }
 
+function safeEmailErrorForLog(error: unknown) {
+  const err = error as any;
+
+  const short = (value: unknown, maxLen = 800) => {
+    if (typeof value !== 'string') return value;
+    return value.length > maxLen ? `${value.slice(0, maxLen)}...` : value;
+  };
+
+  return {
+    name: err?.name,
+    code: err?.code,
+    message: short(err?.message),
+    command: err?.command,
+    responseCode: err?.responseCode,
+    response: short(err?.response),
+    errno: err?.errno,
+    syscall: err?.syscall,
+    address: err?.address,
+    port: err?.port,
+  };
+}
+
+function smtpConfigForLog() {
+  return {
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    tlsRejectUnauthorized: SMTP_TLS_REJECT_UNAUTHORIZED,
+    connectionTimeoutMs: SMTP_CONNECTION_TIMEOUT_MS,
+    greetingTimeoutMs: SMTP_GREETING_TIMEOUT_MS,
+    socketTimeoutMs: SMTP_SOCKET_TIMEOUT_MS,
+  };
+}
+
+async function sendEmailViaResendHttp(options: EmailOptions): Promise<boolean> {
+  const resendApiKey =
+    process.env.RESEND_API_KEY || (process.env.SMTP_USER === 'resend' ? process.env.SMTP_PASS : undefined);
+
+  if (!resendApiKey) {
+    console.warn('[Email] RESEND_API_KEY not configured. Email not sent.');
+    return false;
+  }
+
+  const timeoutMs = parseInt(process.env.RESEND_HTTP_TIMEOUT_MS || '10000', 10);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const payload = {
+      from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+      text: options.text || options.html.replace(/<[^>]+>/g, ''),
+    };
+
+    const resp = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+        // Resend supports idempotent requests.
+        'Idempotency-Key': randomUUID(),
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    const raw = await resp.text();
+
+    if (!resp.ok) {
+      console.error('[Email] Resend HTTP send failed', {
+        provider: 'resend_http',
+        to: options.to,
+        subject: options.subject,
+        status: resp.status,
+        body: raw.slice(0, 800),
+      });
+      return false;
+    }
+
+    console.log(`[Email] Sent (resend_http) to ${options.to}: ${options.subject}`);
+    return true;
+  } catch (error) {
+    console.error('[Email] Resend HTTP send exception', {
+      provider: 'resend_http',
+      to: options.to,
+      subject: options.subject,
+      error: safeEmailErrorForLog(error),
+    });
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 // ============================================
 // CORE SEND EMAIL
 // ============================================
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
+    if (EMAIL_PROVIDER === 'resend_http') {
+      return await sendEmailViaResendHttp(options);
+    }
+
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn('[Email] SMTP credentials not configured. Email not sent.');
+      console.warn('[Email] SMTP credentials not configured. Email not sent.', {
+        provider: EMAIL_PROVIDER,
+        smtp: smtpConfigForLog(),
+      });
       return false;
     }
 
@@ -59,7 +179,13 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     console.log(`[Email] Sent to ${options.to}: ${options.subject}`);
     return true;
   } catch (error) {
-    console.error('[Email] Failed to send:', error);
+    console.error('[Email] Failed to send', {
+      provider: EMAIL_PROVIDER,
+      to: options.to,
+      subject: options.subject,
+      smtp: smtpConfigForLog(),
+      error: safeEmailErrorForLog(error),
+    });
     return false;
   }
 }
