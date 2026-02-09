@@ -110,12 +110,14 @@ describe('Review Controller', () => {
       // Mock sequence: 
       // 1. Check website exists
       // 2. Check existing review  
-      // 3. Insert review
-      // 4. Get website reviews for average
-      // 5. Update website rating
+      // 3. Check purchase exists (paid)
+      // 4. Insert review
+      // 5. Get website reviews for average
+      // 6. Update website rating
       fromMock
         .mockImplementationOnce(() => new MockQuery({ data: { id: 'website-123' }, error: null }))
         .mockImplementationOnce(() => new MockQuery({ data: null, error: { code: 'PGRST116' } }))
+        .mockImplementationOnce(() => new MockQuery({ data: { id: 'order-1' }, error: null }))
         .mockImplementationOnce(() => new MockQuery({ data: mockCreatedReview, error: null }))
         .mockImplementationOnce(() => new MockQuery({ data: [{ rating: 5 }], error: null }))
         .mockImplementationOnce(() => new MockQuery({ data: {}, error: null }));

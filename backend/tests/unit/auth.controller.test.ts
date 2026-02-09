@@ -45,48 +45,64 @@ describe('Auth Controller', () => {
       // Mock password hashing
       (hashPassword as jest.Mock).mockResolvedValue('hashedpassword');
       
-      // Mock token generation
-      (jwtUtils.generateTokens as jest.Mock).mockReturnValue({ 
-        accessToken: 'access-token', 
-        refreshToken: 'refresh-token' 
-      });
+      // Register now returns verificationRequired (no tokens).
 
-      // Create a mock chain builder that handles different table operations
-      let callIndex = 0;
-      (supabase.from as jest.Mock).mockImplementation(() => {
-        callIndex++;
-        
-        if (callIndex === 1) {
-          // First call: check email existence - should return null (email not taken)
+      // Mock Supabase calls by table + call order.
+      let userSelectCall = 0;
+      (supabase.from as jest.Mock).mockImplementation((table: string) => {
+        if (table === 'users') {
           return {
             select: jest.fn().mockReturnValue({
               eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
-              })
-            })
-          };
-        } else if (callIndex === 2) {
-          // Second call: check username existence - should return null (username not taken)
-          return {
-            select: jest.fn().mockReturnValue({
-              eq: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
-              })
-            })
-          };
-        } else {
-          // Third call: insert user
-          return {
+                single: jest.fn().mockImplementation(async () => {
+                  userSelectCall += 1;
+                  // 1) email check, 2) username check
+                  if (userSelectCall <= 2) {
+                    return { data: null, error: { code: 'PGRST116' } };
+                  }
+                  return { data: null, error: null };
+                }),
+              }),
+            }),
             insert: jest.fn().mockReturnValue({
               select: jest.fn().mockReturnValue({
-                single: jest.fn().mockResolvedValue({ 
-                  data: { id: 'user-123', ...validRegisterData, role: 'buyer', isActive: true },
-                  error: null 
-                })
-              })
-            })
+                single: jest.fn().mockResolvedValue({
+                  data: {
+                    id: 'user-123',
+                    email: validRegisterData.email.toLowerCase(),
+                    name: validRegisterData.name,
+                    username: validRegisterData.username.toLowerCase(),
+                    role: 'buyer',
+                    isActive: true,
+                    emailVerified: false,
+                  },
+                  error: null,
+                }),
+              }),
+            }),
           };
         }
+
+        if (table === 'email_verification_codes') {
+          return {
+            delete: jest.fn().mockReturnValue({
+              eq: jest.fn().mockReturnValue({
+                eq: jest.fn().mockReturnValue({
+                  is: jest.fn().mockReturnValue({
+                    then: (resolve: any, reject: any) =>
+                      Promise.resolve({ data: null, error: null }).then(resolve, reject),
+                  }),
+                }),
+              }),
+            }),
+            insert: jest.fn().mockReturnValue({
+              then: (resolve: any, reject: any) =>
+                Promise.resolve({ data: { id: 'code-1' }, error: null }).then(resolve, reject),
+            }),
+          };
+        }
+
+        return {};
       });
 
       // Call controller and wait for async
@@ -96,7 +112,11 @@ describe('Auth Controller', () => {
       expect(status).toHaveBeenCalledWith(201);
       expect(json).toHaveBeenCalledWith(expect.objectContaining({
         success: true,
-        message: 'User registered successfully'
+        message: 'Verification code sent to email',
+        data: expect.objectContaining({
+          verificationRequired: true,
+          user: expect.any(Object),
+        }),
       }));
     });
 
@@ -152,7 +172,9 @@ describe('Auth Controller', () => {
         password: 'hashedpassword', 
         isActive: true,
         role: 'buyer',
-        name: 'Test User'
+        name: 'Test User',
+        emailVerified: true,
+        emailVerifiedAt: new Date().toISOString(),
       };
 
       // Mock user lookup

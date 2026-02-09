@@ -45,7 +45,8 @@ const flushPromises = () => new Promise(setImmediate);
 
 describe('Billing Controller', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    fromMock.mockReset();
+    rpcMock.mockReset();
   });
 
   test('POST /api/v1/billing/orders returns 401 if not authenticated', async () => {
@@ -71,11 +72,16 @@ describe('Billing Controller', () => {
   test('POST /api/v1/billing/orders creates order for website', async () => {
     fromMock
       .mockImplementationOnce(() => new MockQuery({ data: { id: 'website-1', name: 'Site A', creatorId: 'creator-1', status: 'active' }, error: null }))
-      .mockImplementationOnce(() => new MockQuery({ data: null, error: null }))
+      // user_access check (no access yet)
+      .mockImplementationOnce(() => new MockQuery({ data: null, error: { code: 'PGRST116' } }))
+      // existing orders check (none)
+      .mockImplementationOnce(() => new MockQuery({ data: [], error: null }))
+      // pricing tier lookup
       .mockImplementationOnce(() => new MockQuery({ data: { id: 'tier-1', price: 100000, name: 'Pro', is_active: true }, error: null }))
-      .mockImplementationOnce(() => new MockQuery({ data: { id: 'order-1' }, error: null }));
+      // order insert
+      .mockImplementationOnce(() => new MockQuery({ data: { id: 'order-1', buyer_id: 'user-1', creator_id: 'creator-1' }, error: null }));
 
-    rpcMock.mockResolvedValue({ data: 'ORD-123' });
+    rpcMock.mockResolvedValue({ data: 'ORD-123', error: null });
 
     const req: any = { user: { id: 'user-1' }, body: { website_id: 'website-1', pricing_tier_id: 'tier-1' } };
     const res = createRes();
@@ -102,7 +108,7 @@ describe('Billing Controller', () => {
 
   test('GET /api/v1/billing/orders/:id returns order detail with transactions', async () => {
     fromMock
-      .mockImplementationOnce(() => new MockQuery({ data: { id: 'order-1', buyer_id: 'user-1', creator_id: 'creator-1' }, error: null }))
+      .mockImplementationOnce(() => new MockQuery({ data: { id: 'order-1', buyer_id: 'user-1', creator_id: 'creator-1', website_id: 'website-1' }, error: null }))
       .mockImplementationOnce(() => new MockQuery({ data: { id: 'tx-1' }, error: null }))
       .mockImplementationOnce(() => new MockQuery({ data: { id: 'inv-1' }, error: null }));
 
