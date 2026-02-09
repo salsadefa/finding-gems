@@ -85,7 +85,7 @@ services:
     plan: free
     autoDeploy: true
     buildCommand: npm ci && npm run build
-    startCommand: npm run start
+    startCommand: npm run start -- -p $PORT
     envVars:
       - key: NODE_ENV
         value: production
