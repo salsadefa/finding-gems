@@ -4,6 +4,7 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import { useRegister } from '@/lib/api/auth';
 import { useToast } from '@/lib/store';
 import { Input } from '@/components/Input';
@@ -16,6 +17,8 @@ import {
   Users, 
   ArrowRight,
   CheckCircle2,
+  Eye,
+  EyeOff,
   Star,
   Gem
 } from 'lucide-react';
@@ -32,6 +35,8 @@ function SignupContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
     username?: string;
@@ -39,6 +44,31 @@ function SignupContent() {
     password?: string;
     confirmPassword?: string;
   }>({});
+
+  const passwordChecks = {
+    minLen: password.length >= 8,
+    upperLower: /(?=.*[a-z])(?=.*[A-Z])/.test(password),
+    number: /(?=.*\d)/.test(password),
+    recommendedLen: password.length >= 12,
+  };
+
+  const strengthScore =
+    Number(passwordChecks.minLen) +
+    Number(passwordChecks.upperLower) +
+    Number(passwordChecks.number) +
+    Number(passwordChecks.recommendedLen);
+
+  const strengthLabel =
+    strengthScore <= 1 ? 'Weak' : strengthScore === 2 ? 'Okay' : strengthScore === 3 ? 'Good' : 'Strong';
+
+  const strengthBarLevel =
+    passwordChecks.minLen && passwordChecks.upperLower && passwordChecks.number
+      ? (passwordChecks.recommendedLen ? 4 : 3)
+      : passwordChecks.minLen && passwordChecks.upperLower
+        ? 2
+        : passwordChecks.minLen
+          ? 1
+          : 0;
 
   const validateForm = () => {
     const newErrors: typeof errors = {};
@@ -67,7 +97,9 @@ function SignupContent() {
       newErrors.password = 'Password must contain uppercase, lowercase, and number';
     }
     
-    if (password !== confirmPassword) {
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (password !== confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
     
@@ -89,12 +121,30 @@ function SignupContent() {
         role: 'buyer',
       });
       
-      showToast('Account created successfully! Welcome to Finding Gems.', 'success');
-      router.push('/dashboard');
-    } catch (error: any) {
-      const errorMessage = error?.response?.data?.error?.message || 
-                          error?.message || 
-                          'Registration failed. Please try again.';
+      showToast('We sent a verification code to your email.', 'success');
+      const redirectTo = searchParams.get('redirect') || '/dashboard';
+      router.push(`/verify-email?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`);
+    } catch (err: unknown) {
+      let errorMessage = 'Registration failed. Please try again.';
+      if (axios.isAxiosError(err)) {
+        const data = err.response?.data;
+        if (data && typeof data === 'object') {
+          const record = data as Record<string, unknown>;
+          const topMessage = record.message;
+          const nestedError = record.error;
+          const nestedMessage =
+            nestedError && typeof nestedError === 'object'
+              ? (nestedError as Record<string, unknown>).message
+              : undefined;
+
+          const maybeServerMessage = nestedMessage ?? topMessage;
+          if (typeof maybeServerMessage === 'string' && maybeServerMessage.trim()) {
+            errorMessage = maybeServerMessage;
+          }
+        }
+      } else if (err instanceof Error && err.message) {
+        errorMessage = err.message;
+      }
       showToast(errorMessage, 'error');
     }
   };
@@ -184,7 +234,7 @@ function SignupContent() {
                 ))}
               </div>
               <p className="text-gray-300 text-sm mb-4">
-                "Finding Gems has completely transformed how I discover and purchase digital products. The curation is top-notch!"
+                &quot;Finding Gems has completely transformed how I discover and purchase digital products. The curation is top-notch!&quot;
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full flex items-center justify-center text-white font-bold">
@@ -299,15 +349,26 @@ function SignupContent() {
             <motion.div variants={fadeInUp}>
               <Input 
                 label="Password" 
-                type="password" 
+                type={showPassword ? 'text' : 'password'} 
                 value={password} 
                 onChange={(e) => {
                   setPassword(e.target.value);
                   if (errors.password) setErrors({...errors, password: undefined});
+                  if (confirmPassword && errors.confirmPassword) setErrors({...errors, confirmPassword: undefined});
                 }} 
                 placeholder="••••••••" 
                 required 
                 error={errors.password}
+                endAdornment={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                }
               />
               {/* Password Strength Indicator */}
               {password && (
@@ -316,6 +377,20 @@ function SignupContent() {
                   animate={{ opacity: 1, height: 'auto' }}
                   className="mt-2 space-y-1"
                 >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Strength</span>
+                    <span
+                      className={`text-xs font-semibold ${
+                        strengthBarLevel <= 1
+                          ? 'text-red-600'
+                          : strengthBarLevel === 2
+                            ? 'text-amber-700'
+                            : 'text-emerald-700'
+                      }`}
+                    >
+                      {strengthLabel}
+                    </span>
+                  </div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4].map((level) => (
                       <motion.div
@@ -323,27 +398,24 @@ function SignupContent() {
                         initial={{ scaleX: 0 }}
                         animate={{ 
                           scaleX: 1,
-                          backgroundColor: 
-                            (password.length >= 8 && level <= 1) ||
-                            (/(?=.*[a-z])(?=.*[A-Z])/.test(password) && level <= 2) ||
-                            (/(?=.*\d)/.test(password) && level <= 3) ||
-                            (password.length >= 12 && level <= 4)
-                              ? '#10b981'
-                              : '#e5e7eb'
+                          backgroundColor: level <= strengthBarLevel ? '#10b981' : '#e5e7eb'
                         }}
                         className="h-1 flex-1 rounded-full origin-left"
                       />
                     ))}
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
-                    <span className={`flex items-center gap-1 ${password.length >= 8 ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className={`flex items-center gap-1 ${passwordChecks.minLen ? 'text-green-600' : 'text-gray-400'}`}>
                       <CheckCircle2 className="w-3 h-3" /> 8+ chars
                     </span>
-                    <span className={`flex items-center gap-1 ${/(?=.*[a-z])(?=.*[A-Z])/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className={`flex items-center gap-1 ${passwordChecks.upperLower ? 'text-green-600' : 'text-gray-400'}`}>
                       <CheckCircle2 className="w-3 h-3" /> Upper &amp; lower
                     </span>
-                    <span className={`flex items-center gap-1 ${/(?=.*\d)/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
+                    <span className={`flex items-center gap-1 ${passwordChecks.number ? 'text-green-600' : 'text-gray-400'}`}>
                       <CheckCircle2 className="w-3 h-3" /> Number
+                    </span>
+                    <span className={`flex items-center gap-1 ${passwordChecks.recommendedLen ? 'text-green-600' : 'text-gray-400'}`}>
+                      <CheckCircle2 className="w-3 h-3" /> 12+ recommended
                     </span>
                   </div>
                 </motion.div>
@@ -353,7 +425,7 @@ function SignupContent() {
             <motion.div variants={fadeInUp}>
               <Input 
                 label="Confirm Password" 
-                type="password" 
+                type={showConfirmPassword ? 'text' : 'password'} 
                 value={confirmPassword} 
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
@@ -362,7 +434,22 @@ function SignupContent() {
                 placeholder="••••••••" 
                 required 
                 error={errors.confirmPassword}
+                endAdornment={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((v) => !v)}
+                    className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                }
               />
+              {confirmPassword && (
+                <p className={`text-xs mt-2 ${password === confirmPassword ? 'text-emerald-700' : 'text-red-600'}`}>
+                  {password === confirmPassword ? 'Passwords match.' : 'Passwords do not match.'}
+                </p>
+              )}
             </motion.div>
             
             <motion.div variants={fadeInUp}>

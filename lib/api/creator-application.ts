@@ -1,6 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from './client';
 
+type ApiEnvelope<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
+
 // Types
 export interface CreatorApplication {
   id: string;
@@ -38,16 +44,19 @@ export const creatorApplicationKeys = {
 /**
  * Get current user's creator application
  */
-export const useMyCreatorApplication = () => {
+export const useMyCreatorApplication = (options?: { enabled?: boolean }) => {
+  const { enabled = true } = options || {};
+
   return useQuery({
     queryKey: creatorApplicationKeys.my(),
     queryFn: async () => {
-      const response = await apiClient.get<CreatorApplication>('/creator-applications/me');
-      return response.data;
+      const response = await apiClient.get<ApiEnvelope<CreatorApplication>>('/creator-applications/me');
+      return response.data.data;
     },
     retry: false,
     // Don't throw error if no application exists (404)
     throwOnError: false,
+    enabled,
   });
 };
 
@@ -59,8 +68,8 @@ export const useCreatorApplication = () => {
 
   return useMutation({
     mutationFn: async (data: CreateApplicationData) => {
-      const response = await apiClient.post<CreatorApplication>('/creator-applications', data);
-      return response.data;
+      const response = await apiClient.post<ApiEnvelope<CreatorApplication>>('/creator-applications', data);
+      return response.data.data;
     },
     onSuccess: (data) => {
       queryClient.setQueryData(creatorApplicationKeys.my(), data);
@@ -79,10 +88,16 @@ export const useCreatorApplications = (status?: 'pending' | 'approved' | 'reject
       const params = new URLSearchParams();
       if (status) params.append('status', status);
       
-      const response = await apiClient.get<{ data: CreatorApplication[]; total: number }>(
+      const response = await apiClient.get<ApiEnvelope<{ applications: CreatorApplication[]; pagination?: unknown; total?: number }>>(
         `/creator-applications?${params.toString()}`
       );
-      return response.data;
+
+      // Backend responses vary across admin endpoints; normalize to a simple list.
+      const payload = response.data.data;
+      return {
+        applications: payload.applications,
+        total: typeof payload.total === 'number' ? payload.total : payload.applications.length,
+      };
     },
   });
 };
@@ -95,10 +110,10 @@ export const useApproveApplication = () => {
 
   return useMutation({
     mutationFn: async (applicationId: string) => {
-      const response = await apiClient.post<CreatorApplication>(
+      const response = await apiClient.post<ApiEnvelope<CreatorApplication>>(
         `/creator-applications/${applicationId}/approve`
       );
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: creatorApplicationKeys.all });
@@ -114,11 +129,11 @@ export const useRejectApplication = () => {
 
   return useMutation({
     mutationFn: async ({ applicationId, reason }: { applicationId: string; reason?: string }) => {
-      const response = await apiClient.post<CreatorApplication>(
+      const response = await apiClient.post<ApiEnvelope<CreatorApplication>>(
         `/creator-applications/${applicationId}/reject`,
         { reason }
       );
-      return response.data;
+      return response.data.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: creatorApplicationKeys.all });

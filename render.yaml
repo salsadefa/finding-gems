@@ -49,18 +49,45 @@ services:
       
       # SMTP Email (optional - set manually if needed)
       - key: SMTP_HOST
-        sync: false
+        value: smtp.resend.com
       - key: SMTP_PORT
-        sync: false
+        value: 465
+      - key: SMTP_SECURE
+        value: true
       - key: SMTP_USER
-        sync: false
+        value: resend
       - key: SMTP_PASS
         sync: false
+      - key: SMTP_TLS_REJECT_UNAUTHORIZED
+        value: true
       - key: EMAIL_FROM
+        value: contact@dualangka.com
+      - key: EMAIL_FROM_NAME
+        value: Dualangka
+
+      # OTP
+      - key: OTP_SECRET
         sync: false
       
-      # Frontend URL (update after Vercel deploy)
+      # Frontend URL
       - key: FRONTEND_URL
         value: https://finding-gems.vercel.app
+      - key: FRONTEND_URL_SECONDARY
+        value: https://finding-gems-frontend.onrender.com
       - key: APP_BASE_URL
         value: https://finding-gems.vercel.app
+
+  # Frontend (Next.js) Service
+  - type: web
+    name: finding-gems-frontend
+    runtime: node
+    region: singapore
+    plan: free
+    autoDeploy: true
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://finding-gems-backend.onrender.com/api/v1

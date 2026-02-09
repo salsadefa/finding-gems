@@ -12,6 +12,8 @@ export interface User {
   avatar?: string | null;
   role: 'buyer' | 'creator' | 'admin';
   isActive: boolean;
+  emailVerified?: boolean;
+  emailVerifiedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -2,6 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/lib/store';
 import { 
   useAdminDashboard, 
@@ -13,7 +14,7 @@ import {
   formatPercent
 } from '@/lib/api/admin';
 import { TableSkeleton, DashboardStatsSkeleton } from '@/components/Skeleton';
-import { TrendingUp, MoreHorizontal, Globe, Clock, Loader2 } from 'lucide-react';
+import { TrendingUp, MoreHorizontal, Clock, Loader2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // Loading States
@@ -60,6 +61,21 @@ const SettingsTab = dynamic(() => import('./tabs/SettingsTab'), {
   ssr: false
 });
 
+const NotificationsTab = dynamic(() => import('./tabs/NotificationsTab'), {
+  loading: () => <TableSkeleton rows={6} />,
+  ssr: false,
+});
+
+const DropsTab = dynamic(() => import('./tabs/DropsTab'), {
+  loading: () => <TableSkeleton rows={6} />,
+  ssr: false,
+});
+
+const RequestsTab = dynamic(() => import('./tabs/RequestsTab'), {
+  loading: () => <TableSkeleton rows={6} />,
+  ssr: false,
+});
+
 // ============================================
 // MAIN DASHBOARD CONTENT - Only loads overview data
 // ============================================
@@ -93,9 +109,9 @@ function AdminDashboardContent() {
         <div className="text-6xl mb-4">🚫</div>
         <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
         <p className="text-gray-500 mb-6">You don&apos;t have permission to access this page.</p>
-        <a href="/" className="px-6 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
+        <Link href="/" className="px-6 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors">
           Go Home
-        </a>
+        </Link>
       </div>
     );
   }
@@ -105,6 +121,9 @@ function AdminDashboardContent() {
   if (tab === 'websites') return <WebsitesTab />;
   if (tab === 'reports') return <ReportsTab />;
   if (tab === 'users') return <UsersTab />;
+  if (tab === 'notifications') return <NotificationsTab />;
+  if (tab === 'drops') return <DropsTab />;
+  if (tab === 'requests') return <RequestsTab />;
   if (tab === 'settings') return <SettingsTab />;
 
   return (

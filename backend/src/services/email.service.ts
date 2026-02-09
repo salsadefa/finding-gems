@@ -16,6 +16,10 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: process.env.SMTP_TLS_REJECT_UNAUTHORIZED !== 'false',
+    minVersion: 'TLSv1.2',
+  },
 });
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@findinggems.id';
@@ -230,6 +234,57 @@ export async function sendInvoiceEmail(to: string, data: InvoiceData) {
   return sendEmail({
     to,
     subject: `📄 Invoice ${data.invoiceNumber} - Finding Gems`,
+    html: baseTemplate(content),
+  });
+}
+
+// ============================================
+// AUTH EMAILS
+// ============================================
+
+export async function sendEmailVerificationOtpEmail(to: string, data: { userName: string; otp: string }) {
+  const content = `
+    <div class="content">
+      <h2>Verifikasi Email Anda</h2>
+      <p>Halo ${data.userName},</p>
+      <p>Gunakan kode OTP berikut untuk memverifikasi email Anda:</p>
+
+      <div style="text-align:center;margin:24px 0;">
+        <div style="display:inline-block;font-size:32px;letter-spacing:10px;font-weight:800;background:#111827;color:#fff;padding:14px 18px;border-radius:12px;">
+          ${data.otp}
+        </div>
+      </div>
+
+      <p style="color:#6b7280;font-size:13px;">Kode ini berlaku selama 10 menit. Jika Anda tidak melakukan pendaftaran, abaikan email ini.</p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject: '🔐 Kode OTP Verifikasi Email',
+    html: baseTemplate(content),
+  });
+}
+
+export async function sendToolRequestResponseEmail(to: string, data: { buyerName: string; requestTitle: string; requestUrl: string; responderName: string }) {
+  const content = `
+    <div class="content">
+      <h2>Respon Baru Untuk Request Anda</h2>
+      <p>Halo ${data.buyerName},</p>
+      <p><strong>${data.responderName}</strong> baru saja merespon request Anda:</p>
+      <p style="margin:16px 0;padding:12px 14px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+        ${data.requestTitle}
+      </p>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${data.requestUrl}" class="button">Lihat Respon</a>
+      </div>
+      <p style="color:#6b7280;font-size:13px;">Tip: Pilih respon terbaik untuk menutup request dan menjaga board tetap berkualitas.</p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject: '💬 Respon baru untuk request kamu',
     html: baseTemplate(content),
   });
 }

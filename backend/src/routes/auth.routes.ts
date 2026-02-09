@@ -3,7 +3,7 @@
 // ============================================
 
 import { Router } from 'express';
-import { register, login, logout, refresh, getMe, forgotPassword, resetPassword } from '../controllers/auth.controller';
+import { register, login, logout, refresh, getMe, forgotPassword, resetPassword, verifyEmail, resendVerification } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth';
 
 const router = Router();
@@ -63,5 +63,19 @@ router.post('/forgot-password', forgotPassword);
  * @access  Public
  */
 router.post('/reset-password', resetPassword);
+
+/**
+ * @route   POST /api/v1/auth/verify-email
+ * @desc    Verify email with OTP
+ * @access  Public
+ */
+router.post('/verify-email', verifyEmail);
+
+/**
+ * @route   POST /api/v1/auth/resend-verification
+ * @desc    Resend email verification OTP
+ * @access  Public
+ */
+router.post('/resend-verification', resendVerification);
 
 export default router;

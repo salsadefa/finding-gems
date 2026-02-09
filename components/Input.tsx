@@ -1,11 +1,12 @@
 'use client';
-import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, TextareaHTMLAttributes, forwardRef, ReactNode } from 'react';
 import { motion } from 'framer-motion';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
     hint?: string;
+    endAdornment?: ReactNode;
 }
 
 interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -15,7 +16,7 @@ interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-    ({ label, error, hint, className = '', ...props }, ref) => {
+    ({ label, error, hint, endAdornment, className = '', ...props }, ref) => {
         return (
             <motion.div 
                 initial={{ opacity: 0, y: 10 }}
@@ -23,11 +24,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 className="input-wrapper"
             >
                 {label && <label className="label">{label}</label>}
-                <input
-                    ref={ref}
-                    className={`input ${error ? 'input-error' : ''} ${className}`}
-                    {...props}
-                />
+                <div className="input-shell">
+                    <input
+                        ref={ref}
+                        className={`input ${endAdornment ? 'input-with-adornment' : ''} ${error ? 'input-error' : ''} ${className}`}
+                        {...props}
+                    />
+                    {endAdornment && (
+                        <div className="end-adornment" aria-hidden={typeof endAdornment === 'string' ? true : undefined}>
+                            {endAdornment}
+                        </div>
+                    )}
+                </div>
                 {hint && !error && <span className="hint">{hint}</span>}
                 {error && (
                     <motion.span 
@@ -60,6 +68,25 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             border: 1px solid var(--gray-300);
             border-radius: var(--radius-md);
             transition: all var(--transition-fast);
+          }
+
+          .input-shell {
+            position: relative;
+          }
+
+          .end-adornment {
+            position: absolute;
+            top: 50%;
+            right: var(--space-3);
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+          }
+
+          .input-with-adornment {
+            padding-right: calc(var(--space-4) + 2.75rem);
           }
           
           .input:focus {

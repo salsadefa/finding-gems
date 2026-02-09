@@ -8,6 +8,7 @@ import WebsiteCard from '@/components/WebsiteCard';
 import { WebsiteCardSkeleton } from '@/components/Skeleton';
 import { useWebsites } from '@/lib/api/websites';
 import { useCategories } from '@/lib/api/categories';
+import { useLatestDrop } from '@/lib/api/drops';
 import type { Website } from '@/lib/types';
 import { ArrowRight, Sparkles } from 'lucide-react';
 
@@ -36,13 +37,22 @@ const fadeInUpStyle = `
 `;
 
 // Transform API website data to match Website type
-const transformWebsite = (apiWebsite: any): Website => {
+type WebsiteListItem = Partial<Website> & {
+  id: string;
+  name: string;
+  slug: string;
+  thumbnail: string;
+  createdAt: string;
+  shortDescription?: string;
+};
+
+const transformWebsite = (apiWebsite: WebsiteListItem): Website => {
   return {
     id: apiWebsite.id,
     name: apiWebsite.name,
     slug: apiWebsite.slug,
-    description: apiWebsite.description || apiWebsite.shortDescription,
-    shortDescription: apiWebsite.shortDescription,
+    description: apiWebsite.description || apiWebsite.shortDescription || apiWebsite.name,
+    shortDescription: apiWebsite.shortDescription || apiWebsite.description || apiWebsite.name,
     categoryId: apiWebsite.categoryId || '',
     category: apiWebsite.category || {
       id: '',
@@ -50,8 +60,6 @@ const transformWebsite = (apiWebsite: any): Website => {
       slug: '',
       description: '',
       websiteCount: 0,
-      isActive: true,
-      createdAt: '',
     },
     creatorId: apiWebsite.creatorId || '',
     creator: apiWebsite.creator || {
@@ -167,6 +175,77 @@ function CategoriesSection() {
                 <h3 className="font-semibold text-gray-900 mb-1">{category.name}</h3>
                 <p className="text-xs text-gray-400">Explore tools</p>
               </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+// Weekly Drop Section - Lazy Loaded
+function WeeklyDropSection() {
+  const { ref, isVisible } = useLazyLoad();
+  const { data, isLoading, error } = useLatestDrop({ enabled: isVisible });
+
+  const drop = data?.drop;
+  const items = data?.items || [];
+
+  if (!isVisible) {
+    return <div ref={ref} />;
+  }
+
+  if (!drop) {
+    // Hide the section completely when there's no published drop yet.
+    return <div ref={ref} />;
+  }
+
+  return (
+    <section ref={ref} className="py-20 border-t border-gray-50 bg-gradient-to-b from-white to-gray-50/40">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 text-white text-xs font-semibold w-fit mb-3">
+              <Sparkles size={12} className="text-yellow-300" aria-hidden="true" />
+              Weekly Drop
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{drop.title}</h2>
+            <p className="text-gray-500 mt-2 max-w-2xl">{drop.description || 'Curated picks you can trust. New drops every week.'}</p>
+          </div>
+          <Link
+            href={`/drops/${drop.slug}`}
+            className="text-sm font-medium text-gray-900 hover:text-gray-600 flex items-center gap-1 transition-colors"
+          >
+            View Drop <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {!isVisible ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-80 bg-gray-100 rounded-xl" />
+            ))}
+          </div>
+        ) : isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <WebsiteCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : error ? (
+          <div className="text-red-500 text-center py-8">
+            Failed to load weekly drop. Please try again.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.slice(0, 6).map((it, index) => (
+              <div
+                key={it.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 80}ms` }}
+              >
+                <WebsiteCard website={transformWebsite(it.website)} />
+              </div>
             ))}
           </div>
         )}
@@ -322,6 +401,7 @@ export default function HomePage() {
 
       {/* Below-fold sections - Lazy loaded */}
       <CategoriesSection />
+      <WeeklyDropSection />
       <FeaturedSection />
     </div>
   );

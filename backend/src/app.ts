@@ -27,6 +27,9 @@ import billingRoutes from './routes/billing.routes';
 import paymentRoutes from './routes/payment.routes';
 import payoutRoutes from './routes/payout.routes';
 import refundRoutes from './routes/refund.routes';
+import dropRoutes from './routes/drop.routes';
+import requestRoutes from './routes/request.routes';
+import notificationRoutes from './routes/notification.routes';
 
 const app: Application = express();
 
@@ -71,10 +74,11 @@ app.use(helmet({
 // SEC-007 Fix: Properly validate origins
 const allowedOrigins = [
   process.env.FRONTEND_URL || 'http://localhost:3000',
+  process.env.FRONTEND_URL_SECONDARY,
   'http://localhost:3000',
   'https://finding-gems.vercel.app',
   'https://findinggems.id',
-];
+].filter(Boolean) as string[];
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -256,6 +260,15 @@ app.use(`${API_PREFIX}/payouts`, payoutRoutes);
 
 // Refund routes
 app.use(`${API_PREFIX}/refunds`, refundRoutes);
+
+// Weekly Drops routes
+app.use(`${API_PREFIX}/drops`, dropRoutes);
+
+// Tool Requests routes
+app.use(`${API_PREFIX}/requests`, requestRoutes);
+
+// User Notifications
+app.use(`${API_PREFIX}/notifications`, notificationRoutes);
 
 // ============================================
 // Error Handling

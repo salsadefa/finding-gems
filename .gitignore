@@ -20,6 +20,16 @@
 # production
 /build
 
+# Backend build output
+/backend/dist/
+
+# QA screenshots (generated during testing)
+/weekly-drop-homepage.png
+/weekly-drop-detail.png
+/homepage-weekly-drop.png
+/drop-detail-page.png
+/admin-drops-panel.png
+
 # misc
 .DS_Store
 *.pem

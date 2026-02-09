@@ -30,12 +30,33 @@ export interface AuthResponse {
       avatar?: string;
       role: string;
       isActive: boolean;
+      emailVerified?: boolean;
     };
     accessToken: string;
     refreshToken: string;
   };
   message: string;
 }
+
+export interface RegisterResponse {
+  success: boolean;
+  data: {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      username: string;
+      avatar?: string;
+      role: string;
+      isActive: boolean;
+      emailVerified?: boolean;
+    };
+    verificationRequired: boolean;
+  };
+  message: string;
+}
+
+export type VerifyEmailResponse = AuthResponse;
 
 export interface UserProfile {
   id: string;
@@ -94,27 +115,38 @@ export const useLogin = () => {
 
 // Register mutation
 export const useRegister = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async (data: RegisterData) => {
-      const response = await api.post<AuthResponse>('/auth/register', data);
+      const response = await api.post<RegisterResponse>('/auth/register', data);
       return response; // Returns full AuthResponse { success, data: { user, accessToken, refreshToken }, message }
     },
+    // Do not store user/tokens until OTP verification succeeds.
+  });
+};
+
+export const useVerifyEmailOtp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { email: string; otp: string }) => {
+      const response = await api.post<VerifyEmailResponse>('/auth/verify-email', payload);
+      return response;
+    },
     onSuccess: (response) => {
-      // Access nested data from AuthResponse structure
       const { user, accessToken, refreshToken } = response.data;
-      
-      // Save tokens to localStorage
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
-      
-      // Update cache
       queryClient.setQueryData(authKeys.user(), user);
-
-      // Dispatch custom event to update AuthContext in same tab
       dispatchAuthUpdate(user);
+    },
+  });
+};
+
+export const useResendVerificationOtp = () => {
+  return useMutation({
+    mutationFn: async (payload: { email: string }) => {
+      const response = await api.post<{ success: boolean; message: string }>('/auth/resend-verification', payload);
+      return response;
     },
   });
 };

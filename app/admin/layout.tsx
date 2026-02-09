@@ -4,16 +4,19 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
     LayoutDashboard,
+    Bell,
+    Sparkles,
+    ClipboardList,
     Globe,
     Users,
     Shield,
     DollarSign,
     Settings,
-    LogOut,
-    Bell
+    LogOut
 } from 'lucide-react';
 import { useAuth } from '@/lib/store';
 import { Suspense } from 'react';
+import AdminNotificationDropdown from '@/components/AdminNotificationDropdown';
 
 function SidebarContent() {
     const pathname = usePathname();
@@ -23,6 +26,9 @@ function SidebarContent() {
 
     const navItems = [
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+        { name: 'Notifications', href: '/admin?tab=notifications', icon: Bell },
+        { name: 'Drops', href: '/admin?tab=drops', icon: Sparkles },
+        { name: 'Requests', href: '/admin?tab=requests', icon: ClipboardList },
         { name: 'Websites', href: '/admin?tab=websites', icon: Globe },
         { name: 'Creators', href: '/admin?tab=creators', icon: Users },
         { name: 'Moderation', href: '/admin?tab=reports', icon: Shield },
@@ -101,6 +107,8 @@ function SidebarContent() {
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+
     return (
         <div className="min-h-screen bg-gray-50 flex">
 
@@ -119,10 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <button className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100 relative">
-                            <Bell size={20} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-                        </button>
+                        {user?.role === 'admin' && <AdminNotificationDropdown />}
                     </div>
                 </header>
 

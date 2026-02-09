@@ -2,15 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth, useBookmarks } from '@/lib/store';
-import { formatDate } from '@/lib/utils';
 import WebsiteCard from '@/components/WebsiteCard';
 import EmptyState, { EmptyBookmarksIcon } from '@/components/EmptyState';
 import Button from '@/components/Button';
 import { Settings } from 'lucide-react';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+import { useMyCreatorApplication } from '@/lib/api/creator-application';
+import CreatorApplicationStatusBanner from '@/components/CreatorApplicationStatusBanner';
 
 type Tab = 'bookmarks' | 'reviews';
 
@@ -18,6 +18,10 @@ export default function DashboardPage() {
     const { user, isAuthenticated } = useAuth();
     const { bookmarks } = useBookmarks();
     const [activeTab, setActiveTab] = useState<Tab>('bookmarks');
+
+    const { data: myApplication } = useMyCreatorApplication({
+        enabled: isAuthenticated && user?.role === 'buyer',
+    });
 
     if (!isAuthenticated) {
         return (
@@ -98,7 +102,19 @@ export default function DashboardPage() {
 
                 {/* Creator CTA - Show only for non-creators */}
                 <AnimatePresence>
-                    {user && user.role !== 'creator' && user.role !== 'admin' && (
+                    {user?.role === 'buyer' && myApplication && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                            transition={{ duration: 0.35, delay: 0.15 }}
+                            className="mb-8"
+                        >
+                            <CreatorApplicationStatusBanner application={myApplication} />
+                        </motion.div>
+                    )}
+
+                    {user && user.role === 'buyer' && !myApplication && (
                         <motion.div 
                             initial={{ opacity: 0, y: 20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -111,7 +127,7 @@ export default function DashboardPage() {
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.3 }}
                             >
-                                <h3 className="text-lg font-semibold mb-1">🚀 Have tools to share?</h3>
+                                <h3 className="text-lg font-semibold mb-1">Have tools to share?</h3>
                                 <p className="text-gray-300 text-sm">Become a creator and share your websites with our community.</p>
                             </motion.div>
                             

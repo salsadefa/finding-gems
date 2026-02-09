@@ -14,6 +14,8 @@ import {
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/password';
 import { generateTokens, verifyRefreshToken } from '../utils/jwt';
 import { sanitizeText } from '../utils/sanitize';
+import { generateOtp, hashOtp } from '../utils/otp';
+import { sendEmailVerificationOtpEmail } from '../services/email.service';
 import {
   RegisterRequestBody,
   LoginRequestBody,
@@ -121,24 +123,218 @@ export const register = catchAsync(async (req: Request, res: Response) => {
       username: username.toLowerCase(),
       role,
       isActive: true,
+      emailVerified: false,
     })
     .select()
     .single();
 
   if (error) throw error;
 
-  // 9. Generate tokens
-  const { accessToken, refreshToken } = generateTokens(user);
+  // 9. Create and send OTP for email verification
+  const otp = generateOtp(6);
+  const otpHash = hashOtp({ email, otp, purpose: 'verify_email' });
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
-  // 10. Return response
+  // Remove any previous unconsumed codes for this user/email
+  await supabase
+    .from('email_verification_codes')
+    .delete()
+    .eq('userId', user.id)
+    .eq('purpose', 'verify_email')
+    .is('consumedAt', null);
+
+  await supabase.from('email_verification_codes').insert({
+    userId: user.id,
+    email: email.toLowerCase(),
+    purpose: 'verify_email',
+    codeHash: otpHash,
+    expiresAt,
+    attempts: 0,
+    lastSentAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
+  // Send email (best-effort)
+  try {
+    await sendEmailVerificationOtpEmail(email.toLowerCase(), { userName: sanitizedName, otp });
+  } catch {
+    // ignore
+  }
+
+  // 10. Return response (verification required, no tokens yet)
   res.status(201).json({
     success: true,
     data: {
       user: sanitizeUser(user),
+      verificationRequired: true,
+    },
+    message: 'Verification code sent to email',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * @desc    Verify email with OTP
+ * @route   POST /api/v1/auth/verify-email
+ * @access  Public
+ */
+export const verifyEmail = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  const otp = String(req.body?.otp || '').trim();
+
+  if (!email || !otp) {
+    throw new ValidationError('Email and OTP are required', [
+      ...(!email ? [{ field: 'email', message: 'Email is required' }] : []),
+      ...(!otp ? [{ field: 'otp', message: 'OTP is required' }] : []),
+    ]);
+  }
+
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+  if (userError || !user) throw new NotFoundError('User not found');
+
+  if (user.emailVerified) {
+    const { accessToken, refreshToken } = generateTokens(user);
+    return res.status(200).json({
+      success: true,
+      data: { user: sanitizeUser(user), accessToken, refreshToken },
+      message: 'Email already verified',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  const { data: codeRow, error: codeError } = await supabase
+    .from('email_verification_codes')
+    .select('*')
+    .eq('userId', user.id)
+    .eq('purpose', 'verify_email')
+    .is('consumedAt', null)
+    .order('createdAt', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (codeError) throw codeError;
+  if (!codeRow) throw new ValidationError('No active verification code. Please resend OTP.');
+
+  const now = Date.now();
+  if (new Date(codeRow.expiresAt).getTime() < now) {
+    throw new ValidationError('OTP expired. Please resend OTP.');
+  }
+
+  if ((codeRow.attempts || 0) >= 5) {
+    throw new ValidationError('Too many attempts. Please resend OTP.');
+  }
+
+  const expectedHash = hashOtp({ email, otp, purpose: 'verify_email' });
+  if (expectedHash !== codeRow.codeHash) {
+    await supabase
+      .from('email_verification_codes')
+      .update({ attempts: (codeRow.attempts || 0) + 1, updatedAt: new Date().toISOString() })
+      .eq('id', codeRow.id);
+    throw new ValidationError('Invalid OTP');
+  }
+
+  const verifiedAt = new Date().toISOString();
+  await supabase
+    .from('users')
+    .update({ emailVerified: true, emailVerifiedAt: verifiedAt, updatedAt: verifiedAt })
+    .eq('id', user.id);
+
+  await supabase
+    .from('email_verification_codes')
+    .update({ consumedAt: verifiedAt, updatedAt: verifiedAt })
+    .eq('id', codeRow.id);
+
+  const { accessToken, refreshToken } = generateTokens({ ...user, emailVerified: true, emailVerifiedAt: verifiedAt });
+
+  res.status(200).json({
+    success: true,
+    data: {
+      user: sanitizeUser({ ...user, emailVerified: true, emailVerifiedAt: verifiedAt }),
       accessToken,
       refreshToken,
     },
-    message: 'User registered successfully',
+    message: 'Email verified successfully',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/**
+ * @desc    Resend verification OTP
+ * @route   POST /api/v1/auth/resend-verification
+ * @access  Public
+ */
+export const resendVerification = catchAsync(async (req: Request, res: Response) => {
+  const email = String(req.body?.email || '').toLowerCase().trim();
+  if (!email) throw new ValidationError('Email is required', [{ field: 'email', message: 'Required' }]);
+
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+  if (userError || !user) throw new NotFoundError('User not found');
+  if (user.emailVerified) {
+    return res.status(200).json({
+      success: true,
+      message: 'Email already verified',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // Cooldown: 60 seconds
+  const { data: lastCode } = await supabase
+    .from('email_verification_codes')
+    .select('id, lastSentAt:"lastSentAt"')
+    .eq('userId', user.id)
+    .eq('purpose', 'verify_email')
+    .is('consumedAt', null)
+    .order('createdAt', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lastCode?.lastSentAt) {
+    const last = new Date(lastCode.lastSentAt).getTime();
+    if (Date.now() - last < 60_000) {
+      throw new ValidationError('Please wait before requesting a new code');
+    }
+  }
+
+  const otp = generateOtp(6);
+  const otpHash = hashOtp({ email, otp, purpose: 'verify_email' });
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+  await supabase
+    .from('email_verification_codes')
+    .delete()
+    .eq('userId', user.id)
+    .eq('purpose', 'verify_email')
+    .is('consumedAt', null);
+
+  await supabase.from('email_verification_codes').insert({
+    userId: user.id,
+    email,
+    purpose: 'verify_email',
+    codeHash: otpHash,
+    expiresAt,
+    attempts: 0,
+    lastSentAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+
+  try {
+    await sendEmailVerificationOtpEmail(email, { userName: user.name, otp });
+  } catch {
+    // ignore
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Verification code sent',
     timestamp: new Date().toISOString(),
   });
 });
@@ -179,6 +375,65 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   const isPasswordValid = await comparePassword(password, user.password);
   if (!isPasswordValid) {
     throw new UnauthorizedError('Invalid email or password');
+  }
+
+  // Require email verification
+  if (!user.emailVerified) {
+    // best-effort: send OTP (with 60s cooldown)
+    try {
+      const { data: lastCode } = await supabase
+        .from('email_verification_codes')
+        .select('lastSentAt:"lastSentAt"')
+        .eq('userId', user.id)
+        .eq('purpose', 'verify_email')
+        .is('consumedAt', null)
+        .order('createdAt', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const last = lastCode?.lastSentAt ? new Date(lastCode.lastSentAt).getTime() : 0;
+      if (Date.now() - last >= 60_000) {
+        const otp = generateOtp(6);
+        const otpHash = hashOtp({ email, otp, purpose: 'verify_email' });
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+        await supabase
+          .from('email_verification_codes')
+          .delete()
+          .eq('userId', user.id)
+          .eq('purpose', 'verify_email')
+          .is('consumedAt', null);
+
+        await supabase.from('email_verification_codes').insert({
+          userId: user.id,
+          email: email.toLowerCase(),
+          purpose: 'verify_email',
+          codeHash: otpHash,
+          expiresAt,
+          attempts: 0,
+          lastSentAt: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+
+        await sendEmailVerificationOtpEmail(email.toLowerCase(), { userName: user.name, otp });
+      }
+    } catch {
+      // ignore
+    }
+
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'EMAIL_NOT_VERIFIED',
+        message: 'Please verify your email to continue',
+      },
+      data: {
+        verificationRequired: true,
+        email: email.toLowerCase(),
+      },
+      timestamp: new Date().toISOString(),
+    });
   }
 
   // 5. Generate tokens

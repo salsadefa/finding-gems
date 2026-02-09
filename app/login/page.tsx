@@ -4,11 +4,39 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import axios from 'axios';
 import { useLogin } from '@/lib/api/auth';
 import { useToast } from '@/lib/store';
 import { Input } from '@/components/Input';
 import Button from '@/components/Button';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+
+function getApiErrorCode(err: unknown): string | undefined {
+  if (!axios.isAxiosError(err)) return undefined;
+  const data = err.response?.data;
+  if (!data || typeof data !== 'object') return undefined;
+  const record = data as Record<string, unknown>;
+  const errorObj = record.error;
+  if (!errorObj || typeof errorObj !== 'object') return undefined;
+  const code = (errorObj as Record<string, unknown>).code;
+  return typeof code === 'string' ? code : undefined;
+}
+
+function getApiErrorMessage(err: unknown, fallback: string): string {
+  if (axios.isAxiosError(err)) {
+    const data = err.response?.data;
+    if (data && typeof data === 'object') {
+      const record = data as Record<string, unknown>;
+      const errorObj = record.error;
+      if (errorObj && typeof errorObj === 'object') {
+        const msg = (errorObj as Record<string, unknown>).message;
+        if (typeof msg === 'string' && msg.trim()) return msg;
+      }
+    }
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
 
 function LoginContent() {
   const router = useRouter();
@@ -56,8 +84,14 @@ function LoginContent() {
       } else {
         router.push('/dashboard');
       }
-    } catch (error: any) {
-      showToast(error?.response?.data?.error?.message || 'Login failed. Please check your credentials.', 'error');
+    } catch (err: unknown) {
+      const code = getApiErrorCode(err);
+      if (code === 'EMAIL_NOT_VERIFIED') {
+        showToast('Please verify your email. We sent you an OTP.', 'error');
+        router.push(`/verify-email?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent('/dashboard')}`);
+        return;
+      }
+      showToast(getApiErrorMessage(err, 'Login failed. Please check your credentials.'), 'error');
     }
   };
 
@@ -69,7 +103,7 @@ function LoginContent() {
     };
     
     try {
-      const result = await loginMutation.mutateAsync(credentials[role]);
+      await loginMutation.mutateAsync(credentials[role]);
       showToast(`Logged in as ${role}!`, 'success');
       
       if (role === 'admin') {
@@ -79,8 +113,15 @@ function LoginContent() {
       } else {
         router.push('/dashboard');
       }
-    } catch (error: any) {
-      showToast(error?.response?.data?.error?.message || 'Quick login failed.', 'error');
+    } catch (err: unknown) {
+      const code = getApiErrorCode(err);
+      if (code === 'EMAIL_NOT_VERIFIED') {
+        const em = credentials[role].email;
+        showToast('Please verify your email. We sent you an OTP.', 'error');
+        router.push(`/verify-email?email=${encodeURIComponent(em)}&redirect=${encodeURIComponent(role === 'admin' ? '/admin' : role === 'creator' ? '/creator' : '/dashboard')}`);
+        return;
+      }
+      showToast(getApiErrorMessage(err, 'Quick login failed.'), 'error');
     }
   };
 

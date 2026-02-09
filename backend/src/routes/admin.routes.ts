@@ -32,6 +32,21 @@ import {
   markAllNotificationsAsRead,
   cleanupNotifications,
 } from '../controllers/notification.controller';
+import {
+  createDropAdmin,
+  getDropAdmin,
+  listDropsAdmin,
+  publishDropAdmin,
+  setDropItemsAdmin,
+  updateDropAdmin,
+} from '../controllers/drop-admin.controller';
+import {
+  hideToolRequestAdmin,
+  hideToolRequestResponseAdmin,
+  listToolRequestsAdmin,
+  unhideToolRequestAdmin,
+  unhideToolRequestResponseAdmin,
+} from '../controllers/request-admin.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
@@ -75,5 +90,19 @@ router.post('/notifications/read-all', markAllNotificationsAsRead);
 router.patch('/notifications/:id/read', markNotificationAsRead);
 router.delete('/notifications/cleanup', cleanupNotifications);
 
-export default router;
+// Weekly Drops management
+router.get('/drops', listDropsAdmin);
+router.post('/drops', createDropAdmin);
+router.get('/drops/:id', getDropAdmin);
+router.patch('/drops/:id', updateDropAdmin);
+router.put('/drops/:id/items', setDropItemsAdmin);
+router.post('/drops/:id/publish', publishDropAdmin);
 
+// Tool Requests moderation
+router.get('/requests', listToolRequestsAdmin);
+router.patch('/requests/:id/hide', hideToolRequestAdmin);
+router.patch('/requests/:id/unhide', unhideToolRequestAdmin);
+router.patch('/request-responses/:id/hide', hideToolRequestResponseAdmin);
+router.patch('/request-responses/:id/unhide', unhideToolRequestResponseAdmin);
+
+export default router;

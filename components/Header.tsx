@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/store';
 import { useState, useEffect } from 'react';
 import { Search, Menu, X, ChevronDown, LogOut, LayoutDashboard, MessageSquare, ShoppingBag } from 'lucide-react';
+import UserNotificationDropdown from '@/components/UserNotificationDropdown';
 
 const categories = [
   { name: 'Productivity', slug: 'productivity' },
@@ -53,6 +54,9 @@ export default function Header() {
             <Link href="/" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
               Explore
             </Link>
+            <Link href="/requests" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
+              Requests
+            </Link>
             {categories.slice(0, 4).map(cat => (
               <Link
                 key={cat.slug}
@@ -74,6 +78,12 @@ export default function Header() {
             >
               <Search size={20} strokeWidth={2} />
             </Link>
+
+            {/* User Notifications (Buyer + Creator) */}
+            {!isLoading &&
+              isAuthenticated &&
+              (user?.role === 'buyer' || user?.role === 'creator') &&
+              <UserNotificationDropdown />}
 
             {/* Auth Buttons */}
             {isLoading ? (
@@ -169,6 +179,9 @@ export default function Header() {
           <nav className="flex flex-col gap-6 text-center">
             <Link href="/" className="text-2xl font-medium text-gray-900" onClick={() => setMobileMenuOpen(false)}>
               Explore
+            </Link>
+            <Link href="/requests" className="text-2xl font-medium text-gray-900" onClick={() => setMobileMenuOpen(false)}>
+              Requests
             </Link>
             {categories.map(cat => (
               <Link
