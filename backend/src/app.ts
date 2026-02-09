@@ -33,6 +33,9 @@ import notificationRoutes from './routes/notification.routes';
 
 const app: Application = express();
 
+// Render and other proxies set X-Forwarded-For. Trust the proxy so rate limiting and IP logic work correctly.
+app.set('trust proxy', 1);
+
 // Initialize Sentry (must be done early)
 initSentry(app);
 
