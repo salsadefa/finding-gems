@@ -67,7 +67,7 @@ export const createChallengeSubmission = catchAsync(async (req: Request, res: Re
     .select(
       `id, title, description, demoUrl, repoUrl, status, createdAt,
        website:websites(id, name, slug, thumbnail, shortDescription),
-       user:users(id, name, username, avatar)`
+       user:users!challenge_submissions_userid_fkey(id, name, username, avatar)`
     )
     .single();
 
@@ -136,7 +136,7 @@ export const updateChallengeSubmission = catchAsync(async (req: Request, res: Re
     .select(
       `id, title, description, demoUrl, repoUrl, status, createdAt, updatedAt,
        website:websites(id, name, slug, thumbnail, shortDescription),
-       user:users(id, name, username, avatar)`
+       user:users!challenge_submissions_userid_fkey(id, name, username, avatar)`
     )
     .single();
 

@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
+import { Trophy, ArrowRight, Calendar } from 'lucide-react';
 import { useChallenges } from '@/lib/api/challenges';
 
 export default function ChallengesPage() {
@@ -22,9 +24,9 @@ export default function ChallengesPage() {
 
         <div className="mt-10">
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-36 bg-gray-100 rounded-2xl animate-pulse" />
+                <div key={i} className="aspect-[16/9] bg-gray-100 rounded-3xl animate-pulse" />
               ))}
             </div>
           ) : error ? (
@@ -32,41 +34,72 @@ export default function ChallengesPage() {
               Failed to load challenges.
             </div>
           ) : challenges.length === 0 ? (
-            <div className="p-8 rounded-2xl border border-gray-200 bg-white text-gray-600">
-              No challenges yet.
+            <div className="flex flex-col items-center justify-center text-center p-12 rounded-3xl border border-gray-200 bg-white/50 backdrop-blur-sm shadow-sm">
+              <div className="p-4 rounded-full bg-blue-50 text-blue-600 mb-4">
+                <Trophy className="w-8 h-8" strokeWidth={1.5} />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900">No active challenges</h3>
+              <p className="mt-2 text-gray-500 max-w-md mx-auto">
+                We&apos;re currently preparing the next big challenge. Check back soon or follow us for updates on when the next event drops.
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {challenges.map((c) => (
                 <Link
                   key={c.id}
                   href={`/challenges/${c.slug}`}
-                  className="group p-6 rounded-2xl border border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm transition-all"
+                  className="group relative rounded-3xl overflow-hidden border border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-300"
                 >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="inline-flex items-center gap-2">
-                        <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${
+                  {/* Cover image / fallback gradient */}
+                  <div className="relative aspect-[16/9]">
+                    {c.coverImage ? (
+                      <Image
+                        src={c.coverImage}
+                        alt={c.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-indigo-50 to-amber-50" />
+                    )}
+                    {/* Gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+
+                    {/* Content on top of image */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6">
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border backdrop-blur-sm ${
                           c.status === 'active'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            ? 'bg-emerald-500/20 text-emerald-100 border-emerald-400/30'
                             : c.status === 'upcoming'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                            : 'bg-gray-50 text-gray-700 border-gray-200'
+                            ? 'bg-blue-500/20 text-blue-100 border-blue-400/30'
+                            : 'bg-white/20 text-white/80 border-white/20'
                         }`}>
                           {c.status.toUpperCase()}
                         </span>
                         {c.theme ? (
-                          <span className="text-xs text-gray-500">Theme: {c.theme}</span>
+                          <span className="text-xs text-white/80 backdrop-blur-sm bg-white/10 px-2 py-1 rounded-full">
+                            {c.theme}
+                          </span>
                         ) : null}
                       </div>
-                      <h2 className="mt-3 text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+
+                      <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight group-hover:text-blue-200 transition-colors">
                         {c.title}
                       </h2>
-                      <p className="mt-2 text-sm text-gray-600">
-                        {new Date(c.startAt).toLocaleDateString()} – {new Date(c.endAt).toLocaleDateString()}
-                      </p>
+
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="inline-flex items-center gap-1.5 text-xs text-white/80">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {new Date(c.startAt).toLocaleDateString()} – {new Date(c.endAt).toLocaleDateString()}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-white/90 group-hover:text-white transition-colors">
+                          View challenge <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-sm font-medium text-gray-900 group-hover:text-blue-600">View →</span>
                   </div>
                 </Link>
               ))}

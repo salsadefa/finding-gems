@@ -69,7 +69,7 @@ export const getChallengeBySlug = catchAsync(async (req: Request, res: Response)
     .from('challenge_submissions')
     .select(
       `id, title, description, demoUrl, repoUrl, status, isFeatured, featuredPosition, featuredAt, createdAt,
-       user:users(id, name, username, avatar),
+       user:users!challenge_submissions_userid_fkey(id, name, username, avatar),
        website:websites(id, name, slug, thumbnail, shortDescription, status)`
     )
     .eq('challengeId', challenge.id)

@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/lib/store';
 import { useChallengeBySlug, useCreateChallengeSubmission, useMyChallengeSubmission, useUpdateChallengeSubmission } from '@/lib/api/challenges';
 import { useEffect, useRef, useState } from 'react';
 import WebsiteCard from '@/components/WebsiteCard';
+import { Trophy } from 'lucide-react';
 
 export default function ChallengeDetailPage() {
   const params = useParams();
@@ -83,26 +85,50 @@ export default function ChallengeDetailPage() {
         ) : (
           <>
             <div className="mt-6 rounded-3xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-              <div className="px-6 sm:px-10 py-10 sm:py-12">
+              <div className="relative aspect-[16/6] bg-gray-100">
+                {challenge.coverImage ? (
+                  <Image
+                    src={challenge.coverImage}
+                    alt={challenge.title}
+                    fill
+                    className="object-cover"
+                    sizes="100vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-amber-50" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/0" />
+                <div className="absolute left-6 right-6 bottom-6">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-full border backdrop-blur ${
+                      challenge.status === 'active'
+                        ? 'bg-emerald-50/90 text-emerald-700 border-emerald-200'
+                        : challenge.status === 'upcoming'
+                        ? 'bg-blue-50/90 text-blue-700 border-blue-200'
+                        : 'bg-gray-50/90 text-gray-700 border-gray-200'
+                    }`}>
+                      {challenge.status.toUpperCase()}
+                    </span>
+                    <span className="text-xs text-white/90">
+                      {new Date(challenge.startAt).toLocaleString()} – {new Date(challenge.endAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <h1 className="mt-3 text-3xl sm:text-4xl font-semibold tracking-tight text-white">
+                    {challenge.title}
+                  </h1>
+                  {challenge.theme ? (
+                    <p className="mt-2 text-white/90 text-sm">Theme: <span className="font-semibold text-white">{challenge.theme}</span></p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="px-6 sm:px-10 py-8 sm:py-10">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`text-xs font-semibold px-2 py-1 rounded-full border ${
-                    challenge.status === 'active'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : challenge.status === 'upcoming'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200'
-                      : 'bg-gray-50 text-gray-700 border-gray-200'
-                  }`}>
-                    {challenge.status.toUpperCase()}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    {new Date(challenge.startAt).toLocaleString()} – {new Date(challenge.endAt).toLocaleString()}
+                  <span className="inline-flex items-center gap-2 text-xs text-gray-500">
+                    <Trophy className="w-4 h-4" />
+                    Approved submissions are curated by admins.
                   </span>
                 </div>
-
-                <h1 className="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight text-gray-900">{challenge.title}</h1>
-                {challenge.theme ? (
-                  <p className="mt-3 text-gray-600">Theme: <span className="font-medium text-gray-900">{challenge.theme}</span></p>
-                ) : null}
 
                 {challenge.rules ? (
                   <div className="mt-6">

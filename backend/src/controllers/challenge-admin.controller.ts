@@ -177,7 +177,7 @@ export const listChallengeSubmissionsAdmin = catchAsync(async (req: Request, res
     .from('challenge_submissions')
     .select(
       `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
-       user:users(id, name, username, email, avatar),
+       user:users!challenge_submissions_userid_fkey(id, name, username, email, avatar),
        website:websites(id, name, slug, thumbnail, shortDescription, status)`
     )
     .eq('challengeId', id)
@@ -234,7 +234,7 @@ export const reviewChallengeSubmissionAdmin = catchAsync(async (req: Request, re
     .eq('id', id)
     .select(
       `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
-       user:users(id, name, username, avatar),
+       user:users!challenge_submissions_userid_fkey(id, name, username, avatar),
        website:websites(id, name, slug, thumbnail, shortDescription, status)`
     )
     .single();
