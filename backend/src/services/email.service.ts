@@ -392,6 +392,31 @@ export async function sendEmailVerificationOtpEmail(to: string, data: { userName
   });
 }
 
+export async function sendPasswordResetEmail(to: string, data: { userName: string; resetUrl: string }) {
+  const content = `
+    <div class="content">
+      <h2>Reset Password</h2>
+      <p>Halo ${data.userName},</p>
+      <p>Kami menerima permintaan untuk mereset password akun Finding Gems Anda.</p>
+      <p>Klik tombol di bawah untuk membuat password baru:</p>
+
+      <div style="text-align:center;margin:30px 0;">
+        <a href="${data.resetUrl}" class="button">Reset Password</a>
+      </div>
+
+      <p style="color:#6b7280;font-size:13px;">Link ini berlaku selama 1 jam. Jika Anda tidak meminta reset password, abaikan email ini — akun Anda tetap aman.</p>
+      <p style="color:#6b7280;font-size:13px;">Jika tombol tidak berfungsi, salin link berikut ke browser:</p>
+      <p style="word-break:break-all;color:#6366f1;font-size:12px;">${data.resetUrl}</p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject: '🔑 Reset Password - Finding Gems',
+    html: baseTemplate(content),
+  });
+}
+
 export async function sendToolRequestResponseEmail(to: string, data: { buyerName: string; requestTitle: string; requestUrl: string; responderName: string }) {
   const content = `
     <div class="content">

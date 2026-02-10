@@ -15,7 +15,7 @@ import { hashPassword, comparePassword, validatePasswordStrength } from '../util
 import { generateTokens, verifyRefreshToken } from '../utils/jwt';
 import { sanitizeText } from '../utils/sanitize';
 import { generateOtp, hashOtp } from '../utils/otp';
-import { sendEmailVerificationOtpEmail } from '../services/email.service';
+import { sendEmailVerificationOtpEmail, sendPasswordResetEmail } from '../services/email.service';
 import {
   RegisterRequestBody,
   LoginRequestBody,
@@ -158,8 +158,8 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   // Send email (best-effort)
   try {
     await sendEmailVerificationOtpEmail(email.toLowerCase(), { userName: sanitizedName, otp });
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error('[Auth][Register] Failed to send OTP email:', err);
   }
 
   // 10. Return response (verification required, no tokens yet)
@@ -328,8 +328,8 @@ export const resendVerification = catchAsync(async (req: Request, res: Response)
 
   try {
     await sendEmailVerificationOtpEmail(email, { userName: user.name, otp });
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error('[Auth][ResendVerification] Failed to send OTP email:', err);
   }
 
   res.status(200).json({
@@ -418,8 +418,8 @@ export const login = catchAsync(async (req: Request, res: Response) => {
 
         await sendEmailVerificationOtpEmail(email.toLowerCase(), { userName: user.name, otp });
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('[Auth][Login] Failed to send OTP email:', err);
     }
 
     return res.status(403).json({
@@ -568,9 +568,7 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response) => 
     .single();
 
   // Always return success to prevent email enumeration
-  // In production, this would send an email with a reset token
   if (user) {
-    // Generate reset token (in production, store this in DB with expiry)
     const crypto = await import('crypto');
     const resetToken = crypto.randomBytes(32).toString('hex');
     
@@ -585,9 +583,18 @@ export const forgotPassword = catchAsync(async (req: Request, res: Response) => 
       })
       .eq('id', user.id);
 
-    // TODO: In production, send email with reset link
-    // For now, we just log it (remove in production)
-    console.log(`Password reset requested for ${email}. Token: ${resetToken}`);
+    // Send password reset email
+    const baseUrl = process.env.APP_BASE_URL || 'https://finding-gems.vercel.app';
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+
+    try {
+      await sendPasswordResetEmail(email.toLowerCase(), {
+        userName: user.name,
+        resetUrl,
+      });
+    } catch (err) {
+      console.error('[Auth] Failed to send password reset email:', err);
+    }
   }
 
   res.status(200).json({
