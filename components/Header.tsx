@@ -2,23 +2,27 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/store';
-import { useState, useEffect } from 'react';
-import { Search, Menu, X, ChevronDown, LogOut, LayoutDashboard, MessageSquare, ShoppingBag } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Search, Menu, X, ChevronDown, LogOut, LayoutDashboard, MessageSquare, ShoppingBag, Grid3X3 } from 'lucide-react';
 import UserNotificationDropdown from '@/components/UserNotificationDropdown';
 
 const categories = [
-  { name: 'Productivity', slug: 'productivity' },
-  { name: 'Administration', slug: 'administration' },
-  { name: 'Education', slug: 'education' },
-  { name: 'AI Tools', slug: 'ai-tools' },
-  { name: 'Finance', slug: 'finance' },
+  { name: 'Productivity', slug: 'productivity', icon: '⚡' },
+  { name: 'Administration', slug: 'administration', icon: '📋' },
+  { name: 'Education', slug: 'education', icon: '📚' },
+  { name: 'AI Tools', slug: 'ai-tools', icon: '🤖' },
+  { name: 'Finance', slug: 'finance', icon: '💰' },
 ];
 
 export default function Header() {
   const { user, isAuthenticated, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [categoryMenuOpen, setCategoryMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Add shadow on scroll for better visibility
   useEffect(() => {
@@ -27,6 +31,20 @@ export default function Header() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+        setCategoryMenuOpen(false);
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -50,7 +68,7 @@ export default function Header() {
           </Link>
 
           {/* CENTER: Navigation Links (Desktop) */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
             <Link href="/" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
               Explore
             </Link>
@@ -60,15 +78,48 @@ export default function Header() {
             <Link href="/requests" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
               Requests
             </Link>
-            {categories.slice(0, 4).map(cat => (
-              <Link
-                key={cat.slug}
-                href={`/search?category=${cat.slug}`}
-                className="text-sm font-medium text-gray-600 hover:text-black transition-colors"
+
+            {/* Categories Dropdown */}
+            <div className="relative" ref={categoryRef}>
+              <button
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-black transition-colors"
+                onClick={() => setCategoryMenuOpen(!categoryMenuOpen)}
+                aria-expanded={categoryMenuOpen}
+                aria-haspopup="menu"
               >
-                {cat.name}
-              </Link>
-            ))}
+                <Grid3X3 size={14} />
+                Categories
+                <ChevronDown size={13} className={`transition-transform duration-200 ${categoryMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {categoryMenuOpen && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-4 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden py-2 animate-in fade-in zoom-in-95 duration-200 origin-top">
+                  <div className="px-4 py-2 border-b border-gray-50">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Browse by Category</p>
+                  </div>
+                  {categories.map(cat => (
+                    <Link
+                      key={cat.slug}
+                      href={`/search?category=${cat.slug}`}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-black transition-colors"
+                      onClick={() => setCategoryMenuOpen(false)}
+                    >
+                      <span className="text-base">{cat.icon}</span>
+                      {cat.name}
+                    </Link>
+                  ))}
+                  <div className="border-t border-gray-50 mt-1 pt-1">
+                    <Link
+                      href="/search"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-50 transition-colors"
+                      onClick={() => setCategoryMenuOpen(false)}
+                    >
+                      View All →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
           </nav>
 
           {/* RIGHT: Actions */}
@@ -92,7 +143,7 @@ export default function Header() {
             {isLoading ? (
               <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
             ) : isAuthenticated && user ? (
-              <div className="relative">
+              <div className="relative" ref={userMenuRef}>
                 <button
                   className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -192,14 +243,18 @@ export default function Header() {
             <Link href="/requests" className="text-2xl font-medium text-gray-900" onClick={() => setMobileMenuOpen(false)}>
               Requests
             </Link>
+
+            {/* Mobile Categories Section */}
+            <div className="w-12 h-px bg-gray-200 mx-auto" />
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Categories</p>
             {categories.map(cat => (
               <Link
                 key={cat.slug}
                 href={`/search?category=${cat.slug}`}
-                className="text-2xl font-medium text-gray-600 hover:text-black"
+                className="text-lg font-medium text-gray-600 hover:text-black flex items-center justify-center gap-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {cat.name}
+                <span>{cat.icon}</span> {cat.name}
               </Link>
             ))}
 

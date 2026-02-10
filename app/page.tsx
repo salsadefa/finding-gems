@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import SearchBar from '@/components/SearchBar';
@@ -11,7 +11,7 @@ import { useCategories } from '@/lib/api/categories';
 import { useLatestDrop } from '@/lib/api/drops';
 import { useChallenges } from '@/lib/api/challenges';
 import type { Website } from '@/lib/types';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Zap } from 'lucide-react';
 
 type SortOption = 'newest' | 'rating' | 'alphabetical';
@@ -185,22 +185,45 @@ function CategoriesSection() {
   );
 }
 
-// Weekly Drop Section - Lazy Loaded
+// Weekly Drop Section - Horizontal Scrollable
 function WeeklyDropSection() {
   const { ref, isVisible } = useLazyLoad();
   const { data, isLoading, error } = useLatestDrop({ enabled: isVisible });
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    checkScroll();
+    el.addEventListener('scroll', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll, data]);
+
+  const scroll = (dir: 'left' | 'right') => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const amt = el.clientWidth * 0.7;
+    el.scrollBy({ left: dir === 'left' ? -amt : amt, behavior: 'smooth' });
+  };
 
   const drop = data?.drop;
   const items = data?.items || [];
 
-  if (!isVisible) {
-    return <div ref={ref} />;
-  }
-
-  if (!drop) {
-    // Hide the section completely when there's no published drop yet.
-    return <div ref={ref} />;
-  }
+  if (!isVisible) return <div ref={ref} />;
+  if (!drop) return <div ref={ref} />;
 
   return (
     <section ref={ref} className="py-20 border-t border-gray-50 bg-gradient-to-b from-white to-gray-50/40">
@@ -214,24 +237,40 @@ function WeeklyDropSection() {
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{drop.title}</h2>
             <p className="text-gray-500 mt-2 max-w-2xl">{drop.description || 'Curated picks you can trust. New drops every week.'}</p>
           </div>
-          <Link
-            href={`/drops/${drop.slug}`}
-            className="text-sm font-medium text-gray-900 hover:text-gray-600 flex items-center gap-1 transition-colors"
-          >
-            View Drop <ArrowRight size={16} />
-          </Link>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-1">
+              <button
+                onClick={() => scroll('left')}
+                disabled={!canScrollLeft}
+                className="p-2 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                aria-label="Scroll left"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                disabled={!canScrollRight}
+                className="p-2 rounded-full border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                aria-label="Scroll right"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+            <Link
+              href={`/drops/${drop.slug}`}
+              className="text-sm font-medium text-gray-900 hover:text-gray-600 flex items-center gap-1 transition-colors"
+            >
+              View Drop <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
 
-        {!isVisible ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-80 bg-gray-100 rounded-xl" />
-            ))}
-          </div>
-        ) : isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <WebsiteCardSkeleton key={i} />
+        {isLoading ? (
+          <div className="flex gap-6 overflow-hidden">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="min-w-[300px] flex-shrink-0">
+                <WebsiteCardSkeleton />
+              </div>
             ))}
           </div>
         ) : error ? (
@@ -239,16 +278,31 @@ function WeeklyDropSection() {
             Failed to load weekly drop. Please try again.
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.slice(0, 6).map((it, index) => (
-              <div
-                key={it.id}
-                className="animate-fade-in-up"
-                style={{ animationDelay: `${index * 80}ms` }}
-              >
-                <WebsiteCard website={transformWebsite(it.website)} />
-              </div>
-            ))}
+          <div className="relative">
+            {/* Left fade */}
+            {canScrollLeft && (
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            )}
+            {/* Right fade */}
+            {canScrollRight && (
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+            )}
+
+            <div
+              ref={scrollContainerRef}
+              className="flex gap-6 overflow-x-auto scrollbar-hide pb-4 -mb-4 snap-x snap-mandatory"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {items.slice(0, 8).map((it, index) => (
+                <div
+                  key={it.id}
+                  className="min-w-[280px] max-w-[320px] flex-shrink-0 snap-start animate-fade-in-up"
+                  style={{ animationDelay: `${index * 80}ms` }}
+                >
+                  <WebsiteCard website={transformWebsite(it.website)} />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -256,18 +310,15 @@ function WeeklyDropSection() {
   );
 }
 
+// Vibe Code Challenge Section with Thumbnail
 function VibeChallengeSection() {
   const { ref, isVisible } = useLazyLoad();
   const { data, isLoading } = useChallenges({ status: 'active', page: 1, limit: 1 }, { enabled: isVisible });
 
-  if (!isVisible) {
-    return <div ref={ref} />;
-  }
+  if (!isVisible) return <div ref={ref} />;
 
   const challenge = data?.challenges?.[0];
-  if (!challenge) {
-    return <div ref={ref} />;
-  }
+  if (!challenge) return <div ref={ref} />;
 
   return (
     <section ref={ref} className="py-20 border-t border-gray-50 bg-gradient-to-b from-gray-50/40 to-white">
@@ -293,22 +344,51 @@ function VibeChallengeSection() {
         </div>
 
         {isLoading ? (
-          <div className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
+          <div className="h-48 rounded-2xl bg-gray-100 animate-pulse" />
         ) : (
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Live now</p>
-              <p className="mt-1 text-sm text-gray-600">
-                {new Date(challenge.startAt).toLocaleDateString()} – {new Date(challenge.endAt).toLocaleDateString()}
-              </p>
+          <Link href={`/challenges/${challenge.slug}`} className="block group">
+            <div className="relative rounded-2xl overflow-hidden border border-gray-200 bg-white h-56 md:h-64">
+              {/* Background image or gradient */}
+              {challenge.coverImage ? (
+                <Image
+                  src={challenge.coverImage}
+                  alt={challenge.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 900px"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500" />
+              )}
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+
+              {/* Content */}
+              <div className="absolute inset-0 flex flex-col justify-end p-6 md:p-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/90 text-white text-xs font-semibold backdrop-blur-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    Live Now
+                  </span>
+                  <span className="text-sm text-white/80">
+                    {new Date(challenge.startAt).toLocaleDateString()} – {new Date(challenge.endAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 group-hover:underline underline-offset-4 decoration-2">
+                  {challenge.title}
+                </h3>
+                {challenge.theme && (
+                  <p className="text-white/70 text-sm mb-4">Theme: {challenge.theme}</p>
+                )}
+                <div>
+                  <span className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium text-white bg-white/20 backdrop-blur-sm border border-white/30 group-hover:bg-white/30 transition-colors">
+                    Submit an entry →
+                  </span>
+                </div>
+              </div>
             </div>
-            <Link
-              href={`/challenges/${challenge.slug}`}
-              className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 transition-colors"
-            >
-              Submit an entry
-            </Link>
-          </div>
+          </Link>
         )}
       </div>
     </section>

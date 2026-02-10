@@ -113,15 +113,25 @@ export const getDropAdmin = catchAsync(async (req: Request, res: Response) => {
 
   const { data: items, error: itemsError } = await supabase
     .from('drop_items')
-    .select('id, position, note, websiteId:"websiteId"')
+    .select('id, position, note, websiteId:"websiteId", website:websites(slug, name)')
     .eq('dropId', id)
     .order('position', { ascending: true });
 
   if (itemsError) throw itemsError;
 
+  // Flatten website join into websiteSlug/websiteName for easier FE consumption
+  const flatItems = (items || []).map((it: any) => ({
+    id: it.id,
+    position: it.position,
+    note: it.note,
+    websiteId: it.websiteId,
+    websiteSlug: it.website?.slug || null,
+    websiteName: it.website?.name || null,
+  }));
+
   res.status(200).json({
     success: true,
-    data: { drop, items: items || [] },
+    data: { drop, items: flatItems },
     timestamp: new Date().toISOString(),
   });
 });

@@ -44,7 +44,7 @@ export const useAdminDrop = (id: string) => {
   return useQuery({
     queryKey: adminDropKeys.detail(id),
     queryFn: async () => {
-      const response = await api.get<ApiResponse<{ drop: Drop; items: Array<{ id: string; position: number; note?: string | null; websiteId: string }> }>>(
+      const response = await api.get<ApiResponse<{ drop: Drop; items: Array<{ id: string; position: number; note?: string | null; websiteId: string; websiteSlug?: string | null; websiteName?: string | null }> }>>(
         `/admin/drops/${id}`
       );
       return response.data;
@@ -62,6 +62,21 @@ export const useCreateAdminDrop = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: adminDropKeys.all });
+    },
+  });
+};
+
+export const useUpdateAdminDrop = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { id: string; title?: string; description?: string; coverImage?: string; slug?: string }) => {
+      const { id, ...rest } = payload;
+      const response = await apiClient.patch<ApiResponse<{ drop: Drop }>>(`/admin/drops/${id}`, rest);
+      return response.data.data.drop;
+    },
+    onSuccess: (_drop, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminDropKeys.all });
+      queryClient.invalidateQueries({ queryKey: adminDropKeys.detail(variables.id) });
     },
   });
 };

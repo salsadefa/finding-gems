@@ -30,6 +30,14 @@
 /drop-detail-page.png
 /admin-drops-panel.png
 
+# Additional QA screenshots / artifacts
+/challenges-*.png
+/cvc-*.png
+/trust-signals-*.png
+
+# QA briefs that may contain credentials (keep local only)
+/QA-NEW-FEATURES-BRIEF.md
+
 # misc
 .DS_Store
 *.pem
