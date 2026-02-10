@@ -28,11 +28,29 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const apiBaseUrl = (() => {
+    const explicit = process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (explicit) return explicit;
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) return null;
+
+    try {
+      return new URL(apiUrl).origin;
+    } catch {
+      return null;
+    }
+  })();
+
   return (
     <html lang="en">
       <head>
-        <link rel="preconnect" href="https://api.findinggems.id" />
-        <link rel="dns-prefetch" href="https://api.findinggems.id" />
+        {apiBaseUrl ? (
+          <>
+            <link rel="preconnect" href={apiBaseUrl} />
+            <link rel="dns-prefetch" href={apiBaseUrl} />
+          </>
+        ) : null}
       </head>
       <body
         suppressHydrationWarning={true}

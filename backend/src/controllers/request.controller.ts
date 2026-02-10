@@ -15,6 +15,7 @@ import type {
 import { createNotification } from '../services/notification.service';
 import { createUserNotification } from '../services/user-notification.service';
 import { sendToolRequestResponseEmail } from '../services/email.service';
+import { getOrCreateThread } from '../services/message-thread.service';
 
 const sanitizePage = (page: unknown) => {
   const p = Math.floor(Number(page));
@@ -372,6 +373,13 @@ export const solveToolRequest = catchAsync(async (req: Request, res: Response) =
   // Notify the creator whose response was selected (only if selected)
   if (respRow?.responderId) {
     try {
+      // Ensure a message thread exists between buyer and creator for this request.
+      await getOrCreateThread({
+        userAId: req.user!.id,
+        userBId: respRow.responderId,
+        requestId: id,
+      });
+
       await createUserNotification({
         recipientId: respRow.responderId,
         type: 'request_solved',
@@ -480,6 +488,13 @@ export const createToolRequestResponse = catchAsync(async (req: Request, res: Re
   try {
     const buyerId = (requestRow as any).buyerId as string | undefined;
     if (buyerId) {
+      // Ensure a message thread exists between buyer and creator for this request.
+      await getOrCreateThread({
+        userAId: buyerId,
+        userBId: req.user!.id,
+        requestId: id,
+      });
+
       await createUserNotification({
         recipientId: buyerId,
         type: 'request_response',

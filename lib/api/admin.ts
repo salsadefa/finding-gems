@@ -187,6 +187,9 @@ export interface AdminWebsite {
   creator: { id: string; name: string; email: string; avatar?: string };
   createdAt: string;
   updatedAt: string;
+  isReviewed?: boolean;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
   viewCount?: number;
   rating?: number;
   reviewCount?: number;
@@ -257,6 +260,23 @@ export const useModerateWebsite = () => {
       const response = await api.patch<ApiResponse<{ website: AdminWebsite }>>(
         `/admin/websites/${id}/moderate`,
         { status, reason }
+      );
+      return normalizeKeys<AdminWebsite>(response.data.website);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminWebsiteKeys.all });
+    },
+  });
+};
+
+export const useSetWebsiteReviewed = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, isReviewed }: { id: string; isReviewed: boolean }) => {
+      const response = await api.patch<ApiResponse<{ website: AdminWebsite }>>(
+        `/admin/websites/${id}/reviewed`,
+        { isReviewed }
       );
       return normalizeKeys<AdminWebsite>(response.data.website);
     },

@@ -7,7 +7,6 @@ import { Website } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { useBookmarks } from '@/lib/store';
 import { HeartIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface WebsiteCardProps {
   website: Website;
@@ -18,6 +17,16 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const bookmarked = isBookmarked(website.id);
   const [imageError, setImageError] = useState(false);
+
+  const isNew = (() => {
+    if (!website.createdAt) return false;
+    const createdAtMs = Date.parse(website.createdAt);
+    if (Number.isNaN(createdAtMs)) return false;
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    return Date.now() - createdAtMs <= sevenDaysMs;
+  })();
+
+  const isPopular = (website.viewCount || 0) >= 1000;
 
   const isValidImageSrc = (src?: string) => {
     if (!src) return false;
@@ -52,11 +61,7 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -5, scale: 1.02 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-      className="group relative"
-    >
+    <div className="group relative transition-transform duration-200 ease-out will-change-transform hover:-translate-y-1 hover:scale-[1.02]">
       <Link href={`/website/${website.slug}`} className="block h-full">
         <div className="card h-full flex flex-col bg-white border border-gray-200 rounded-xl overflow-hidden transition-colors hover:border-brand-blue/50 shadow-sm hover:shadow-lg">
           {/* Thumbnail */}
@@ -76,11 +81,31 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
               </div>
             )}
 
-            {website.hasFreeTrial && (
-              <span className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 text-xs font-medium rounded-full shadow-sm z-10">
-                Free Trial
-              </span>
-            )}
+            <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
+              {website.isReviewed ? (
+                <span className="bg-emerald-50/95 text-emerald-700 border border-emerald-200 backdrop-blur px-2 py-1 text-xs font-semibold rounded-full shadow-sm">
+                  Reviewed
+                </span>
+              ) : null}
+
+              {isNew ? (
+                <span className="bg-blue-50/95 text-blue-700 border border-blue-200 backdrop-blur px-2 py-1 text-xs font-semibold rounded-full shadow-sm">
+                  New
+                </span>
+              ) : null}
+
+              {isPopular ? (
+                <span className="bg-amber-50/95 text-amber-700 border border-amber-200 backdrop-blur px-2 py-1 text-xs font-semibold rounded-full shadow-sm">
+                  Popular
+                </span>
+              ) : null}
+
+              {website.hasFreeTrial ? (
+                <span className="bg-white/90 backdrop-blur px-2 py-1 text-xs font-medium rounded-full shadow-sm">
+                  Free Trial
+                </span>
+              ) : null}
+            </div>
 
             {/* Overlay Gradient on Hover */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
@@ -139,6 +164,6 @@ export default function WebsiteCard({ website, showCreator = true }: WebsiteCard
       >
         <HeartIcon size={18} fill={bookmarked ? "currentColor" : "none"} />
       </button>
-    </motion.div>
+    </div>
   );
 }

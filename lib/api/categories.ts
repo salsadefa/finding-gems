@@ -34,7 +34,8 @@ export const categoryKeys = {
 };
 
 // Get all categories
-export const useCategories = () => {
+export const useCategories = (options?: { enabled?: boolean }) => {
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: categoryKeys.lists(),
     queryFn: async () => {
@@ -44,6 +45,7 @@ export const useCategories = () => {
       return response.data.categories;
     },
     staleTime: 10 * 60 * 1000, // 10 minutes - categories don't change often
+    enabled,
   });
 };
 

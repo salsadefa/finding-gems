@@ -54,6 +54,9 @@ export default function Header() {
             <Link href="/" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
               Explore
             </Link>
+            <Link href="/challenges" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
+              Challenges
+            </Link>
             <Link href="/requests" className="text-sm font-medium text-gray-600 hover:text-black transition-colors">
               Requests
             </Link>
@@ -123,15 +126,18 @@ export default function Header() {
                       )}
 
                       {user.role === 'creator' && (
-                        <>
-                          <Link href="/creator" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black" onClick={() => setUserMenuOpen(false)}>
-                            <LayoutDashboard size={16} /> Creator Studio
-                          </Link>
-                          <Link href="/creator/listings" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black" onClick={() => setUserMenuOpen(false)}>
-                            <ShoppingBag size={16} /> My Listings
-                          </Link>
-                        </>
-                      )}
+                         <>
+                           <Link href="/creator" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black" onClick={() => setUserMenuOpen(false)}>
+                             <LayoutDashboard size={16} /> Creator Studio
+                           </Link>
+                           <Link href="/dashboard/messages" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black" onClick={() => setUserMenuOpen(false)}>
+                             <MessageSquare size={16} /> Messages
+                           </Link>
+                           <Link href="/creator/listings" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black" onClick={() => setUserMenuOpen(false)}>
+                             <ShoppingBag size={16} /> My Listings
+                           </Link>
+                         </>
+                       )}
 
                       {user.role === 'admin' && (
                         <Link href="/admin" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-black" onClick={() => setUserMenuOpen(false)}>
@@ -174,11 +180,14 @@ export default function Header() {
       </header>
 
       {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
+          {mobileMenuOpen && (
         <div className="fixed inset-0 z-40 bg-white/95 backdrop-blur-xl pt-28 px-6 pb-6 animate-in fade-in slide-in-from-top-10 duration-200">
           <nav className="flex flex-col gap-6 text-center">
             <Link href="/" className="text-2xl font-medium text-gray-900" onClick={() => setMobileMenuOpen(false)}>
               Explore
+            </Link>
+            <Link href="/challenges" className="text-2xl font-medium text-gray-900" onClick={() => setMobileMenuOpen(false)}>
+              Challenges
             </Link>
             <Link href="/requests" className="text-2xl font-medium text-gray-900" onClick={() => setMobileMenuOpen(false)}>
               Requests

@@ -6,6 +6,7 @@ import {
   useAdminWebsites,
   usePendingWebsites,
   useModerateWebsite,
+  useSetWebsiteReviewed,
   formatNumber,
 } from '@/lib/api/admin';
 import { TableSkeleton } from '@/components/Skeleton';
@@ -40,9 +41,14 @@ export default function WebsitesTab() {
   });
   const { data: pendingWebsites } = usePendingWebsites();
   const moderateWebsite = useModerateWebsite();
+  const setReviewed = useSetWebsiteReviewed();
 
   const handleModerate = async (id: string, status: 'active' | 'rejected', reason?: string) => {
     await moderateWebsite.mutateAsync({ id, status, reason });
+  };
+
+  const handleToggleReviewed = async (id: string, current: boolean | undefined) => {
+    await setReviewed.mutateAsync({ id, isReviewed: !current });
   };
 
   const displayWebsites = statusFilter === 'pending' && pendingWebsites && pendingWebsites.length > 0
@@ -153,6 +159,7 @@ export default function WebsitesTab() {
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Creator</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Signals</th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -184,6 +191,19 @@ export default function WebsitesTab() {
                         <div className="text-sm font-medium text-gray-900">{formatPrice(website.price)}</div>
                       </td>
                       <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          {website.isReviewed ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                              <CheckCircle size={12} /> Reviewed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-50 text-gray-600 border border-gray-100">
+                              Not reviewed
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
                           website.status === 'active'
                             ? 'bg-green-50 text-green-700 border border-green-100'
@@ -208,6 +228,20 @@ export default function WebsitesTab() {
                           >
                             <Eye size={16} />
                           </a>
+
+                          <button
+                            onClick={() => handleToggleReviewed(website.id, website.isReviewed)}
+                            disabled={setReviewed.isPending}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                              website.isReviewed
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            }`}
+                            title={website.isReviewed ? 'Unmark reviewed' : 'Mark reviewed'}
+                          >
+                            {website.isReviewed ? 'Reviewed' : 'Mark reviewed'}
+                          </button>
+
                           {website.status === 'pending' && (
                             <>
                               <button

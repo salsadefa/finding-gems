@@ -18,7 +18,7 @@ export const bookmarkKeys = {
 };
 
 // Get all bookmarks for the current user
-export const useBookmarks = () => {
+export const useBookmarks = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: bookmarkKeys.lists(),
     queryFn: async () => {
@@ -27,6 +27,7 @@ export const useBookmarks = () => {
       );
       return response.data.bookmarks;
     },
+    enabled: options?.enabled ?? true,
     staleTime: 1 * 60 * 1000, // 1 minute - bookmarks change frequently
   });
 };

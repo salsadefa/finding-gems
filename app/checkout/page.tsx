@@ -111,6 +111,33 @@ function CheckoutContent() {
   const [ewalletData, setEwalletData] = useState<any>(null);
   const [orderContext, setOrderContext] = useState<{ orderId: string; amount: number; transactionId: string } | null>(null);
 
+  const CheckoutClarity = () => (
+    <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-5">
+      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+        <Shield className="w-4 h-4 text-gray-700" />
+        What happens after purchase
+      </div>
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-gray-600">
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+          <p className="font-semibold text-gray-900">Instant access</p>
+          <p className="mt-1">You’ll see your access on the Purchases page after payment is confirmed.</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+          <p className="font-semibold text-gray-900">Secure checkout</p>
+          <p className="mt-1">Payments are handled via supported payment methods with clear instructions.</p>
+        </div>
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+          <p className="font-semibold text-gray-900">Support</p>
+          <p className="mt-1">If something feels off, contact support and we’ll help resolve it.</p>
+        </div>
+      </div>
+      <p className="mt-4 text-xs text-gray-500 flex items-center gap-2">
+        <Clock className="w-4 h-4" />
+        Some payment methods can take a few minutes to confirm.
+      </p>
+    </div>
+  );
+
   // Redirect if not authenticated
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -1002,6 +1029,8 @@ function CheckoutContent() {
                       </>
                     )}
                   </Button>
+
+                  <CheckoutClarity />
                 </motion.div>
               )}
 

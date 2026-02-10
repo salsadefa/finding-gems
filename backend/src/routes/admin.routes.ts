@@ -12,7 +12,17 @@ import {
   getReports,
   handleReport,
   getAllWebsitesAdmin,
+  setWebsiteReviewed,
 } from '../controllers/admin.controller';
+import {
+  listChallengesAdmin,
+  createChallengeAdmin,
+  getChallengeAdmin,
+  updateChallengeAdmin,
+  listChallengeSubmissionsAdmin,
+  reviewChallengeSubmissionAdmin,
+  setFeaturedOrderAdmin,
+} from '../controllers/challenge-admin.controller';
 import {
   getDashboardOverview,
   getPaymentAnalytics,
@@ -68,6 +78,7 @@ router.get('/stats', getPlatformStats);
 router.get('/websites', getAllWebsitesAdmin);
 router.get('/websites/pending', getPendingWebsites);
 router.patch('/websites/:id/moderate', moderateWebsite);
+router.patch('/websites/:id/reviewed', setWebsiteReviewed);
 
 // User management
 router.get('/users', getAllUsers);
@@ -104,5 +115,14 @@ router.patch('/requests/:id/hide', hideToolRequestAdmin);
 router.patch('/requests/:id/unhide', unhideToolRequestAdmin);
 router.patch('/request-responses/:id/hide', hideToolRequestResponseAdmin);
 router.patch('/request-responses/:id/unhide', unhideToolRequestResponseAdmin);
+
+// Vibe Code Challenge
+router.get('/challenges', listChallengesAdmin);
+router.post('/challenges', createChallengeAdmin);
+router.get('/challenges/:id', getChallengeAdmin);
+router.patch('/challenges/:id', updateChallengeAdmin);
+router.get('/challenges/:id/submissions', listChallengeSubmissionsAdmin);
+router.patch('/challenge-submissions/:id/review', reviewChallengeSubmissionAdmin);
+router.put('/challenges/:id/featured', setFeaturedOrderAdmin);
 
 export default router;

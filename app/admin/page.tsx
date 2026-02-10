@@ -76,6 +76,11 @@ const RequestsTab = dynamic(() => import('./tabs/RequestsTab'), {
   ssr: false,
 });
 
+const ChallengesTab = dynamic(() => import('./tabs/ChallengesTab'), {
+  loading: () => <TableSkeleton rows={6} />,
+  ssr: false,
+});
+
 // ============================================
 // MAIN DASHBOARD CONTENT - Only loads overview data
 // ============================================
@@ -123,6 +128,7 @@ function AdminDashboardContent() {
   if (tab === 'users') return <UsersTab />;
   if (tab === 'notifications') return <NotificationsTab />;
   if (tab === 'drops') return <DropsTab />;
+  if (tab === 'challenges') return <ChallengesTab />;
   if (tab === 'requests') return <RequestsTab />;
   if (tab === 'settings') return <SettingsTab />;
 

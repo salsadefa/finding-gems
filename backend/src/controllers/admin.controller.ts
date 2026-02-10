@@ -505,3 +505,56 @@ export const getAllWebsitesAdmin = catchAsync(async (req: Request, res: Response
     timestamp: new Date().toISOString(),
   });
 });
+
+/**
+ * @desc    Mark/unmark a website as reviewed (trust signal)
+ * @route   PATCH /api/v1/admin/websites/:id/reviewed
+ * @access  Private (Admin only)
+ */
+export const setWebsiteReviewed = catchAsync(async (req: Request, res: Response) => {
+  requireAdmin(req);
+
+  const { id } = req.params;
+  const { isReviewed } = req.body as { isReviewed?: boolean };
+
+  if (typeof isReviewed !== 'boolean') {
+    throw new ValidationError('isReviewed must be a boolean');
+  }
+
+  // Ensure website exists
+  const { data: existingWebsite, error: findError } = await supabase
+    .from('websites')
+    .select('id')
+    .eq('id', id)
+    .single();
+
+  if (findError || !existingWebsite) {
+    throw new NotFoundError('Website not found');
+  }
+
+  const updateData: Record<string, unknown> = {
+    isReviewed,
+    reviewedAt: isReviewed ? new Date().toISOString() : null,
+    reviewedBy: isReviewed ? req.user!.id : null,
+  };
+
+  const { data: website, error } = await supabase
+    .from('websites')
+    .update(updateData)
+    .eq('id', id)
+    .select(`
+      *,
+      creator:users(id, name, username, avatar),
+      category:categories(id, name, slug)
+    `)
+    .single();
+
+  if (error) throw error;
+
+  res.status(200).json({
+    success: true,
+    data: { website },
+    message: isReviewed ? 'Website marked as reviewed' : 'Website unmarked as reviewed',
+    timestamp: new Date().toISOString(),
+  });
+});

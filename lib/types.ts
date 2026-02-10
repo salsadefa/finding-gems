@@ -81,6 +81,10 @@ export interface Website {
   viewCount: number;
   clickCount: number;
   status: 'draft' | 'pending' | 'active' | 'suspended';
+  // Trust signals
+  isReviewed?: boolean;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -112,6 +116,41 @@ export interface Bookmark {
   website: Website;
   userId: string;
   createdAt: string;
+}
+
+// Vibe Code Challenge
+export type ChallengeStatus = 'upcoming' | 'active' | 'ended';
+export type ChallengeSubmissionStatus = 'submitted' | 'approved' | 'rejected';
+
+export interface Challenge {
+  id: string;
+  title: string;
+  slug: string;
+  theme?: string | null;
+  rules?: string | null;
+  coverImage?: string | null;
+  status: ChallengeStatus;
+  startAt: string;
+  endAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChallengeSubmission {
+  id: string;
+  title: string;
+  description: string;
+  demoUrl: string;
+  repoUrl?: string | null;
+  status: ChallengeSubmissionStatus;
+  adminNote?: string | null;
+  isFeatured?: boolean;
+  featuredPosition?: number | null;
+  featuredAt?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  user?: Pick<User, 'id' | 'name' | 'username' | 'avatar'> | null;
+  website?: Pick<Website, 'id' | 'name' | 'slug' | 'thumbnail' | 'shortDescription' | 'status'> | null;
 }
 
 // Message Thread

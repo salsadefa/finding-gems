@@ -36,13 +36,13 @@ export const websiteKeys = {
 const mapSortToColumn = (sortBy?: 'newest' | 'rating' | 'alphabetical' | 'popular'): { sortBy?: string; sortOrder?: string } => {
   switch (sortBy) {
     case 'newest':
-      return { sortBy: 'created_at', sortOrder: 'desc' };
+      return { sortBy: 'createdAt', sortOrder: 'desc' };
     case 'rating':
       return { sortBy: 'rating', sortOrder: 'desc' };
     case 'alphabetical':
       return { sortBy: 'name', sortOrder: 'asc' };
     case 'popular':
-      return { sortBy: 'view_count', sortOrder: 'desc' };
+      return { sortBy: 'viewCount', sortOrder: 'desc' };
     default:
       return {};
   }

@@ -9,8 +9,10 @@ import { WebsiteCardSkeleton } from '@/components/Skeleton';
 import { useWebsites } from '@/lib/api/websites';
 import { useCategories } from '@/lib/api/categories';
 import { useLatestDrop } from '@/lib/api/drops';
+import { useChallenges } from '@/lib/api/challenges';
 import type { Website } from '@/lib/types';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { Zap } from 'lucide-react';
 
 type SortOption = 'newest' | 'rating' | 'alphabetical';
 
@@ -127,7 +129,7 @@ function useLazyLoad(threshold = 0.1) {
 // Categories Section Component - Lazy Loaded
 function CategoriesSection() {
   const { ref, isVisible } = useLazyLoad();
-  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCategories();
+  const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCategories({ enabled: isVisible });
 
   return (
     <section ref={ref} className="py-20 border-t border-gray-50">
@@ -254,6 +256,65 @@ function WeeklyDropSection() {
   );
 }
 
+function VibeChallengeSection() {
+  const { ref, isVisible } = useLazyLoad();
+  const { data, isLoading } = useChallenges({ status: 'active', page: 1, limit: 1 }, { enabled: isVisible });
+
+  if (!isVisible) {
+    return <div ref={ref} />;
+  }
+
+  const challenge = data?.challenges?.[0];
+  if (!challenge) {
+    return <div ref={ref} />;
+  }
+
+  return (
+    <section ref={ref} className="py-20 border-t border-gray-50 bg-gradient-to-b from-gray-50/40 to-white">
+      <div className="container mx-auto px-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-900 text-white text-xs font-semibold w-fit mb-3">
+              <Zap size={12} className="text-yellow-300" aria-hidden="true" />
+              Vibe Code Challenge
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">{challenge.title}</h2>
+            <p className="text-gray-500 mt-2 max-w-2xl">
+              {challenge.theme ? `Theme: ${challenge.theme}. ` : ''}
+              Submit your build and get featured.
+            </p>
+          </div>
+          <Link
+            href={`/challenges/${challenge.slug}`}
+            className="text-sm font-medium text-gray-900 hover:text-gray-600 flex items-center gap-1 transition-colors"
+          >
+            View Challenge <ArrowRight size={16} />
+          </Link>
+        </div>
+
+        {isLoading ? (
+          <div className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
+        ) : (
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <p className="text-sm font-medium text-gray-900">Live now</p>
+              <p className="mt-1 text-sm text-gray-600">
+                {new Date(challenge.startAt).toLocaleDateString()} – {new Date(challenge.endAt).toLocaleDateString()}
+              </p>
+            </div>
+            <Link
+              href={`/challenges/${challenge.slug}`}
+              className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-medium text-white bg-black hover:bg-gray-800 transition-colors"
+            >
+              Submit an entry
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // Featured Listings Section - Lazy Loaded
 function FeaturedSection() {
   const { ref, isVisible } = useLazyLoad();
@@ -356,10 +417,9 @@ export default function HomePage() {
             fill
             className="object-cover"
             priority
-            quality={75}
+            quality={60}
             sizes="100vw"
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQtJSEkLzcyLyo7Mjo7PzwzQEA8Qjo8QjtDQz9ER0pMTExHV1dXV1dXV1f/2wBDAR..."
+            placeholder="empty"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40" />
         </div>
@@ -402,6 +462,7 @@ export default function HomePage() {
       {/* Below-fold sections - Lazy loaded */}
       <CategoriesSection />
       <WeeklyDropSection />
+      <VibeChallengeSection />
       <FeaturedSection />
     </div>
   );

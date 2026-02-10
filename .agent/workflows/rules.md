@@ -308,6 +308,17 @@ secrets.json
 
 ---
 
+## Deployment / Redeploy Rule (No Waiting)
+
+- **Backend/FE agents must not wait for deployments to finish** (no polling loops, no repeated status checks, no `sleep`-based waiting).
+- If a deploy/redeploy is triggered (e.g. env var change), **STOP** and inform the user:
+  - what was triggered,
+  - which service it affects,
+  - and that the user can notify the agent once the deploy is finished.
+- Only resume post-deploy checks when the user explicitly says the deploy is complete.
+
+---
+
 ## Summary
 
 **The mantra: Complete your work → Hand off to QA → Wait for approval → Then push**

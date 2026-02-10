@@ -60,9 +60,9 @@ export const getWebsites = catchAsync(async (req: Request, res: Response) => {
     let q = supabase
       .from('websites')
       .select(
-        `id, name, slug, shortDescription, thumbnail, rating, viewCount, hasFreeTrial, status, createdAt, categoryId, creatorId,
-        creator:users(id, name, username, avatar), 
-        category:categories(id, name, slug, icon)`,
+        `id, name, slug, shortDescription, thumbnail, rating, viewCount, hasFreeTrial, status, createdAt, categoryId, creatorId, isReviewed,
+         creator:users(id, name, username, avatar), 
+         category:categories(id, name, slug, icon)`,
         withCount ? { count: 'exact' } : undefined
       );
 

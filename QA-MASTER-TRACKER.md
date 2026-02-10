@@ -1,11 +1,83 @@
 # 📊 QA Testing Master Tracker - Finding Gems
 
-**Last Updated:** 2026-02-08 21:42 WIB  
-**Status:** 🟢 **PRODUCTION LIVE & TESTED** | ✅ **QA PASSING** | 🆕 **Custom Payment UI Testing**
+**Last Updated:** 2026-02-10  
+**Status:** 🟡 **PRODUCTION LIVE** | ✅ **LAST QA PASSING** | ⚠️ **NEW CHANGES PENDING QA**
 
 > **Backend URL:** https://finding-gems-backend.onrender.com  
 > **Frontend URL:** https://finding-gems.vercel.app  
+> **Staging Domain (FE):** https://findinggems.dualangka.com  
 > **Deploy Commit:** `c53225e` | **Deploy ID:** `dep-d63oglhr0fns738bj0d0`
+
+---
+
+## ⚠️ Pending QA (New Changes)
+
+These items were implemented after the last recorded QA pass and are **NOT YET VERIFIED** end-to-end in production/staging.
+
+### TRUST-001: Trust Signals v1 (Reviewed + New)
+
+- **What changed**
+  - New DB fields on `public.websites`: `isReviewed`, `reviewedAt`, `reviewedBy`
+  - Admin API: `PATCH /api/v1/admin/websites/:id/reviewed` body `{ isReviewed: boolean }`
+  - FE: Website card badges `Reviewed` (manual) + `New` (createdAt <= 7 days)
+  - Admin: Websites tab includes action to toggle Reviewed
+- **QA checklist**
+  - Admin toggles Reviewed on a website -> badge appears on card (homepage/search)
+  - Toggling off removes badge
+  - A newly created website shows `New` badge (within 7 days)
+
+### FE-STA-001: Staging domain console noise cleanup (preconnect/bookmarks/pages)
+
+- **What changed (expected)**
+  - Remove hardcoded preconnect to `api.findinggems.id` (should follow `NEXT_PUBLIC_API_*`)
+  - Avoid calling `/api/v1/bookmarks` for unauthenticated visitors (prevent 401 spam)
+  - Add placeholder pages for footer links: /about /blog /careers /contact /terms /privacy /pricing /cookies
+- **QA checklist**
+  - Visit `https://findinggems.dualangka.com` as guest: no CORS errors, no repeated 401 bookmarks spam
+  - Footer links no longer 404
+
+### CVC-001: Vibe Code Challenge (full feature)
+
+- **What changed**
+  - New tables: `challenges`, `challenge_submissions`
+  - New public/creator/admin APIs under `/api/v1/challenges` and `/api/v1/admin/challenges`
+  - FE pages: `/challenges`, `/challenges/[slug]`, homepage section
+  - Admin tab: `/admin?tab=challenges`
+- **QA checklist**
+  - Admin creates challenge (upcoming/active) with valid window
+  - Creator submits entry while active + within window
+  - Admin approves/rejects submission
+  - Approved submission shows on public challenge page
+  - Admin sets featured order; featured items pin at top
+
+### MSG-001: Messaging (replace mock /dashboard/messages)
+
+- **What changed**
+  - DB: new `threads` table + messaging triggers; existing `messages` + `thread_participants` now wired with FKs
+  - Backend: `/api/v1/messages/*` endpoints for threads + messages + read state
+  - FE: `/dashboard/messages` now uses real API (buyer + creator)
+- **QA checklist**
+  - Buyer can open Messages page and see threads list
+  - Creator can open Messages page and see threads list
+  - Create thread (via API / future UI) results in thread visible for both participants
+  - Send message updates last message preview + unread count for recipient
+  - Opening a thread marks it as read (unreadCount -> 0)
+
+### PERF-NEW-001: Frontend LCP improvements (pending retest)
+
+- **What changed**
+  - Homepage hero: removed huge inline `blurDataURL` on background image
+  - Website card: removed `framer-motion` hover animations (replaced with CSS transform)
+  - Search: removed redundant client-side filter/sort; fixed backend sort params
+
+### TRUST-002: Trust Signals (Popular)
+
+- **What changed**
+  - FE shows `Popular` badge based on `viewCount >= 1000`
+- **QA checklist**
+  - Confirm Popular badge appears only for high-view listings
+- **QA checklist**
+  - Re-run Lighthouse on homepage/search/detail and confirm LCP improved vs last baseline
 
 ---
 

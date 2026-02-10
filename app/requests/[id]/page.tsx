@@ -6,6 +6,7 @@ import { useMemo, useState } from 'react';
 import axios from 'axios';
 import { useToolRequest, useCloseToolRequest, useCreateToolRequestResponse, useSolveToolRequest } from '@/lib/api/tool-requests';
 import { useAuth, useToast } from '@/lib/store';
+import { useCreateThread } from '@/lib/api/messages';
 import { ArrowLeft, MessageSquare, Tag, Clock, ExternalLink } from 'lucide-react';
 import { useMyWebsites } from '@/lib/api/websites';
 
@@ -48,6 +49,7 @@ export default function RequestDetailPage() {
   const closeRequest = useCloseToolRequest();
   const solveRequest = useSolveToolRequest();
   const respond = useCreateToolRequestResponse();
+  const createThread = useCreateThread();
   const { data: myWebsites } = useMyWebsites();
 
   const request = data?.request;
@@ -191,6 +193,28 @@ export default function RequestDetailPage() {
                           </div>
                         )}
                       </div>
+
+                      {isOwnerBuyer && r.responder?.id && r.responder.id !== user?.id && (
+                        <div className="mt-3">
+                          <button
+                            onClick={async () => {
+                              try {
+                                const threadId = await createThread.mutateAsync({
+                                  otherUserId: r.responder.id,
+                                  requestId: request.id,
+                                });
+                                window.location.href = `/dashboard/messages?thread=${encodeURIComponent(threadId)}`;
+                              } catch (err) {
+                                showToast(errorMessage(err, 'Failed to start conversation.'), 'error');
+                              }
+                            }}
+                            disabled={createThread.isPending}
+                            className="px-3 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-gray-900 hover:bg-gray-50 disabled:opacity-40"
+                          >
+                            Message creator
+                          </button>
+                        </div>
+                      )}
 
                       {isOwnerBuyer && request.status === 'open' && (
                         <div className="mt-3 flex items-center gap-3">

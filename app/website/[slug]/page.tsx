@@ -8,11 +8,12 @@ import { useWebsiteBySlug } from '@/lib/api/websites';
 import { useWebsiteReviews } from '@/lib/api/reviews';
 import { useWebsitePricing, useCheckAccess, formatPrice } from '@/lib/api/billing';
 import { useAuth, useBookmarks, useToast } from '@/lib/store';
+import { useCreateThread } from '@/lib/api/messages';
 import { formatDate, getInitials } from '@/lib/utils';
 import Rating from '@/components/Rating';
 import Button from '@/components/Button';
 import { ProductDetailSkeleton } from '@/components/Skeleton';
-import { Heart, Globe, Check, ChevronDown, ChevronUp, Share2, ShieldCheck, Star, ExternalLink, ArrowUpRight, ShoppingCart, Clock, Sparkles } from 'lucide-react';
+import { Heart, Globe, Check, ChevronDown, ChevronUp, Share2, ShieldCheck, Star, ExternalLink, ArrowUpRight, ShoppingCart, Clock, Sparkles, MessageSquare } from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -38,9 +39,10 @@ const animations = `
 export default function WebsiteDetailPage({ params }: PageProps) {
   const { slug } = use(params);
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const { showToast } = useToast();
+  const createThread = useCreateThread();
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
   const { data: website, isLoading: isLoadingWebsite, error: websiteError } = useWebsiteBySlug(slug);
@@ -91,6 +93,31 @@ export default function WebsiteDetailPage({ params }: PageProps) {
     if (!isAuthenticated) { router.push('/login'); return; }
     toggleBookmark(website);
     showToast(bookmarked ? 'Removed from bookmarks' : 'Added to bookmarks', 'success');
+  };
+
+  const canMessageCreator = Boolean(
+    isAuthenticated &&
+    user?.id &&
+    website.creator?.id &&
+    user.id !== website.creator.id
+  );
+
+  const handleMessageCreator = async () => {
+    if (!isAuthenticated) {
+      router.push(`/login?redirect=/website/${encodeURIComponent(slug)}`);
+      return;
+    }
+    if (!website.creator?.id) return;
+
+    try {
+      const threadId = await createThread.mutateAsync({
+        otherUserId: website.creator.id,
+        websiteId: website.id,
+      });
+      router.push(`/dashboard/messages?thread=${encodeURIComponent(threadId)}`);
+    } catch {
+      showToast('Failed to start a conversation.', 'error');
+    }
   };
 
   return (
@@ -190,6 +217,19 @@ export default function WebsiteDetailPage({ params }: PageProps) {
               >
                 <Heart size={22} fill={bookmarked ? "currentColor" : "none"} />
               </button>
+
+              {canMessageCreator && (
+                <button
+                  onClick={handleMessageCreator}
+                  disabled={createThread.isPending}
+                  className="p-3 rounded-full border border-gray-200 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-all disabled:opacity-50"
+                  aria-label="Message creator"
+                  title="Message creator"
+                >
+                  <MessageSquare size={22} />
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);

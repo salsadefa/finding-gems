@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 import { User, UserRole, Website, Bookmark, MessageThread, Message } from './types';
-import { mockMessageThreads, mockMessages } from './mockData';
 import { 
   useBookmarks as useBookmarksQuery, 
   useCreateBookmark as useCreateBookmarkMutation, 
@@ -109,8 +108,11 @@ interface BookmarksContextType {
 const BookmarksContext = createContext<BookmarksContextType | undefined>(undefined);
 
 export function BookmarksProvider({ children }: { children: ReactNode }) {
+    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { showToast } = useToast();
+
     // Use the real API hooks
-    const { data: bookmarks = [], isLoading } = useBookmarksQuery();
+    const { data: bookmarks = [], isLoading } = useBookmarksQuery({ enabled: isAuthenticated && !isAuthLoading });
     const createBookmark = useCreateBookmarkMutation();
     const deleteBookmark = useDeleteBookmarkMutation();
     const toggleBookmarkMutation = useToggleBookmarkMutation();
@@ -120,24 +122,36 @@ export function BookmarksProvider({ children }: { children: ReactNode }) {
     [bookmarks]);
 
     const addBookmark = useCallback((website: Website) => {
+        if (!isAuthenticated) {
+            showToast('Log in to save tools to your bookmarks.', 'info');
+            return;
+        }
         createBookmark.mutate(website.id);
-    }, [createBookmark]);
+    }, [createBookmark, isAuthenticated, showToast]);
 
     const removeBookmark = useCallback((websiteId: string) => {
+        if (!isAuthenticated) {
+            showToast('Log in to manage bookmarks.', 'info');
+            return;
+        }
         const bookmark = bookmarks.find(b => b.websiteId === websiteId);
         if (bookmark) {
             deleteBookmark.mutate({ id: bookmark.id, websiteId });
         }
-    }, [bookmarks, deleteBookmark]);
+    }, [bookmarks, deleteBookmark, isAuthenticated, showToast]);
 
     const toggleBookmark = useCallback((website: Website) => {
+        if (!isAuthenticated) {
+            showToast('Log in to save tools to your bookmarks.', 'info');
+            return;
+        }
         const existingBookmark = bookmarks.find(b => b.websiteId === website.id);
         toggleBookmarkMutation.mutate({
             websiteId: website.id,
             isBookmarked: !!existingBookmark,
             bookmarkId: existingBookmark?.id,
         });
-    }, [bookmarks, toggleBookmarkMutation]);
+    }, [bookmarks, toggleBookmarkMutation, isAuthenticated, showToast]);
 
     return (
         <BookmarksContext.Provider value={{ 
@@ -160,44 +174,6 @@ export function useBookmarks() {
 }
 
 
-
-interface MessagesContextType {
-    threads: MessageThread[];
-    messages: Message[];
-    getThreadMessages: (threadId: string) => Message[];
-    sendMessage: (threadId: string, content: string, senderId: string, sender: User) => void;
-    createThread: (participants: User[], websiteId?: string) => MessageThread;
-    markAsRead: (threadId: string) => void;
-}
-
-const MessagesContext = createContext<MessagesContextType | undefined>(undefined);
-
-export function MessagesProvider({ children }: { children: ReactNode }) {
-    const [threads, setThreads] = useState<MessageThread[]>(mockMessageThreads);
-    const [messages, setMessages] = useState<Message[]>(mockMessages);
-    const getThreadMessages = useCallback((threadId: string) => messages.filter(m => m.threadId === threadId), [messages]);
-    const sendMessage = useCallback((threadId: string, content: string, senderId: string, sender: User) => {
-        const newMessage: Message = { id: `msg-${Date.now()}`, threadId, senderId, sender, content, isRead: false, createdAt: new Date().toISOString() };
-        setMessages(prev => [...prev, newMessage]);
-        setThreads(prev => prev.map(t => t.id === threadId ? { ...t, lastMessage: newMessage, updatedAt: newMessage.createdAt } : t));
-    }, []);
-    const createThread = useCallback((participants: User[], websiteId?: string): MessageThread => {
-        const newThread: MessageThread = { id: `thread-${Date.now()}`, participants, websiteId, lastMessage: { id: '', threadId: '', senderId: '', sender: participants[0], content: '', isRead: true, createdAt: new Date().toISOString() }, unreadCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
-        setThreads(prev => [...prev, newThread]);
-        return newThread;
-    }, []);
-    const markAsRead = useCallback((threadId: string) => {
-        setMessages(prev => prev.map(m => m.threadId === threadId ? { ...m, isRead: true } : m));
-        setThreads(prev => prev.map(t => t.id === threadId ? { ...t, unreadCount: 0 } : t));
-    }, []);
-    return (<MessagesContext.Provider value={{ threads, messages, getThreadMessages, sendMessage, createThread, markAsRead }}>{children}</MessagesContext.Provider>);
-}
-
-export function useMessages() {
-    const context = useContext(MessagesContext);
-    if (context === undefined) throw new Error('useMessages must be used within a MessagesProvider');
-    return context;
-}
 
 interface Toast { id: string; message: string; type: 'success' | 'error' | 'info'; }
 interface ToastContextType { toasts: Toast[]; showToast: (message: string, type?: Toast['type']) => void; dismissToast: (id: string) => void; }
@@ -226,9 +202,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <AuthProvider>
             <ToastProvider>
                 <BookmarksProvider>
-                    <MessagesProvider>
-                        {children}
-                    </MessagesProvider>
+                    {children}
                 </BookmarksProvider>
             </ToastProvider>
         </AuthProvider>

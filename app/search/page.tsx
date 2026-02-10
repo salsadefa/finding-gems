@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Suspense, useEffect, useCallback, useRef } from 'react';
+import { useState, Suspense, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import WebsiteCard from '@/components/WebsiteCard';
 import { WebsiteCardSkeleton } from '@/components/Skeleton';
@@ -64,41 +64,8 @@ function SearchContent() {
 
   const { data: categories, isLoading: categoriesLoading } = useCategories();
 
-  // Client-side filtering (tanpa useMemo yang berat)
-  const filteredWebsites = useMemo(() => {
-    if (!websites) return [];
-    
-    let results = [...websites];
-
-    // Filter by search query
-    if (debouncedQuery) {
-      const q = debouncedQuery.toLowerCase();
-      results = results.filter(
-        (w) =>
-          w.name.toLowerCase().includes(q) ||
-          w.shortDescription.toLowerCase().includes(q) ||
-          w.category?.name.toLowerCase().includes(q)
-      );
-    }
-
-    // Sort
-    results.sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'rating':
-          return (b.rating || 0) - (a.rating || 0);
-        case 'alphabetical':
-          return a.name.localeCompare(b.name);
-        case 'popular':
-          return (b.viewCount || 0) - (a.viewCount || 0);
-        default:
-          return 0;
-      }
-    });
-
-    return results;
-  }, [websites, debouncedQuery, sortBy]);
+  // Backend already handles search + sorting.
+  const filteredWebsites = websites || [];
 
   // Update URL
   const updateUrl = useCallback((newQuery: string, newCategory: string) => {

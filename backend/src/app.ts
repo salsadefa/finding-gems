@@ -30,6 +30,8 @@ import refundRoutes from './routes/refund.routes';
 import dropRoutes from './routes/drop.routes';
 import requestRoutes from './routes/request.routes';
 import notificationRoutes from './routes/notification.routes';
+import messageRoutes from './routes/message.routes';
+import challengeRoutes from './routes/challenge.routes';
 
 const app: Application = express();
 
@@ -272,6 +274,12 @@ app.use(`${API_PREFIX}/requests`, requestRoutes);
 
 // User Notifications
 app.use(`${API_PREFIX}/notifications`, notificationRoutes);
+
+// Messaging
+app.use(`${API_PREFIX}/messages`, messageRoutes);
+
+// Vibe Code Challenge
+app.use(`${API_PREFIX}/challenges`, challengeRoutes);
 
 // ============================================
 // Error Handling
