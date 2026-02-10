@@ -36,6 +36,7 @@ export default function VerifyEmailClient() {
 
   const emailFromQuery = searchParams.get('email') || '';
   const redirectTo = searchParams.get('redirect') || '/dashboard';
+  const isAdminRedirect = redirectTo.startsWith('/admin');
 
   const [email, setEmail] = useState(emailFromQuery);
   const [otp, setOtp] = useState('');
@@ -60,6 +61,11 @@ export default function VerifyEmailClient() {
         <p className="text-gray-600 mt-2">
           We sent a 6-digit OTP to <span className="font-semibold">{maskedEmail || 'your email'}</span>.
         </p>
+        {isAdminRedirect ? (
+          <p className="text-sm text-gray-500 mt-2">
+            After verification, you&apos;ll be redirected to the Admin Panel.
+          </p>
+        ) : null}
 
         <div className="mt-8 space-y-5">
           <div className="bg-white border border-gray-200 rounded-2xl p-6">

@@ -10,6 +10,21 @@ Notes:
 - Do not paste secrets/tokens in reports.
 - When testing admin-only features, use an admin account that is already `emailVerified=true`.
 
+## Test Account Setup (Recommended)
+
+To avoid OTP blockers during QA, create accounts normally via the UI, then promote them in the database:
+
+1) QA creates accounts via FE:
+- Buyer: sign up normally
+- Creator: sign up normally, then apply as creator if needed
+- Admin: sign up normally
+
+2) Dev/ops promotes and verifies in DB:
+- Set `users.role = 'admin'` for the admin email
+- Set `users.emailVerified = true` and `users.emailVerifiedAt = now()`
+
+This keeps the OTP verification feature intact for real users, while unblocking QA.
+
 ## 1) Vibe Code Challenge (CVC)
 
 ### Public

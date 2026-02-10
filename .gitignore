@@ -34,6 +34,7 @@
 /challenges-*.png
 /cvc-*.png
 /trust-signals-*.png
+/p1-*.png
 
 # QA briefs that may contain credentials (keep local only)
 /QA-NEW-FEATURES-BRIEF.md
