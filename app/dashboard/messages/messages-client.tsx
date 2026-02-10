@@ -32,7 +32,7 @@ export default function MessagesClient() {
     );
   }
 
-  if (!isAuthenticated || (user?.role !== 'buyer' && user?.role !== 'creator')) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen pt-32 pb-12 flex flex-col items-center justify-center text-center px-6">
         <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-700 mb-4">
@@ -114,7 +114,7 @@ export default function MessagesClient() {
                 ) : (
                   <div className="space-y-3">
                     {messages.map((m) => {
-                      const mine = m.senderId === user.id;
+                      const mine = m.senderId === user?.id;
                       return (
                         <div key={m.id} className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
                           <div
