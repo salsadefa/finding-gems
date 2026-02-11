@@ -221,7 +221,7 @@ export const sendMessage = catchAsync(async (req: Request, res: Response) => {
 
   await requireParticipant(id, req.user.id);
 
-  const { data: message, error } = await supabase
+  const { data: message, error} = await supabase
     .from('messages')
     .insert({
       thread_id: id,

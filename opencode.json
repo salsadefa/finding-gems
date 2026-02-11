@@ -14,7 +14,7 @@
       "type": "remote",
       "url": "https://mcp.supabase.com/mcp",
       "headers": {
-        "Authorization": "Bearer {env:SUPABASE_ACCESS_TOKEN}"
+        "Authorization": "Bearer sbp_fe32a119f5caa5c47fa65d074c747c0c328e0593"
       },
       "enabled": true
     },

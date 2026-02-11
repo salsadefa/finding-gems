@@ -1,11 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/store';
 import { useMarkThreadRead, useMessageThreads, useSendMessage, useThreadMessages } from '@/lib/api/messages';
-import { MessageSquare, ArrowLeft } from 'lucide-react';
+import { useRealtimeMessages } from '@/lib/hooks/useRealtimeMessages';
+import { useRealtimeThreads } from '@/lib/hooks/useRealtimeThreads';
+import { MessageSquare, ArrowLeft, Wifi, WifiOff } from 'lucide-react';
 
 export default function MessagesClient() {
   const searchParams = useSearchParams();
@@ -16,6 +18,17 @@ export default function MessagesClient() {
   const initialThreadId = searchParams.get('thread');
   const [activeThreadId, setActiveThreadId] = useState<string | null>(initialThreadId || null);
   const [draft, setDraft] = useState('');
+
+  // Real-time subscriptions
+  const { isSubscribed: isMessagesSubscribed } = useRealtimeMessages({
+    threadId: activeThreadId,
+    enabled: isAuthenticated && !!activeThreadId,
+  });
+
+  const { isSubscribed: isThreadsSubscribed } = useRealtimeThreads({
+    userId: user?.id || null,
+    enabled: isAuthenticated,
+  });
 
   const activeThread = useMemo(
     () => threads.find((t) => t.id === activeThreadId) || null,
@@ -58,6 +71,20 @@ export default function MessagesClient() {
             </Link>
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight mt-2">Messages</h1>
             <p className="text-gray-500 mt-1">Chat with creators and buyers.</p>
+          </div>
+          {/* Realtime Connection Indicator */}
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            {isMessagesSubscribed || isThreadsSubscribed ? (
+              <>
+                <Wifi size={14} className="text-green-500" />
+                <span className="text-green-600 font-medium">Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff size={14} className="text-gray-400" />
+                <span>Offline</span>
+              </>
+            )}
           </div>
         </div>
 
