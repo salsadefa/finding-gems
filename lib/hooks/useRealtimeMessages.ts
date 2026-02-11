@@ -8,7 +8,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { supabase } from '../supabase';
+import { supabase, checkSupabaseConfig } from '../supabase';
 import { messageKeys, Message } from '../api/messages';
 import { normalizeKeys } from '../api/normalize';
 
@@ -24,6 +24,12 @@ export function useRealtimeMessages({ threadId, enabled = true }: UseRealtimeMes
   useEffect(() => {
     // Don't subscribe if disabled or no threadId
     if (!enabled || !threadId) {
+      return;
+    }
+
+    // Check if Supabase is configured
+    if (!checkSupabaseConfig()) {
+      console.warn('[Realtime] Supabase not configured, skipping subscription');
       return;
     }
 
