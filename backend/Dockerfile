@@ -46,12 +46,12 @@ RUN chown -R expressjs:nodejs /app
 
 USER expressjs
 
-EXPOSE 8000
+EXPOSE 10000
 
-ENV PORT=8000
+# PORT will be set by Render at runtime
+# Default fallback is handled in src/server.ts (3001)
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
+# Health check - Render will check via HTTP on the dynamic port
+# We don't need HEALTHCHECK in Dockerfile, Render has its own health checks
 
 CMD ["node", "dist/server.js"]
