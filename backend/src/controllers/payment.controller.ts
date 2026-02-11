@@ -854,10 +854,7 @@ export const handlePaymentWebhook = catchAsync(async (req: Request, res: Respons
   const {
     order_id,
     transaction_id,
-    transaction_status,
-    payment_type: _payment_type,
-    gross_amount: _gross_amount,
-    signature_key: _signature_key
+    transaction_status
   } = req.body;
 
   console.log('Payment webhook received:', { order_id, transaction_id, transaction_status });

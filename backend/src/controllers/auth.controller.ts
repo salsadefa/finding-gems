@@ -27,7 +27,8 @@ import {
  * Sanitize user object by removing password
  */
 const sanitizeUser = (user: any): SanitizedUser => {
-  const { password, ...sanitized } = user;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { password: _password, ...sanitized } = user;
   return sanitized;
 };
 
