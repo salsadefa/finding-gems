@@ -10,6 +10,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY prisma ./prisma
 
 # Install dependencies
 RUN npm ci --only=production
@@ -19,6 +20,7 @@ FROM base AS builder
 WORKDIR /app
 
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 
 COPY . .
