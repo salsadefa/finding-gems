@@ -68,10 +68,10 @@ export const getChallengeBySlug = catchAsync(async (req: Request, res: Response)
   const { data: submissions, error: subError } = await supabase
     .from('challenge_submissions')
     .select(
-      `id, title, description, demoUrl, repoUrl, status, isFeatured, featuredPosition, featuredAt, createdAt,
-       user:users!challenge_submissions_userid_fkey(id, name, username, avatar),
-       website:websites(id, name, slug, thumbnail, shortDescription, status)`
-    )
+       `id, title, description, demoUrl, repoUrl, status, isFeatured, featuredPosition, featuredAt, createdAt,
+        user:users!challenge_submissions_userId_fkey(id, name, username, avatar),
+        website:websites(id, name, slug, thumbnail, shortDescription, status)`
+     )
     .eq('challengeId', challenge.id)
     .eq('status', 'approved')
     .order('isFeatured', { ascending: false })

@@ -65,10 +65,10 @@ export const createChallengeSubmission = catchAsync(async (req: Request, res: Re
     .from('challenge_submissions')
     .insert(insertData)
     .select(
-      `id, title, description, demoUrl, repoUrl, status, createdAt,
-       website:websites(id, name, slug, thumbnail, shortDescription),
-       user:users!challenge_submissions_userid_fkey(id, name, username, avatar)`
-    )
+       `id, title, description, demoUrl, repoUrl, status, createdAt,
+        website:websites(id, name, slug, thumbnail, shortDescription),
+        user:users!challenge_submissions_userId_fkey(id, name, username, avatar)`
+     )
     .single();
 
   if (insertError) {
@@ -134,10 +134,10 @@ export const updateChallengeSubmission = catchAsync(async (req: Request, res: Re
     .update(updateData)
     .eq('id', id)
     .select(
-      `id, title, description, demoUrl, repoUrl, status, createdAt, updatedAt,
-       website:websites(id, name, slug, thumbnail, shortDescription),
-       user:users!challenge_submissions_userid_fkey(id, name, username, avatar)`
-    )
+       `id, title, description, demoUrl, repoUrl, status, createdAt, updatedAt,
+        website:websites(id, name, slug, thumbnail, shortDescription),
+        user:users!challenge_submissions_userId_fkey(id, name, username, avatar)`
+     )
     .single();
 
   if (updateError) throw updateError;

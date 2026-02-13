@@ -176,10 +176,10 @@ export const listChallengeSubmissionsAdmin = catchAsync(async (req: Request, res
   let q = supabase
     .from('challenge_submissions')
     .select(
-      `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
-       user:users!challenge_submissions_userid_fkey(id, name, username, email, avatar),
-       website:websites(id, name, slug, thumbnail, shortDescription, status)`
-    )
+       `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
+        user:users!challenge_submissions_userId_fkey(id, name, username, email, avatar),
+        website:websites(id, name, slug, thumbnail, shortDescription, status)`
+     )
     .eq('challengeId', id)
     .order('createdAt', { ascending: false });
 
@@ -233,10 +233,10 @@ export const reviewChallengeSubmissionAdmin = catchAsync(async (req: Request, re
     .update(updateData)
     .eq('id', id)
     .select(
-      `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
-       user:users!challenge_submissions_userid_fkey(id, name, username, avatar),
-       website:websites(id, name, slug, thumbnail, shortDescription, status)`
-    )
+       `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
+        user:users!challenge_submissions_userId_fkey(id, name, username, avatar),
+        website:websites(id, name, slug, thumbnail, shortDescription, status)`
+     )
     .single();
 
   if (error || !submission) throw new NotFoundError('Submission not found');
