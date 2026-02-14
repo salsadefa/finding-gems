@@ -176,10 +176,10 @@ export const listChallengeSubmissionsAdmin = catchAsync(async (req: Request, res
   let q = supabase
     .from('challenge_submissions')
     .select(
-       `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
-        user:users!challenge_submissions_userId_fkey(id, name, username, email, avatar),
-        website:websites(id, name, slug, thumbnail, shortDescription, status)`
-     )
+      `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
+       userId,
+       website:websites(id, name, slug, thumbnail, shortDescription, status)`
+    )
     .eq('challengeId', id)
     .order('createdAt', { ascending: false });
 
@@ -193,9 +193,35 @@ export const listChallengeSubmissionsAdmin = catchAsync(async (req: Request, res
   const { data, error } = await q;
   if (error) throw error;
 
+  const submissions = data || [];
+  const userIds = Array.from(
+    new Set(
+      submissions
+        .map((s: any) => s.userId)
+        .filter((uid: any) => typeof uid === 'string' && uid.length > 0)
+    )
+  );
+
+  let usersById = new Map<string, any>();
+  if (userIds.length > 0) {
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, name, username, email, avatar')
+      .in('id', userIds);
+    if (usersError) throw usersError;
+    usersById = new Map((users || []).map((u: any) => [u.id, u]));
+  }
+
+  const hydrated = submissions.map((s: any) => {
+    const user = usersById.get(s.userId) || null;
+    const rest = { ...s };
+    delete (rest as any).userId;
+    return { ...rest, user };
+  });
+
   res.status(200).json({
     success: true,
-    data: { submissions: data || [] },
+    data: { submissions: hydrated },
     timestamp: new Date().toISOString(),
   });
 });
@@ -228,18 +254,29 @@ export const reviewChallengeSubmissionAdmin = catchAsync(async (req: Request, re
     updateData.featuredPosition = body.featuredPosition;
   }
 
-  const { data: submission, error } = await supabase
+  const { data: baseSubmission, error } = await supabase
     .from('challenge_submissions')
     .update(updateData)
     .eq('id', id)
     .select(
-       `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
-        user:users!challenge_submissions_userId_fkey(id, name, username, avatar),
-        website:websites(id, name, slug, thumbnail, shortDescription, status)`
-     )
+      `id, title, description, demoUrl, repoUrl, status, adminNote, reviewedAt, reviewedBy, isFeatured, featuredPosition, featuredAt, createdAt, updatedAt,
+       userId,
+       website:websites(id, name, slug, thumbnail, shortDescription, status)`
+    )
     .single();
 
-  if (error || !submission) throw new NotFoundError('Submission not found');
+  if (error || !baseSubmission) throw new NotFoundError('Submission not found');
+
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id, name, username, avatar')
+    .eq('id', baseSubmission.userId)
+    .single();
+  if (userError) throw userError;
+
+  const rest = { ...(baseSubmission as any) };
+  delete (rest as any).userId;
+  const submission = { ...rest, user };
 
   res.status(200).json({
     success: true,
