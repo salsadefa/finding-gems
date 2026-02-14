@@ -69,10 +69,12 @@ export const requestRefund = catchAsync(async (req: Request, res: Response) => {
     });
   }
 
-  // Check refund time limit (30 days)
-  const orderDate = new Date(order.created_at);
+  // Check refund time limit
+  // If escrow is enabled and funds are still held, keep the window tight (14 days).
+  const hasEscrow = Object.prototype.hasOwnProperty.call(order, 'escrow_status');
+  const orderDate = new Date(order.paid_at || order.created_at);
   const daysSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
-  const REFUND_TIME_LIMIT_DAYS = 30;
+  const REFUND_TIME_LIMIT_DAYS = hasEscrow ? 14 : 30;
   
   if (daysSinceOrder > REFUND_TIME_LIMIT_DAYS) {
     return res.status(400).json({ 
@@ -111,11 +113,22 @@ export const requestRefund = catchAsync(async (req: Request, res: Response) => {
     return res.status(500).json({ success: false, error: { message: error.message } });
   }
 
-  // Update order refund status
-  await supabase
-    .from('orders')
-    .update({ refund_status: 'requested', updated_at: new Date().toISOString() })
-    .eq('id', order_id);
+  // Update order refund status (and escrow state if available)
+  {
+    const updateData: any = { refund_status: 'requested', updated_at: new Date().toISOString() };
+    if (hasEscrow) {
+      updateData.escrow_status = 'disputed';
+    }
+
+    const { error: updateError } = await supabase.from('orders').update(updateData).eq('id', order_id);
+    if (updateError && hasEscrow) {
+      // Fallback if escrow columns are not deployed yet
+      await supabase
+        .from('orders')
+        .update({ refund_status: 'requested', updated_at: new Date().toISOString() })
+        .eq('id', order_id);
+    }
+  }
 
   // Notify admin of refund request
   try {
@@ -269,10 +282,18 @@ export const cancelRefund = catchAsync(async (req: Request, res: Response) => {
   }
 
   // Update order refund status
-  await supabase
-    .from('orders')
-    .update({ refund_status: 'none', updated_at: new Date().toISOString() })
-    .eq('id', refund.order_id);
+  {
+    const updateData: any = { refund_status: 'none', updated_at: new Date().toISOString() };
+    updateData.escrow_status = 'held';
+
+    const { error: updateError } = await supabase.from('orders').update(updateData).eq('id', refund.order_id);
+    if (updateError) {
+      await supabase
+        .from('orders')
+        .update({ refund_status: 'none', updated_at: new Date().toISOString() })
+        .eq('id', refund.order_id);
+    }
+  }
 
   res.status(200).json({
     success: true,
@@ -407,12 +428,18 @@ export const processRefund = catchAsync(async (req: Request, res: Response) => {
         admin_notes
       };
 
-      // Update order
-      await supabase
-        .from('orders')
-        .update({ refund_status: 'none', updated_at: new Date().toISOString() })
-        .eq('id', refund.order_id);
-      break;
+       // Update order
+       {
+         const orderRow = refund.order as any;
+         const hasEscrow = orderRow && Object.prototype.hasOwnProperty.call(orderRow, 'escrow_status');
+         const updateData: any = { refund_status: 'none', updated_at: new Date().toISOString() };
+         if (hasEscrow && orderRow.escrow_status === 'disputed') {
+           updateData.escrow_status = 'held';
+         }
+
+         await supabase.from('orders').update(updateData).eq('id', refund.order_id);
+       }
+       break;
 
     case 'complete':
       if (refund.status !== 'approved') {
@@ -434,18 +461,26 @@ export const processRefund = catchAsync(async (req: Request, res: Response) => {
       const order = refund.order as any;
       const isFullRefund = Number(refund.refund_amount) >= Number(order.total_amount);
 
-      // Update order
-      await supabase
-        .from('orders')
-        .update({ 
-          refund_status: isFullRefund ? 'full' : 'partial',
-          refunded_amount: Number(order.refunded_amount || 0) + Number(refund.refund_amount),
-          status: isFullRefund ? 'refunded' : order.status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', refund.order_id);
+       // Update order
+       {
+         const hasEscrow = order && Object.prototype.hasOwnProperty.call(order, 'escrow_status');
+         const updateData: any = {
+           refund_status: isFullRefund ? 'full' : 'partial',
+           refunded_amount: Number(order.refunded_amount || 0) + Number(refund.refund_amount),
+           status: isFullRefund ? 'refunded' : order.status,
+           updated_at: new Date().toISOString(),
+         };
 
-      // Revoke user access if full refund
+         if (hasEscrow && isFullRefund) {
+           updateData.escrow_status = 'refunded';
+           updateData.escrow_released_at = new Date().toISOString();
+           updateData.escrow_release_reason = 'refunded';
+         }
+
+         await supabase.from('orders').update(updateData).eq('id', refund.order_id);
+       }
+
+       // Revoke user access if full refund
       if (isFullRefund) {
         console.log(`[Refund] Revoking user access for order ${refund.order_id}`);
         const { error: revokeError } = await supabase

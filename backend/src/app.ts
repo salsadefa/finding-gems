@@ -27,6 +27,7 @@ import billingRoutes from './routes/billing.routes';
 import paymentRoutes from './routes/payment.routes';
 import payoutRoutes from './routes/payout.routes';
 import refundRoutes from './routes/refund.routes';
+import escrowRoutes from './routes/escrow.routes';
 import dropRoutes from './routes/drop.routes';
 import requestRoutes from './routes/request.routes';
 import notificationRoutes from './routes/notification.routes';
@@ -263,8 +264,11 @@ app.use(`${API_PREFIX}/payments`, paymentRoutes);
 // Payout routes
 app.use(`${API_PREFIX}/payouts`, payoutRoutes);
 
-// Refund routes
-app.use(`${API_PREFIX}/refunds`, refundRoutes);
+  // Refund routes
+  app.use(`${API_PREFIX}/refunds`, refundRoutes);
+
+  // Escrow / Orders actions (buyer + admin)
+  app.use(`${API_PREFIX}`, escrowRoutes);
 
 // Weekly Drops routes
 app.use(`${API_PREFIX}/drops`, dropRoutes);

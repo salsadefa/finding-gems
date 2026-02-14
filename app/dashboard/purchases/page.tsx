@@ -1,10 +1,11 @@
+
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/lib/store';
+import { useAuth, useToast } from '@/lib/store';
 import { 
   useMyOrders, 
   useMyAccess,
@@ -12,12 +13,15 @@ import {
   getOrderStatusColor, 
   getOrderStatusLabel,
   Order,
-  UserAccess
+  UserAccess,
+  billingKeys,
 } from '@/lib/api/billing';
 import { useRequestRefund, REFUND_REASONS } from '@/lib/api/refund';
+import { api as apiHttp } from '@/lib/api/client';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/Button';
 import Modal from '@/components/Modal';
-import { Input } from '@/components/Input';
+import EscrowStatusBadge, { type EscrowStatus } from '@/components/EscrowStatusBadge';
 import { 
   Package, 
   ExternalLink, 
@@ -29,10 +33,40 @@ import {
   AlertCircle,
   ChevronRight,
   RefreshCcw,
-  ArrowLeft
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { fadeInUp, staggerContainer } from '@/lib/animations';
+
+type OrderWithEscrow = Order & {
+  escrow_status?: string;
+  escrowStatus?: string;
+  paid_at?: string;
+  paidAt?: string;
+  refund_status?: string;
+  refundStatus?: string;
+};
+
+function getEscrowStatus(order: Order): EscrowStatus | undefined {
+  const o = order as OrderWithEscrow;
+  const raw = o.escrow_status ?? o.escrowStatus;
+  if (typeof raw !== 'string') return undefined;
+  const normalized = raw.toLowerCase();
+  if (normalized === 'held' || normalized === 'released' || normalized === 'refunded' || normalized === 'disputed') {
+    return normalized;
+  }
+  return undefined;
+}
+
+function getPaidAtISO(order: Order): string | undefined {
+  const o = order as OrderWithEscrow;
+  const raw = o.paid_at ?? o.paidAt;
+  return typeof raw === 'string' ? raw : undefined;
+}
+
+function daysUntil(dateIso: string) {
+  const ms = new Date(dateIso).getTime() - Date.now();
+  return Math.ceil(ms / (24 * 60 * 60 * 1000));
+}
 
 type Tab = 'purchases' | 'access';
 
@@ -48,24 +82,69 @@ function RefundRequestModal({
 }) {
   const [reasonCategory, setReasonCategory] = useState('');
   const [reason, setReason] = useState('');
-  
+  const queryClient = useQueryClient();
+  const { showToast } = useToast();
+    
   const requestRefund = useRequestRefund();
+
+  const requestEscrowRefund = useMutation({
+    mutationFn: async (payload: {
+      order_id: string;
+      reason: string;
+      reason_category?: string;
+      evidence_urls?: string[];
+    }) => {
+      return await apiHttp.post(`/orders/${payload.order_id}/request-refund`, {
+        reason: payload.reason,
+        reason_category: payload.reason_category,
+        evidence_urls: payload.evidence_urls,
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!order) return;
 
     try {
-      await requestRefund.mutateAsync({
-        order_id: order.id,
-        reason,
-        reason_category: reasonCategory,
-      });
+      const escrowStatus = getEscrowStatus(order);
+      try {
+        if (escrowStatus) {
+          await requestEscrowRefund.mutateAsync({
+            order_id: order.id,
+            reason,
+            reason_category: reasonCategory,
+          });
+        } else {
+          await requestRefund.mutateAsync({
+            order_id: order.id,
+            reason,
+            reason_category: reasonCategory,
+          });
+        }
+      } catch (err: any) {
+        // Backward compatibility: if order-based endpoint is not deployed yet.
+        if (escrowStatus && err?.response?.status === 404) {
+          await requestRefund.mutateAsync({
+            order_id: order.id,
+            reason,
+            reason_category: reasonCategory,
+          });
+        } else {
+          throw err;
+        }
+      }
+
+       // Extra safety: billing hooks use different query keys.
+      await queryClient.invalidateQueries({ queryKey: billingKeys.myOrders() });
+      await queryClient.invalidateQueries({ queryKey: billingKeys.order(order.id) });
+      showToast('Refund request submitted. We will review it soon.', 'success');
       onClose();
       setReason('');
       setReasonCategory('');
     } catch (error) {
       console.error('Failed to request refund:', error);
+      showToast('Failed to submit refund request. Please try again.', 'error');
     }
   };
 
@@ -123,7 +202,7 @@ function RefundRequestModal({
             <Button 
               type="submit" 
               className="flex-1"
-              loading={requestRefund.isPending}
+              loading={requestRefund.isPending || requestEscrowRefund.isPending}
               disabled={!reasonCategory || !reason}
             >
               Submit Request
@@ -135,12 +214,101 @@ function RefundRequestModal({
   );
 }
 
+// Confirm Delivery Modal
+function ConfirmDeliveryModal({
+  isOpen,
+  onClose,
+  order,
+  onConfirm,
+  isConfirming,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  order: Order | null;
+  onConfirm: (orderId: string) => void;
+  isConfirming: boolean;
+}) {
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Confirm Delivery">
+      {order && (
+        <div className="space-y-4">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <p className="text-sm text-gray-500">Order</p>
+            <p className="font-semibold text-gray-900">{order.order_number}</p>
+            <p className="text-sm text-gray-600 mt-1">{order.item_name}</p>
+            <p className="font-medium text-gray-900 mt-2">{formatPrice(order.total_amount)}</p>
+          </div>
+
+          <div className="bg-yellow-50 rounded-lg p-4">
+            <p className="text-sm text-yellow-900 font-medium">What happens when you confirm?</p>
+            <p className="text-sm text-yellow-800 mt-1">
+              Your payment will be released to the creator. If there is an issue with the delivery, request a refund before confirming.
+            </p>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="flex-1"
+              loading={isConfirming}
+              onClick={() => onConfirm(order.id)}
+            >
+              Yes, I received it
+            </Button>
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 function PurchasesContent() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('purchases');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const [refundOrder, setRefundOrder] = useState<Order | null>(null);
+  const [confirmOrder, setConfirmOrder] = useState<Order | null>(null);
+
+  const queryClient = useQueryClient();
+
+  const confirmDelivery = useMutation({
+    mutationFn: async (orderId: string) => {
+      // BE contract (planned): POST /api/v1/orders/:id/confirm-delivery
+      return await apiHttp.post<{ success: boolean; data?: unknown; message?: string }>(
+        `/orders/${orderId}/confirm-delivery`,
+        { confirmed: true }
+      );
+    },
+    onSuccess: async (_data, orderId) => {
+      showToast('Delivery confirmed. Funds will be processed for the creator.', 'success');
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: billingKeys.myOrders() }),
+        queryClient.invalidateQueries({ queryKey: billingKeys.order(orderId) }),
+        queryClient.invalidateQueries({ queryKey: ['creator-balance'] }),
+      ]);
+    },
+    onError: (error: any) => {
+      const status = error?.response?.status;
+      if (status === 404) {
+        showToast('Confirm delivery is not available yet on this environment.', 'info');
+        return;
+      }
+      if (status === 401) {
+        showToast('Please log in to confirm delivery.', 'info');
+        return;
+      }
+      if (status === 403) {
+        showToast('You are not allowed to confirm this order.', 'error');
+        return;
+      }
+      showToast('Failed to confirm delivery. Please try again.', 'error');
+    },
+  });
 
   const { 
     data: ordersData, 
@@ -285,14 +453,15 @@ function PurchasesContent() {
                   animate="visible"
                   className="space-y-4"
                 >
-                  {ordersData.orders.map((order: Order, index: number) => (
-                    <OrderCard 
-                      key={order.id} 
-                      order={order} 
-                      onRequestRefund={setRefundOrder}
-                      index={index}
-                    />
-                  ))}
+                    {ordersData.orders.map((order: Order, index: number) => (
+                      <OrderCard 
+                        key={order.id} 
+                        order={order} 
+                        onRequestRefund={setRefundOrder}
+                        onConfirmDelivery={setConfirmOrder}
+                        index={index}
+                      />
+                    ))}
 
                   {/* Pagination */}
                   {ordersData.pagination.totalPages > 1 && (
@@ -379,6 +548,22 @@ function PurchasesContent() {
         onClose={() => setRefundOrder(null)}
         order={refundOrder}
       />
+
+      {/* Confirm Delivery Modal */}
+      <ConfirmDeliveryModal
+        isOpen={!!confirmOrder}
+        onClose={() => setConfirmOrder(null)}
+        order={confirmOrder}
+        isConfirming={confirmDelivery.isPending}
+        onConfirm={async (orderId) => {
+          try {
+            await confirmDelivery.mutateAsync(orderId);
+            setConfirmOrder(null);
+          } catch (error) {
+            console.error('Failed to confirm delivery:', error);
+          }
+        }}
+      />
     </motion.div>
   );
 }
@@ -387,13 +572,39 @@ function PurchasesContent() {
 function OrderCard({ 
   order, 
   onRequestRefund,
+  onConfirmDelivery,
   index 
 }: { 
   order: Order; 
   onRequestRefund: (order: Order) => void;
+  onConfirmDelivery: (order: Order) => void;
   index: number;
 }) {
-  const canRequestRefund = order.status === 'paid';
+  const escrowStatus = getEscrowStatus(order);
+  const escrowEnabled = !!escrowStatus;
+
+  const refundEligibility = useMemo(() => {
+    if (order.status !== 'paid') return { canRequestRefund: false, eligibleUntilIso: undefined as string | undefined };
+
+    // Pre-escrow: keep legacy behavior (refund still via /refunds system).
+    if (!escrowEnabled) return { canRequestRefund: true, eligibleUntilIso: undefined as string | undefined };
+
+    // Escrow: allow refunds only while funds are held and within a 14-day window.
+    if (escrowStatus !== 'held') return { canRequestRefund: false, eligibleUntilIso: undefined as string | undefined };
+
+    const paidAt = getPaidAtISO(order) ?? order.created_at;
+    const paidMs = new Date(paidAt).getTime();
+    if (Number.isNaN(paidMs)) return { canRequestRefund: true, eligibleUntilIso: undefined as string | undefined };
+    const eligibleUntilMs = paidMs + 14 * 24 * 60 * 60 * 1000;
+    const eligibleUntilIso = new Date(eligibleUntilMs).toISOString();
+
+    return {
+      canRequestRefund: Date.now() <= eligibleUntilMs,
+      eligibleUntilIso,
+    };
+  }, [escrowEnabled, escrowStatus, order.created_at, order.status]);
+
+  const canConfirmDelivery = order.status === 'paid' && escrowStatus === 'held';
 
   return (
     <motion.div 
@@ -427,8 +638,60 @@ function OrderCard({
               <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium mt-1 ${getOrderStatusColor(order.status)}`}>
                 {getOrderStatusLabel(order.status)}
               </span>
+              {escrowEnabled && order.status === 'paid' && (
+                <div className="mt-2">
+                  <EscrowStatusBadge status={escrowStatus} />
+                </div>
+              )}
             </div>
           </div>
+
+          {escrowEnabled && order.status === 'paid' && (
+            <div className="mt-3">
+              <p className="text-sm text-gray-600">
+                {escrowStatus === 'held' && (
+                  <>Your payment is being held until you confirm delivery (or it auto-releases after 7 days).</>
+                )}
+                {escrowStatus === 'released' && (
+                  <>Funds have been released to the creator.</>
+                )}
+                {escrowStatus === 'disputed' && (
+                  <>Refund requested. Our team will review your case before funds are released.</>
+                )}
+                {escrowStatus === 'refunded' && (
+                  <>This order has been refunded.</>
+                )}
+              </p>
+
+              <details className="mt-2">
+                <summary className="text-sm font-medium text-gray-800 cursor-pointer select-none">
+                  What happens next?
+                </summary>
+                <div className="mt-2 text-sm text-gray-600">
+                  {escrowStatus === 'held' && (
+                    <>
+                      Confirm delivery to release funds to the creator. If you don’t confirm, the system may auto-release after a short holding period.
+                    </>
+                  )}
+                  {escrowStatus === 'released' && (
+                    <>
+                      The creator can now withdraw their earnings through the payout flow.
+                    </>
+                  )}
+                  {escrowStatus === 'disputed' && (
+                    <>
+                      Our team will review your refund request and update you when it’s approved or rejected.
+                    </>
+                  )}
+                  {escrowStatus === 'refunded' && (
+                    <>
+                      If you paid via a supported method, your funds will be returned according to your payment provider’s timeline.
+                    </>
+                  )}
+                </div>
+              </details>
+            </div>
+          )}
         </div>
       </div>
 
@@ -442,6 +705,13 @@ function OrderCard({
             </Button>
           </Link>
         )}
+
+        <Link href={`/dashboard/purchases/${order.id}`}>
+          <Button variant="ghost" size="sm">
+            Details
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
         
         {order.status === 'paid' && (
           <>
@@ -451,15 +721,30 @@ function OrderCard({
                 Invoice
               </Button>
             </Link>
+
+            {canConfirmDelivery && (
+              <Button size="sm" onClick={() => onConfirmDelivery(order)}>
+                <Check className="w-4 h-4 mr-1" />
+                Confirm Delivery
+              </Button>
+            )}
             
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onRequestRefund(order)}
-            >
-              <RefreshCcw className="w-4 h-4 mr-1" />
-              Request Refund
-            </Button>
+            {refundEligibility.canRequestRefund && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => onRequestRefund(order)}
+              >
+                <RefreshCcw className="w-4 h-4 mr-1" />
+                Request Refund
+              </Button>
+            )}
+
+            {escrowEnabled && refundEligibility.eligibleUntilIso && (
+              <p className="text-xs text-gray-500 self-center">
+                Refund window: {Math.max(0, daysUntil(refundEligibility.eligibleUntilIso))} day(s) left
+              </p>
+            )}
           </>
         )}
         

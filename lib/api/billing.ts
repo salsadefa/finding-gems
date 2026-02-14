@@ -37,6 +37,13 @@ export interface Order {
   total_amount: number;
   currency: string;
   status: 'pending' | 'paid' | 'failed' | 'cancelled' | 'refunded' | 'expired';
+  // Escrow (Phase 1 MVP)
+  escrow_status?: 'held' | 'released' | 'refunded' | 'disputed';
+  escrow_released_at?: string | null;
+  escrow_release_reason?: string | null;
+  creator_payout_amount?: number;
+  paid_at?: string | null;
+  refund_status?: string;
   expires_at?: string;
   notes?: string;
   created_at: string;

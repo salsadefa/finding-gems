@@ -425,6 +425,22 @@ export default function CreatorEarningsPage() {
         </motion.div>
       </motion.div>
 
+      {/* Escrow / Balance Explanation */}
+      <div className="bg-amber-50 border border-amber-100 rounded-2xl p-6 mb-10">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5">
+            <AlertCircle className="w-5 h-5 text-amber-700" />
+          </div>
+          <div>
+            <p className="font-semibold text-amber-900">How your balances work</p>
+            <p className="text-sm text-amber-800 mt-1">
+              <strong>Pending</strong> is money from paid orders that is still being held until the buyer confirms delivery (or it auto-releases after a holding period).
+              Once released, it moves to <strong>Available</strong> and you can request a payout.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Bank Accounts */}
         <motion.div 

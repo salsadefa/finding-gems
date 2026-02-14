@@ -705,9 +705,26 @@ export const getPaymentStatus = catchAsync(async (req: Request, res: Response) =
 
         // If payment completed, update order and grant access
         if (mappedStatus === 'completed' && transaction.orders.status !== 'paid') {
+          // Fetch order amounts for escrow calculation
+          const { data: orderForEscrow } = await supabase
+            .from('orders')
+            .select('id, total_amount, platform_fee')
+            .eq('id', transaction.order_id)
+            .single();
+
+          const totalAmount = Number(orderForEscrow?.total_amount || 0);
+          const platformFee = Number(orderForEscrow?.platform_fee || 0);
+          const creatorPayoutAmount = Math.max(0, totalAmount - platformFee);
+
           await supabase
             .from('orders')
-            .update({ status: 'paid', updated_at: new Date().toISOString() })
+            .update({
+              status: 'paid',
+              paid_at: (xenditStatus as any).paidAt || new Date().toISOString(),
+              escrow_status: 'held',
+              creator_payout_amount: creatorPayoutAmount,
+              updated_at: new Date().toISOString(),
+            })
             .eq('id', transaction.order_id);
           
           await grantAccessAndCreateInvoice(transaction.order_id);
@@ -815,10 +832,17 @@ export const handleXenditWebhook = catchAsync(async (req: Request, res: Response
 
   // Update order
   console.log(`[Webhook] Updating order ${orderId} status to: ${orderStatus}`);
+  const totalAmount = Number(transaction.orders?.total_amount || 0);
+  const platformFee = Number(transaction.orders?.platform_fee || 0);
+  const creatorPayoutAmount = Math.max(0, totalAmount - platformFee);
+
   const { error: updateOrderError } = await supabase
     .from('orders')
     .update({
       status: orderStatus,
+      paid_at: orderStatus === 'paid' ? payload.paid_at || new Date().toISOString() : null,
+      escrow_status: orderStatus === 'paid' ? 'held' : transaction.orders?.escrow_status,
+      creator_payout_amount: orderStatus === 'paid' ? creatorPayoutAmount : transaction.orders?.creator_payout_amount,
       updated_at: new Date().toISOString()
     })
     .eq('id', orderId);
@@ -921,6 +945,11 @@ export const handlePaymentWebhook = catchAsync(async (req: Request, res: Respons
     .from('orders')
     .update({
       status: orderStatus,
+      paid_at: orderStatus === 'paid' ? new Date().toISOString() : null,
+      escrow_status: orderStatus === 'paid' ? 'held' : transaction.orders?.escrow_status,
+      creator_payout_amount: orderStatus === 'paid'
+        ? Math.max(0, Number(transaction.orders?.total_amount || 0) - Number(transaction.orders?.platform_fee || 0))
+        : transaction.orders?.creator_payout_amount,
       updated_at: new Date().toISOString()
     })
     .eq('id', orderId);
@@ -974,6 +1003,9 @@ export const confirmPayment = catchAsync(async (req: Request, res: Response) => 
     .from('orders')
     .update({
       status: 'paid',
+      paid_at: new Date().toISOString(),
+      escrow_status: 'held',
+      creator_payout_amount: Math.max(0, Number(transaction.orders?.total_amount || 0) - Number(transaction.orders?.platform_fee || 0)),
       updated_at: new Date().toISOString()
     })
     .eq('id', transaction.order_id);
