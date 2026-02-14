@@ -65,13 +65,13 @@ export const getChallengeBySlug = catchAsync(async (req: Request, res: Response)
   }
 
   // Public view: show only approved submissions.
-  const { data: submissions, error: subError } = await supabase
+  const { data: submissionsRaw, error: subError } = await supabase
     .from('challenge_submissions')
     .select(
-       `id, title, description, demoUrl, repoUrl, status, isFeatured, featuredPosition, featuredAt, createdAt,
-        user:users!challenge_submissions_userId_fkey(id, name, username, avatar),
-        website:websites(id, name, slug, thumbnail, shortDescription, status)`
-     )
+      `id, title, description, demoUrl, repoUrl, status, isFeatured, featuredPosition, featuredAt, createdAt,
+       userId,
+       website:websites(id, name, slug, thumbnail, shortDescription, status)`
+    )
     .eq('challengeId', challenge.id)
     .eq('status', 'approved')
     .order('isFeatured', { ascending: false })
@@ -80,11 +80,38 @@ export const getChallengeBySlug = catchAsync(async (req: Request, res: Response)
 
   if (subError) throw subError;
 
+  const submissions = submissionsRaw || [];
+  const userIds = Array.from(
+    new Set(
+      submissions
+        .map((s: any) => s.userId)
+        .filter((id: any) => typeof id === 'string' && id.length > 0)
+    )
+  );
+
+  let usersById = new Map<string, any>();
+  if (userIds.length > 0) {
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, name, username, avatar')
+      .in('id', userIds);
+    if (usersError) throw usersError;
+    usersById = new Map((users || []).map((u: any) => [u.id, u]));
+  }
+
+  const hydrated = submissions.map((s: any) => {
+    const user = usersById.get(s.userId) || null;
+    // Keep existing response shape: submission.user + submission.website
+    const rest = { ...s };
+    delete (rest as any).userId;
+    return { ...rest, user };
+  });
+
   res.status(200).json({
     success: true,
     data: {
       challenge,
-      submissions: submissions || [],
+      submissions: hydrated,
     },
     timestamp: new Date().toISOString(),
   });

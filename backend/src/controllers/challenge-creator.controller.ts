@@ -61,14 +61,12 @@ export const createChallengeSubmission = catchAsync(async (req: Request, res: Re
     status: 'submitted',
   };
 
-  const { data: submission, error: insertError } = await supabase
+  const { data: baseSubmission, error: insertError } = await supabase
     .from('challenge_submissions')
     .insert(insertData)
     .select(
-       `id, title, description, demoUrl, repoUrl, status, createdAt,
-        website:websites(id, name, slug, thumbnail, shortDescription),
-        user:users!challenge_submissions_userId_fkey(id, name, username, avatar)`
-     )
+      `id, title, description, demoUrl, repoUrl, status, createdAt, userId, websiteId`
+    )
     .single();
 
   if (insertError) {
@@ -78,6 +76,36 @@ export const createChallengeSubmission = catchAsync(async (req: Request, res: Re
     }
     throw insertError;
   }
+
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id, name, username, avatar')
+    .eq('id', baseSubmission.userId)
+    .single();
+  if (userError) throw userError;
+
+  let website: any = null;
+  if (baseSubmission.websiteId) {
+    const { data: w, error: wErr } = await supabase
+      .from('websites')
+      .select('id, name, slug, thumbnail, shortDescription')
+      .eq('id', baseSubmission.websiteId)
+      .single();
+    if (wErr) throw wErr;
+    website = w;
+  }
+
+  const submission = {
+    id: baseSubmission.id,
+    title: baseSubmission.title,
+    description: baseSubmission.description,
+    demoUrl: baseSubmission.demoUrl,
+    repoUrl: baseSubmission.repoUrl,
+    status: baseSubmission.status,
+    createdAt: baseSubmission.createdAt,
+    user,
+    website,
+  };
 
   res.status(201).json({
     success: true,
@@ -129,18 +157,47 @@ export const updateChallengeSubmission = catchAsync(async (req: Request, res: Re
   if (body.repoUrl === null as any) updateData.repoUrl = null;
   if (body.websiteId !== undefined || body.websiteSlug !== undefined) updateData.websiteId = websiteId;
 
-  const { data: submission, error: updateError } = await supabase
+  const { data: baseSubmission, error: updateError } = await supabase
     .from('challenge_submissions')
     .update(updateData)
     .eq('id', id)
     .select(
-       `id, title, description, demoUrl, repoUrl, status, createdAt, updatedAt,
-        website:websites(id, name, slug, thumbnail, shortDescription),
-        user:users!challenge_submissions_userId_fkey(id, name, username, avatar)`
-     )
+      `id, title, description, demoUrl, repoUrl, status, createdAt, updatedAt, userId, websiteId`
+    )
     .single();
 
   if (updateError) throw updateError;
+
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id, name, username, avatar')
+    .eq('id', baseSubmission.userId)
+    .single();
+  if (userError) throw userError;
+
+  let website: any = null;
+  if (baseSubmission.websiteId) {
+    const { data: w, error: wErr } = await supabase
+      .from('websites')
+      .select('id, name, slug, thumbnail, shortDescription')
+      .eq('id', baseSubmission.websiteId)
+      .single();
+    if (wErr) throw wErr;
+    website = w;
+  }
+
+  const submission = {
+    id: baseSubmission.id,
+    title: baseSubmission.title,
+    description: baseSubmission.description,
+    demoUrl: baseSubmission.demoUrl,
+    repoUrl: baseSubmission.repoUrl,
+    status: baseSubmission.status,
+    createdAt: baseSubmission.createdAt,
+    updatedAt: baseSubmission.updatedAt,
+    user,
+    website,
+  };
 
   res.status(200).json({
     success: true,
